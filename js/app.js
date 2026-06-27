@@ -115,6 +115,11 @@ function displayName() {
 function avatarInitial() {
   return (state.user?.user_metadata?.username?.[0] || state.user?.email?.[0] || 'U').toUpperCase();
 }
+function getLectureProgress(title) {
+  const p = state.videoProgress[title];
+  if (!p || !p.duration) return 0;
+  return Math.min(1, p.position / p.duration);
+}
 
 /* ── Router ────────────────────────────────────────────── */
 function render() {
@@ -548,13 +553,15 @@ function renderMaterieDetail() {
   <div class="lectures-list">
     ${m.lectures.map((l, i) => {
       const data = JSON.stringify({...l, subject: m.name}).replace(/"/g,'&quot;');
-      const inProgress = l.progress > 0 && l.progress < 1;
+      const prog = getLectureProgress(l.title);
+      const completed = prog >= 0.95;
+      const inProgress = prog > 0.02 && !completed;
       return `
       <div class="lecture-row" onclick="openPlayer(${data}, '${m.id}')">
         <div class="lecture-num">${String(i+1).padStart(2,'0')}</div>
         <div class="lecture-row-info">
           <h4>${l.title}${inProgress ? '<span class="lecture-in-progress">în curs</span>' : ''}</h4>
-          <p>${l.progress === 1 ? 'Vizionată' : inProgress ? Math.round(l.progress*100)+'% completat' : 'Nevizionată'}</p>
+          <p>${completed ? 'Vizionată' : inProgress ? Math.round(prog*100)+'% completat' : 'Nevizionată'}</p>
         </div>
         <div class="lecture-row-dur">${l.dur}</div>
       </div>`;
@@ -699,20 +706,20 @@ function openPlayer(lecture, materieId) {
     const vid = document.getElementById('player-video');
     if (!vid) return;
 
-    const doSeekAndPlay = () => {
-      const saved = state.videoProgress[lecture.title];
-      if (saved?.position > 3) {
-        const pct = saved.duration ? saved.position / saved.duration : 0;
-        if (pct < 0.95) vid.currentTime = saved.position;
-      }
-      vid.play().catch(() => {});
-      attachVideoProgress(vid);
-    };
+    attachVideoProgress(vid);
+    vid.play().catch(() => {});
 
-    if (vid.readyState >= 1) {
-      doSeekAndPlay();
-    } else {
-      vid.addEventListener('loadedmetadata', doSeekAndPlay, { once: true });
+    const saved = state.videoProgress[lecture.title];
+    if (saved?.position > 3) {
+      const pct = saved.duration ? saved.position / saved.duration : 0;
+      if (pct < 0.95) {
+        const seek = () => { vid.currentTime = saved.position; };
+        if (vid.readyState >= 3) {
+          seek();
+        } else {
+          vid.addEventListener('canplay', seek, { once: true });
+        }
+      }
     }
   }, 150);
 }
@@ -740,17 +747,17 @@ async function toggleSave() {
   setTimeout(() => {
     const newVid = document.getElementById('player-video');
     if (!newVid) return;
-    const doSeekAndPlay = () => {
-      const saved = state.videoProgress[l.title];
-      if (saved?.position > 3) {
-        const pct = saved.duration ? saved.position / saved.duration : 0;
-        if (pct < 0.95) newVid.currentTime = saved.position;
+    attachVideoProgress(newVid);
+    newVid.play().catch(() => {});
+    const saved = state.videoProgress[l.title];
+    if (saved?.position > 3) {
+      const pct = saved.duration ? saved.position / saved.duration : 0;
+      if (pct < 0.95) {
+        const seek = () => { newVid.currentTime = saved.position; };
+        if (newVid.readyState >= 3) seek();
+        else newVid.addEventListener('canplay', seek, { once: true });
       }
-      newVid.play().catch(() => {});
-      attachVideoProgress(newVid);
-    };
-    if (newVid.readyState >= 1) doSeekAndPlay();
-    else newVid.addEventListener('loadedmetadata', doSeekAndPlay, { once: true });
+    }
   }, 150);
 }
 async function loadSaved() {
@@ -782,9 +789,11 @@ async function saveProgress(title, position, duration) {
   }, { onConflict: 'user_id,lecture_title' }).then(() => {});
 }
 let _videoPauseHandler = null;
+let _videoEndedHandler = null;
 function attachVideoProgress(vid) {
   if (_videoTimeUpdateHandler) vid.removeEventListener('timeupdate', _videoTimeUpdateHandler);
-  if (_videoPauseHandler) vid.removeEventListener('pause', _videoPauseHandler);
+  if (_videoPauseHandler)      vid.removeEventListener('pause',      _videoPauseHandler);
+  if (_videoEndedHandler)      vid.removeEventListener('ended',      _videoEndedHandler);
 
   _videoTimeUpdateHandler = () => {
     if (!vid.currentTime || !state.activePlayerLecture) return;
@@ -798,8 +807,13 @@ function attachVideoProgress(vid) {
     if (vid.currentTime && state.activePlayerLecture)
       saveProgress(state.activePlayerLecture.title, vid.currentTime, vid.duration);
   };
+  _videoEndedHandler = () => {
+    if (state.activePlayerLecture)
+      saveProgress(state.activePlayerLecture.title, vid.duration, vid.duration);
+  };
   vid.addEventListener('timeupdate', _videoTimeUpdateHandler);
-  vid.addEventListener('pause', _videoPauseHandler);
+  vid.addEventListener('pause',      _videoPauseHandler);
+  vid.addEventListener('ended',      _videoEndedHandler);
 }
 function setSpeed(btn, speed) {
   document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
