@@ -1,8 +1,13 @@
 /* ── Supabase ──────────────────────────────────────────── */
-const _sb = supabase.createClient(
-  'https://rdbbvspwlphsvutpwvkg.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkYmJ2c3B3bHBoc3Z1dHB3dmtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NTE4MzksImV4cCI6MjA5ODEyNzgzOX0.E_q5rr7-9lSpI631Lws8Ey5zsiOmrNBqtiNHrmQLnQU'
-);
+const _SUPABASE_URL = 'https://rdbbvspwlphsvutpwvkg.supabase.co';
+const _SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkYmJ2c3B3bHBoc3Z1dHB3dmtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NTE4MzksImV4cCI6MjA5ODEyNzgzOX0.E_q5rr7-9lSpI631Lws8Ey5zsiOmrNBqtiNHrmQLnQU';
+const _sb = supabase.createClient(_SUPABASE_URL, _SUPABASE_KEY);
+
+function warmupSupabase() {
+  fetch(_SUPABASE_URL + '/rest/v1/?limit=0', {
+    headers: { 'apikey': _SUPABASE_KEY }
+  }).catch(() => {});
+}
 
 /* ── Data ──────────────────────────────────────────────── */
 const materii = [
@@ -98,6 +103,14 @@ const icons = {
   help: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
   terms: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`,
 };
+
+/* ── Helpers ───────────────────────────────────────────── */
+function displayName() {
+  return state.user?.user_metadata?.username || state.user?.email?.split('@')[0] || 'Utilizator';
+}
+function avatarInitial() {
+  return (state.user?.user_metadata?.username?.[0] || state.user?.email?.[0] || 'U').toUpperCase();
+}
 
 /* ── Router ────────────────────────────────────────────── */
 function render() {
@@ -310,6 +323,11 @@ function renderAuth(mode) {
       <h2 class="auth-title">${isLogin ? 'Bine ai revenit.' : 'Creează-ți contul.'}</h2>
       <p class="auth-sub">${isLogin ? 'Intră în cont pentru a accesa prelegerile.' : 'Înregistrează-te și alege abonamentul tău.'}</p>
       <input type="hidden" id="auth-mode" value="${mode}">
+      ${!isLogin ? `
+      <div class="form-group">
+        <label class="form-label">Nume de utilizator</label>
+        <input class="form-input" type="text" placeholder="ex: ion.popescu" id="auth-username" autocomplete="username">
+      </div>` : ''}
       <div class="form-group">
         <label class="form-label">Adresă de email</label>
         <input class="form-input" type="email" placeholder="email@exemplu.com" id="auth-email" autocomplete="email">
@@ -331,15 +349,21 @@ function renderAuth(mode) {
 }
 
 async function doLogin() {
-  const email = document.getElementById('auth-email')?.value.trim();
-  const pass  = document.getElementById('auth-pass')?.value;
-  const mode  = document.getElementById('auth-mode')?.value;
-  const errEl = document.getElementById('auth-error');
-  const okEl  = document.getElementById('auth-success');
-  const btn   = document.getElementById('auth-submit');
+  const email    = document.getElementById('auth-email')?.value.trim();
+  const pass     = document.getElementById('auth-pass')?.value;
+  const mode     = document.getElementById('auth-mode')?.value;
+  const username = document.getElementById('auth-username')?.value.trim() || '';
+  const errEl    = document.getElementById('auth-error');
+  const okEl     = document.getElementById('auth-success');
+  const btn      = document.getElementById('auth-submit');
 
   if (!email || !pass) {
     errEl.textContent = 'Completează email-ul și parola.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (mode === 'register' && !username) {
+    errEl.textContent = 'Alege un nume de utilizator.';
     errEl.style.display = 'block';
     return;
   }
@@ -353,7 +377,7 @@ async function doLogin() {
   if (mode === 'login') {
     result = await _sb.auth.signInWithPassword({ email, password: pass });
   } else {
-    result = await _sb.auth.signUp({ email, password: pass });
+    result = await _sb.auth.signUp({ email, password: pass, options: { data: { username } } });
   }
 
   const { data, error } = result;
@@ -416,9 +440,9 @@ function renderAppShell(content) {
       </nav>
       <div class="sidebar-bottom">
         <div class="user-pill" onclick="navigate('cont')">
-          <div class="user-avatar">${(state.user?.email?.[0] || 'U').toUpperCase()}</div>
+          <div class="user-avatar">${avatarInitial()}</div>
           <div class="user-info">
-            <div class="user-name">${state.user?.email?.split('@')[0] || 'Utilizator'}</div>
+            <div class="user-name">${displayName()}</div>
             <div class="user-plan">Abonament activ</div>
           </div>
         </div>
@@ -613,10 +637,11 @@ function renderCont() {
   <div class="account-grid">
     <div>
       <div class="profile-card">
-        <div class="profile-avatar-lg">${(state.user?.email?.[0] || 'U').toUpperCase()}</div>
-        <h3 class="profile-name">${state.user?.email?.split('@')[0] || 'Utilizator'}</h3>
+        <div class="profile-avatar-lg">${avatarInitial()}</div>
+        <h3 class="profile-name" id="profile-name">${displayName()}</h3>
         <p class="profile-email">${state.user?.email || ''}</p>
-        <span class="sub-badge">Abonament activ</span>
+        <button class="btn-ghost" style="margin-top:12px;padding:6px 18px;font-size:13px" onclick="editUsername()">Editează username</button>
+        <span class="sub-badge" style="display:block;margin-top:12px">Abonament activ</span>
       </div>
     </div>
     <div>
@@ -713,6 +738,31 @@ async function doLogout() {
   state.activePlayerLecture = null;
   render();
 }
+function editUsername() {
+  const nameEl = document.getElementById('profile-name');
+  if (!nameEl) return;
+  const current = state.user?.user_metadata?.username || '';
+  nameEl.innerHTML = `
+    <div style="display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap">
+      <input type="text" id="username-input" value="${current}"
+             style="background:rgba(255,255,255,.08);border:1px solid rgba(201,168,78,.5);border-radius:6px;padding:6px 12px;color:var(--text-1);font-size:15px;text-align:center;width:160px"
+             onkeydown="if(event.key==='Enter')saveUsername()">
+      <button onclick="saveUsername()"
+              style="background:var(--gold);border:none;border-radius:6px;padding:6px 14px;color:#0F1320;font-size:13px;font-weight:600;cursor:pointer">OK</button>
+      <button onclick="render()"
+              style="background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:6px 14px;color:var(--text-3);font-size:13px;cursor:pointer">Anulează</button>
+    </div>`;
+  document.getElementById('username-input')?.select();
+}
+async function saveUsername() {
+  const val = document.getElementById('username-input')?.value.trim();
+  if (!val) return;
+  const okBtn = document.querySelector('#username-input ~ button');
+  if (okBtn) { okBtn.textContent = '...'; okBtn.disabled = true; }
+  const { data, error } = await _sb.auth.updateUser({ data: { username: val } });
+  if (!error && data?.user) state.user = data.user;
+  render();
+}
 
 /* ── Event attachment ──────────────────────────────────── */
 function attachLandingEvents() {}
@@ -724,6 +774,8 @@ async function boot() {
   if (session) {
     state.loggedIn = true;
     state.user = session.user;
+  } else {
+    warmupSupabase();
   }
   render();
 
