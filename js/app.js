@@ -1132,13 +1132,18 @@ function attachStickyTabs() {
 
   setTab(0);
 
+  let rafPending = false;
   function onScroll() {
-    const rect   = heightEl.getBoundingClientRect();
-    const total  = heightEl.offsetHeight - window.innerHeight;
-    const scrolled = -rect.top;
-    const progress = Math.max(0, Math.min(1, scrolled / total));
-    const idx    = Math.min(TOTAL - 1, Math.floor(progress * TOTAL));
-    setTab(idx);
+    if (rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(() => {
+      rafPending = false;
+      const rect     = heightEl.getBoundingClientRect();
+      const total    = heightEl.offsetHeight - window.innerHeight;
+      const scrolled = -rect.top;
+      const progress = Math.max(0, Math.min(1, scrolled / total));
+      setTab(Math.min(TOTAL - 1, Math.floor(progress * TOTAL)));
+    });
   }
 
   window.addEventListener('scroll', onScroll, { passive: true });

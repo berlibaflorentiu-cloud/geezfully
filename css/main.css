@@ -1319,9 +1319,10 @@ h1,h2,h3 { font-family: 'EB Garamond', serif; font-weight: 500; line-height: 1.1
   flex-direction: column;
   justify-content: center;
   opacity: 0;
-  transform: translateY(20px);
-  transition: opacity .5s cubic-bezier(.22,1,.36,1), transform .5s cubic-bezier(.22,1,.36,1);
+  transform: translateY(16px);
+  transition: opacity .32s cubic-bezier(.4,0,.2,1), transform .32s cubic-bezier(.4,0,.2,1);
   pointer-events: none;
+  will-change: transform, opacity;
 }
 .stab-content.stab-active {
   opacity: 1;
@@ -1376,12 +1377,10 @@ h1,h2,h3 { font-family: 'EB Garamond', serif; font-weight: 500; line-height: 1.1
 }
 .btn-gold-lg:hover { opacity: .88; transform: translateY(-1px); }
 
-/* RIGHT — perspective stage */
+/* RIGHT */
 .stabs-right {
   position: relative;
   height: 520px;
-  perspective: 1000px;
-  perspective-origin: 40% 50%;
 }
 
 /* Ambient glow orb behind each card */
@@ -1395,7 +1394,7 @@ h1,h2,h3 { font-family: 'EB Garamond', serif; font-weight: 500; line-height: 1.1
   transform: translate(-50%, -50%);
   pointer-events: none;
   opacity: 0;
-  transition: opacity .7s ease;
+  transition: opacity .38s ease;
   filter: blur(24px);
 }
 .stab-visual.stab-active::before { opacity: 1; }
@@ -1407,24 +1406,17 @@ h1,h2,h3 { font-family: 'EB Garamond', serif; font-weight: 500; line-height: 1.1
   align-items: center;
   justify-content: center;
   opacity: 0;
-  /* Start: pushed back, tilted away, slightly below */
-  transform: perspective(900px) rotateY(18deg) rotateX(4deg) scale(.82) translateZ(-120px);
+  transform: translateY(32px) scale(.94);
   transition:
-    opacity .7s cubic-bezier(.22,1,.36,1),
-    transform .7s cubic-bezier(.22,1,.36,1);
+    opacity .38s cubic-bezier(.4,0,.2,1),
+    transform .38s cubic-bezier(.4,0,.2,1);
   pointer-events: none;
-  transform-style: preserve-3d;
+  will-change: transform, opacity;
 }
 .stab-visual.stab-active {
   opacity: 1;
-  transform: perspective(900px) rotateY(0deg) rotateX(0deg) scale(1) translateZ(0);
+  transform: translateY(0) scale(1);
   pointer-events: auto;
-  animation: stab-float 4s ease-in-out 0.7s infinite;
-}
-
-@keyframes stab-float {
-  0%, 100% { transform: perspective(900px) translateY(0px) rotateX(0deg); }
-  50%       { transform: perspective(900px) translateY(-10px) rotateX(1deg); }
 }
 
 /* Mockup card */
