@@ -1029,7 +1029,7 @@ function attachAppEvents() {}
 
 /* ── Arc Preloader ──────────────────────────────────────── */
 (function arcPreloader() {
-  const STORAGE_KEY = 'berliba-preloader-done';
+  const STORAGE_KEY = 'berliba-preloader-v1';
   const GREETINGS = ['Drept.', 'Clar.', 'Precis.', 'Riguros.', 'Fundamentat.', 'Pregătit.'];
   const HOLD_MS = 620;
   const REVEAL_MS = 1300;
@@ -1041,7 +1041,7 @@ function attachAppEvents() {}
 
   // Skip if already seen this session
   try {
-    if (sessionStorage.getItem(STORAGE_KEY) === 'done') {
+    if (localStorage.getItem(STORAGE_KEY) === 'done') {
       overlay.style.display = 'none';
       return;
     }
@@ -1090,7 +1090,7 @@ function attachAppEvents() {}
       if (raw < 1) {
         requestAnimationFrame(tick);
       } else {
-        try { sessionStorage.setItem(STORAGE_KEY, 'done'); } catch (_) {}
+        try { localStorage.setItem(STORAGE_KEY, 'done'); } catch (_) {}
         overlay.classList.add('arc-done');
         setTimeout(() => { overlay.style.display = 'none'; }, 200);
       }
