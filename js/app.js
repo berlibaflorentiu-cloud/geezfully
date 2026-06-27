@@ -409,6 +409,7 @@ async function doLogin() {
   state.loggedIn = true;
   state.user = data.user || data.session?.user;
   state.activeTab = 'acasa';
+  await loadSaved();
   render();
 }
 
@@ -699,16 +700,27 @@ function closePlayer() {
   state.activePlayerLecture = null;
   render();
 }
-function toggleSave() {
+async function toggleSave() {
   const l = state.activePlayerLecture;
-  if (!l) return;
-  if (state.saved.has(l.title)) state.saved.delete(l.title);
-  else state.saved.add(l.title);
+  if (!l || !state.user) return;
+  if (state.saved.has(l.title)) {
+    state.saved.delete(l.title);
+    _sb.from('saved_lectures').delete()
+      .eq('user_id', state.user.id).eq('lecture_title', l.title).then(() => {});
+  } else {
+    state.saved.add(l.title);
+    _sb.from('saved_lectures').insert({ user_id: state.user.id, lecture_title: l.title }).then(() => {});
+  }
   render();
   setTimeout(() => {
     const vid = document.getElementById('player-video');
     if (vid) vid.play().catch(() => {});
   }, 100);
+}
+async function loadSaved() {
+  if (!state.user) return;
+  const { data } = await _sb.from('saved_lectures').select('lecture_title').eq('user_id', state.user.id);
+  if (data) state.saved = new Set(data.map(r => r.lecture_title));
 }
 function setSpeed(btn, speed) {
   document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
@@ -774,6 +786,7 @@ async function boot() {
   if (session) {
     state.loggedIn = true;
     state.user = session.user;
+    await loadSaved();
   } else {
     warmupSupabase();
   }
