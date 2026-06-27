@@ -14,16 +14,15 @@
   <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
-  <div id="arc-preloader" aria-hidden="true">
-    <div id="arc-glow"></div>
-    <span id="arc-greeting"></span>
-    <div id="arc-monogram" aria-hidden="true">
-      <span id="arc-mono-vb">V·B</span>
-      <span id="arc-mono-label">Berliba Prelegeri</span>
+  <div id="preloader" aria-hidden="true">
+    <div class="pl-inner">
+      <div class="pl-mono">
+        <span class="pl-mono-mark">V<i>·</i>B</span>
+        <span class="pl-mono-label">Berliba Prelegeri</span>
+      </div>
+      <div class="pl-bar"><span class="pl-bar-fill"></span></div>
+      <div class="pl-count"><span>0</span></div>
     </div>
-    <svg id="arc-curtain" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-      <path id="arc-path" d="M 0 110 Q 50 135 100 110 L 100 110 L 0 110 Z"/>
-    </svg>
   </div>
   <div id="root"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

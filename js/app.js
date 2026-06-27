@@ -1167,89 +1167,45 @@ function attachStickyTabs() {
 function attachLandingEvents() {}
 function attachAppEvents() {}
 
-/* ── Arc Preloader ──────────────────────────────────────── */
-(function arcPreloader() {
-  const STORAGE_KEY = 'berliba-preloader-v1';
-  // 3 punchy words — tight and premium
-  const GREETINGS   = ['Drept.', 'Clar.', 'Pregătit.'];
-  const HOLD_MS     = 560;   // how long each word stays visible
-  const EXIT_MS     = 220;   // exit animation duration
-  const MONO_MS     = 680;   // monogram hold
-  const REVEAL_MS   = 1100;  // arc sweep duration
+/* ── Preloader ──────────────────────────────────────────── */
+(function preloader() {
+  const pl = document.getElementById('preloader');
+  if (!pl) return;
+  const fill  = pl.querySelector('.pl-bar-fill');
+  const count = pl.querySelector('.pl-count span');
 
-  const overlay  = document.getElementById('arc-preloader');
-  const greetEl  = document.getElementById('arc-greeting');
-  const monoEl   = document.getElementById('arc-monogram');
-  const pathEl   = document.getElementById('arc-path');
-  if (!overlay || !greetEl || !monoEl || !pathEl) return;
-
-  try {
-    if (localStorage.getItem(STORAGE_KEY) === 'done') {
-      overlay.style.display = 'none';
-      return;
-    }
-  } catch (_) {}
-
-  let idx = 0;
-
-  // Quadratic-bezier arc path: chord rises from y=110→y=-30 as p goes 0→1
-  function arcD(p) {
-    const edge    = 110 - p * 140;
-    const control = edge + 32; // slightly more dramatic curve
-    return `M 0 ${edge} Q 50 ${control} 100 ${edge} L 100 110 L 0 110 Z`;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    pl.remove();
+    return;
   }
 
-  // Ease: cubic-bezier(0.85,0,0.15,1) — sharp ease-in-out
-  function ease(t) {
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  const DUR   = 1500;                 // counter + bar fill
+  const start = performance.now();
+  const ease  = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+
+  function leave() {
+    pl.classList.add('pl-leaving');                 // fade monogram + bar + count
+    setTimeout(() => pl.classList.add('pl-exit'), 260);  // slide whole panel up
+    setTimeout(() => pl.remove(), 1260);            // cleanup after the slide
   }
 
-  function showGreeting(text, onDone) {
-    greetEl.textContent = text;
-    greetEl.className = 'arc-g-enter';
-    setTimeout(() => {
-      greetEl.className = 'arc-g-exit';
-      setTimeout(onDone, EXIT_MS);
-    }, HOLD_MS);
+  // Don't reveal until the app has actually rendered (or after a safety cap).
+  function whenReady(t0) {
+    const root = document.getElementById('root');
+    if ((root && root.children.length) || performance.now() - t0 > 1600) leave();
+    else requestAnimationFrame(() => whenReady(t0));
   }
 
-  function cycleGreetings() {
-    if (idx >= GREETINGS.length) { showMonogram(); return; }
-    // Turn on glow on first greeting
-    if (idx === 0) overlay.classList.add('arc-glow-on');
-    showGreeting(GREETINGS[idx++], cycleGreetings);
+  function tick(now) {
+    const raw = Math.min(1, (now - start) / DUR);
+    const p   = ease(raw);
+    if (fill)  fill.style.width = (p * 100) + '%';
+    if (count) count.textContent = Math.round(p * 100);
+    if (raw < 1) requestAnimationFrame(tick);
+    else whenReady(performance.now());
   }
 
-  function showMonogram() {
-    greetEl.style.opacity = '0';
-    monoEl.classList.add('arc-mono-show');
-
-    setTimeout(() => {
-      monoEl.classList.add('arc-mono-hide');
-      setTimeout(startReveal, 300);
-    }, MONO_MS);
-  }
-
-  function startReveal() {
-    overlay.classList.remove('arc-glow-on');
-    const start = performance.now();
-
-    function tick(now) {
-      const raw = Math.min(1, (now - start) / REVEAL_MS);
-      const p   = ease(raw);
-      pathEl.setAttribute('d', arcD(p));
-      if (raw < 1) {
-        requestAnimationFrame(tick);
-      } else {
-        try { localStorage.setItem(STORAGE_KEY, 'done'); } catch (_) {}
-        overlay.classList.add('arc-done');
-        setTimeout(() => { overlay.style.display = 'none'; }, 250);
-      }
-    }
-    requestAnimationFrame(tick);
-  }
-
-  cycleGreetings();
+  requestAnimationFrame(tick);
 })();
 
 /* ── Boot ──────────────────────────────────────────────── */
