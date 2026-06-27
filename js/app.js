@@ -290,22 +290,23 @@ function renderLanding() {
   <div class="how-section">
     <div class="how-inner">
       <p class="section-label" data-sr="line">Cum funcționează</p>
-      <div class="clip-wrap" data-sr="clip"><h2 class="section-title">Simplu de la început.</h2></div>
-      <div class="steps-grid">
-        <div class="step" data-sr data-sr-d="1">
-          <div class="step-num">01</div>
+      <div class="clip-wrap" data-sr="clip"><h2 class="section-title">Gata în 3 minute.</h2></div>
+      <div class="steps-flow">
+        <div class="steps-track" aria-hidden="true"></div>
+        <div class="step-item" data-sr data-sr-d="1">
+          <div class="step-marker" aria-hidden="true"><span>1</span></div>
           <h4>Creează-ți contul</h4>
-          <p>Înregistrează-te cu email-ul tău în mai puțin de un minut. Fără carduri de credit obligatorii pentru cont.</p>
+          <p>Email și parolă — în mai puțin de un minut. Fără card de credit pentru înregistrare.</p>
         </div>
-        <div class="step" data-sr data-sr-d="2">
-          <div class="step-num">02</div>
+        <div class="step-item" data-sr data-sr-d="2">
+          <div class="step-marker" aria-hidden="true"><span>2</span></div>
           <h4>Alege abonamentul</h4>
-          <p>Acces lunar sau anual — plătești online securizat cu card bancar sau prin transfer bancar.</p>
+          <p>Lunar sau semestrial — plătești securizat cu card bancar sau prin transfer.</p>
         </div>
-        <div class="step" data-sr data-sr-d="3">
-          <div class="step-num">03</div>
+        <div class="step-item" data-sr data-sr-d="3">
+          <div class="step-marker" aria-hidden="true"><span>3</span></div>
           <h4>Urmărește oricând</h4>
-          <p>Accesezi toate prelegerile imediat după activare, direct în browser sau din aplicația mobilă.</p>
+          <p>Acces imediat la toate prelegerile, în browser sau din aplicație, pe orice dispozitiv.</p>
         </div>
       </div>
     </div>
@@ -316,12 +317,12 @@ function renderLanding() {
   <div id="pricing">
   <div class="pricing-section">
     <p class="section-label" data-sr="line">Prețuri</p>
-    <div class="clip-wrap" data-sr="clip"><h2 class="section-title">Investiție mică, rezultate mari.</h2></div>
-    <p class="section-sub" data-sr style="margin:12px auto 0;text-align:center;">Acces complet la toate prelegerile, fără limitări.</p>
+    <div class="clip-wrap" data-sr="clip"><h2 class="section-title">Prețuri clare pentru studenți serioși.</h2></div>
+    <p class="section-sub" data-sr style="margin:12px auto 0;text-align:center;">Un abonament, acces la toate prelegerile și toate materiile.</p>
     <div class="pricing-cards">
       <div class="pricing-card" data-sr data-sr-d="1">
         <p class="pricing-tier">Lunar</p>
-        <div class="pricing-price"><strong>99</strong><span>lei / lună</span></div>
+        <div class="pricing-price"><strong>99</strong><span>lei<em>/lună</em></span></div>
         <p class="pricing-desc">Ideal pentru a testa platforma înainte de sesiune.</p>
         <div class="pricing-divider"></div>
         <ul class="pricing-features">
@@ -335,20 +336,20 @@ function renderLanding() {
       <div class="pricing-card featured" data-sr data-sr-d="2">
         <div class="pricing-badge">CEL MAI POPULAR</div>
         <p class="pricing-tier">Semestrial</p>
-        <div class="pricing-price"><strong>249</strong><span>lei / 6 luni</span></div>
+        <div class="pricing-price"><strong>249</strong><span>lei<em>/6 luni</em></span></div>
         <p class="pricing-desc">Economisești 345 lei față de abonamentul lunar. Perfect pentru un semestru.</p>
         <div class="pricing-divider"></div>
         <ul class="pricing-features">
           <li>${icons.check} Tot ce include abonamentul lunar</li>
           <li>${icons.check} Economie de 58%</li>
-          <li>${icons.check} Priorty la conținut nou</li>
+          <li>${icons.check} Prioritate la conținut nou</li>
           <li>${icons.check} Anulezi oricând</li>
         </ul>
         <button class="btn-gold" onclick="showAuth('register')">Alege semestrial</button>
       </div>
       <div class="pricing-card" data-sr data-sr-d="3">
         <p class="pricing-tier">Anual</p>
-        <div class="pricing-price"><strong>399</strong><span>lei / an</span></div>
+        <div class="pricing-price"><strong>399</strong><span>lei<em>/an</em></span></div>
         <p class="pricing-desc">Cel mai bun raport calitate-preț pentru studenții serioși.</p>
         <div class="pricing-divider"></div>
         <ul class="pricing-features">
