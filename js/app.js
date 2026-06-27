@@ -127,6 +127,7 @@ function render() {
   if (!state.loggedIn) {
     root.innerHTML = renderLanding();
     attachLandingEvents();
+    attachScrollReveal();
     return;
   }
   if (state.activePlayerLecture) {
@@ -187,36 +188,36 @@ function renderLanding() {
   <!-- Features -->
   <div id="features">
   <div class="section">
-    <p class="section-label">De ce Berliba Prelegeri</p>
-    <h2 class="section-title">Tot ce ai nevoie pentru examen, într-un singur loc.</h2>
-    <p class="section-sub">Nu înlocuiește cursul, îl completează. Prelegeri structurate, explicate clar, cu exemple din practica judiciară.</p>
+    <p class="section-label" data-sr="line">De ce Berliba Prelegeri</p>
+    <div class="clip-wrap" data-sr="clip"><h2 class="section-title">Tot ce ai nevoie pentru examen, într-un singur loc.</h2></div>
+    <p class="section-sub" data-sr>Nu înlocuiește cursul, îl completează. Prelegeri structurate, explicate clar, cu exemple din practica judiciară.</p>
     <div class="features-grid">
-      <div class="feature-card">
+      <div class="feature-card" data-sr data-sr-d="1">
         <div class="feature-icon">${icons.play}</div>
         <h4>Video de calitate</h4>
         <p>Prelegeri filmate profesional, cu sunet clar și imagine HD. Poți urmări de pe telefon, tabletă sau laptop.</p>
       </div>
-      <div class="feature-card">
+      <div class="feature-card" data-sr data-sr-d="2">
         <div class="feature-icon">${icons.book}</div>
         <h4>Organizate pe materii</h4>
         <p>Drept penal general, special, procedură penală și criminologie — fiecare subiect în propriul catalog.</p>
       </div>
-      <div class="feature-card">
+      <div class="feature-card" data-sr data-sr-d="3">
         <div class="feature-icon">${icons.bookmark}</div>
         <h4>Salvează și revino</h4>
         <p>Marchează prelegerile importante și găsește-le instant. Progresul se păstrează de unde ai rămas.</p>
       </div>
-      <div class="feature-card">
+      <div class="feature-card" data-sr data-sr-d="4">
         <div class="feature-icon">${icons.scale}</div>
         <h4>Practică judiciară</h4>
         <p>Fiecare prelegere include referințe la cazuri reale și decizii ale instanțelor din Republica Moldova.</p>
       </div>
-      <div class="feature-card">
+      <div class="feature-card" data-sr data-sr-d="5">
         <div class="feature-icon">${icons.download}</div>
         <h4>Viteză ajustabilă</h4>
         <p>Reglează viteza de redare — 1×, 1.25×, 1.5× sau 2× — ca să înveți în ritmul tău.</p>
       </div>
-      <div class="feature-card">
+      <div class="feature-card" data-sr data-sr-d="6">
         <div class="feature-icon">${icons.bell}</div>
         <h4>Mereu actualizat</h4>
         <p>Conținut nou adăugat regulat, adaptat la modificările legislative și noile hotărâri judecătorești.</p>
@@ -229,20 +230,20 @@ function renderLanding() {
   <div id="how">
   <div class="how-section">
     <div class="how-inner">
-      <p class="section-label">Cum funcționează</p>
-      <h2 class="section-title">Simplu de la început.</h2>
+      <p class="section-label" data-sr="line">Cum funcționează</p>
+      <div class="clip-wrap" data-sr="clip"><h2 class="section-title">Simplu de la început.</h2></div>
       <div class="steps-grid">
-        <div class="step">
+        <div class="step" data-sr data-sr-d="1">
           <div class="step-num">01</div>
           <h4>Creează-ți contul</h4>
           <p>Înregistrează-te cu email-ul tău în mai puțin de un minut. Fără carduri de credit obligatorii pentru cont.</p>
         </div>
-        <div class="step">
+        <div class="step" data-sr data-sr-d="2">
           <div class="step-num">02</div>
           <h4>Alege abonamentul</h4>
           <p>Acces lunar sau anual — plătești online securizat cu card bancar sau prin transfer bancar.</p>
         </div>
-        <div class="step">
+        <div class="step" data-sr data-sr-d="3">
           <div class="step-num">03</div>
           <h4>Urmărește oricând</h4>
           <p>Accesezi toate prelegerile imediat după activare, direct în browser sau din aplicația mobilă.</p>
@@ -255,11 +256,11 @@ function renderLanding() {
   <!-- Pricing -->
   <div id="pricing">
   <div class="pricing-section">
-    <p class="section-label">Prețuri</p>
-    <h2 class="section-title">Investiție mică, rezultate mari.</h2>
-    <p class="section-sub" style="margin:12px auto 0;text-align:center;">Acces complet la toate prelegerile, fără limitări.</p>
+    <p class="section-label" data-sr="line">Prețuri</p>
+    <div class="clip-wrap" data-sr="clip"><h2 class="section-title">Investiție mică, rezultate mari.</h2></div>
+    <p class="section-sub" data-sr style="margin:12px auto 0;text-align:center;">Acces complet la toate prelegerile, fără limitări.</p>
     <div class="pricing-cards">
-      <div class="pricing-card">
+      <div class="pricing-card" data-sr data-sr-d="1">
         <p class="pricing-tier">Lunar</p>
         <div class="pricing-price"><strong>99</strong><span>lei / lună</span></div>
         <p class="pricing-desc">Ideal pentru a testa platforma înainte de sesiune.</p>
@@ -272,7 +273,7 @@ function renderLanding() {
         </ul>
         <button class="btn-ghost" onclick="showAuth('register')">Alege lunar</button>
       </div>
-      <div class="pricing-card featured">
+      <div class="pricing-card featured" data-sr data-sr-d="2">
         <div class="pricing-badge">CEL MAI POPULAR</div>
         <p class="pricing-tier">Semestrial</p>
         <div class="pricing-price"><strong>249</strong><span>lei / 6 luni</span></div>
@@ -286,7 +287,7 @@ function renderLanding() {
         </ul>
         <button class="btn-gold" onclick="showAuth('register')">Alege semestrial</button>
       </div>
-      <div class="pricing-card">
+      <div class="pricing-card" data-sr data-sr-d="3">
         <p class="pricing-tier">Anual</p>
         <div class="pricing-price"><strong>399</strong><span>lei / an</span></div>
         <p class="pricing-desc">Cel mai bun raport calitate-preț pentru studenții serioși.</p>
@@ -1021,6 +1022,30 @@ function showGestioneaza() {
         <button class="btn-ghost" onclick="closeModal()">Închide</button>
       </div>
     </div>`);
+}
+
+/* ── Scroll Reveal ─────────────────────────────────────── */
+function attachScrollReveal() {
+  // Hero entrance — fires once shortly after render, independent of scroll
+  const hero = document.querySelector('.hero');
+  if (hero) setTimeout(() => hero.classList.add('hero-ready'), 120);
+
+  // IntersectionObserver for all [data-sr] elements
+  if (!('IntersectionObserver' in window)) {
+    // Fallback: just show everything immediately
+    document.querySelectorAll('[data-sr]').forEach(el => el.classList.add('sr-in'));
+    return;
+  }
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('sr-in');
+      io.unobserve(entry.target); // fire once only
+    });
+  }, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
+
+  document.querySelectorAll('[data-sr]').forEach(el => io.observe(el));
 }
 
 /* ── Event attachment ──────────────────────────────────── */

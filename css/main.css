@@ -1181,6 +1181,84 @@ h1,h2,h3 { font-family: 'EB Garamond', serif; font-weight: 500; line-height: 1.1
   #arc-preloader { display: none !important; }
 }
 
+/* ── Scroll Reveal ──────────────────────────────────────── */
+
+/* Stagger delay via custom property */
+[data-sr] { --d: 0s; }
+[data-sr-d="1"] { --d: .07s; }
+[data-sr-d="2"] { --d: .14s; }
+[data-sr-d="3"] { --d: .21s; }
+[data-sr-d="4"] { --d: .28s; }
+[data-sr-d="5"] { --d: .35s; }
+[data-sr-d="6"] { --d: .42s; }
+
+/* Default: slide-up + fade */
+[data-sr] {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity .7s cubic-bezier(.22,1,.36,1) var(--d),
+              transform .7s cubic-bezier(.22,1,.36,1) var(--d);
+}
+[data-sr].sr-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Clip: editorial heading reveal — wrapper clips, inner h2 slides up */
+.clip-wrap { overflow: hidden; }
+[data-sr="clip"] > .section-title {
+  display: block;
+  transform: translateY(108%);
+  transition: transform .9s cubic-bezier(.22,1,.36,1) var(--d);
+}
+[data-sr="clip"].sr-in > .section-title { transform: translateY(0); }
+
+/* Line: eyebrow label + extending gold underline */
+[data-sr="line"] {
+  opacity: 0;
+  transform: translateX(-8px);
+  display: inline-block;
+  transition: opacity .45s ease var(--d), transform .45s ease var(--d);
+}
+[data-sr="line"]::after {
+  content: '';
+  display: block;
+  height: 1.5px; width: 0;
+  background: var(--gold);
+  margin-top: 5px;
+  transition: width .65s cubic-bezier(.22,1,.36,1) calc(var(--d) + .2s);
+}
+[data-sr="line"].sr-in { opacity: 1; transform: none; }
+[data-sr="line"].sr-in::after { width: 100%; }
+
+/* ── Hero Entrance (post-preloader, not scroll) ──────────── */
+.hero-copy > *, .hero-photo-wrap {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity .75s cubic-bezier(.22,1,.36,1), transform .75s cubic-bezier(.22,1,.36,1);
+}
+.hero-photo-wrap {
+  transform: scale(.97) translateY(12px);
+  transition: opacity .9s cubic-bezier(.22,1,.36,1), transform .9s cubic-bezier(.22,1,.36,1);
+}
+.hero.hero-ready .hero-copy > *,
+.hero.hero-ready .hero-photo-wrap { opacity: 1; transform: none; }
+
+.hero.hero-ready .hero-eyebrow  { transition-delay: .05s; }
+.hero.hero-ready .hero-title    { transition-delay: .15s; }
+.hero.hero-ready .hero-sub      { transition-delay: .28s; }
+.hero.hero-ready .hero-actions  { transition-delay: .38s; }
+.hero.hero-ready .hero-stats    { transition-delay: .48s; }
+.hero.hero-ready .hero-photo-wrap { transition-delay: .12s; }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-sr], [data-sr="clip"], [data-sr="line"],
+  .hero-copy > *, .hero-photo-wrap {
+    opacity: 1 !important; transform: none !important;
+    clip-path: none !important; transition: none !important;
+  }
+}
+
 /* ── Toast ─────────────────────────────────────────────── */
 .toast {
   position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
