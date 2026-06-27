@@ -651,18 +651,18 @@ function renderCont() {
           <h4>Abonament semestrial</h4>
           <p>Activ · Se reînnoiește pe 27 decembrie 2026 · 249 lei</p>
         </div>
-        <button class="btn-ghost" style="white-space:nowrap">Gestionează</button>
+        <button class="btn-ghost" style="white-space:nowrap" onclick="showGestioneaza()">Gestionează</button>
       </div>
       <div class="settings-section" style="margin-bottom:16px">
         <div class="settings-heading">Preferințe</div>
-        <div class="settings-row"><span class="row-label">Notificări</span>${icons.chevronRight}</div>
-        <div class="settings-row"><span class="row-label">Limbă</span><span class="row-value">Română</span></div>
-        <div class="settings-row"><span class="row-label">Descărcări</span>${icons.chevronRight}</div>
+        <div class="settings-row" onclick="showNotificari()" style="cursor:pointer"><span class="row-label">Notificări</span>${icons.chevronRight}</div>
+        <div class="settings-row" onclick="showLimba()" style="cursor:pointer"><span class="row-label">Limbă</span><span class="row-value">Română</span></div>
+        <div class="settings-row" onclick="showDescarcari()" style="cursor:pointer"><span class="row-label">Descărcări</span>${icons.chevronRight}</div>
       </div>
       <div class="settings-section">
         <div class="settings-heading">Cont</div>
-        <div class="settings-row"><span class="row-label">Ajutor și suport</span>${icons.chevronRight}</div>
-        <div class="settings-row"><span class="row-label">Termeni și condiții</span>${icons.chevronRight}</div>
+        <div class="settings-row" onclick="showAjutor()" style="cursor:pointer"><span class="row-label">Ajutor și suport</span>${icons.chevronRight}</div>
+        <div class="settings-row" onclick="showTermeni()" style="cursor:pointer"><span class="row-label">Termeni și condiții</span>${icons.chevronRight}</div>
         <div class="settings-row danger" onclick="doLogout()"><span class="row-label">Deconectează-te</span>${icons.logout}</div>
       </div>
     </div>
@@ -774,6 +774,160 @@ async function saveUsername() {
   const { data, error } = await _sb.auth.updateUser({ data: { username: val } });
   if (!error && data?.user) state.user = data.user;
   render();
+}
+
+/* ── Modal & Toast ─────────────────────────────────────── */
+function showModal(html) {
+  closeModal();
+  const el = document.createElement('div');
+  el.className = 'modal-overlay';
+  el.id = 'modal-overlay';
+  el.innerHTML = html;
+  el.addEventListener('click', e => { if (e.target === el) closeModal(); });
+  document.body.appendChild(el);
+}
+function closeModal() {
+  document.getElementById('modal-overlay')?.remove();
+}
+function showToast(msg, duration = 3000) {
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), duration);
+}
+
+/* ── Settings actions ──────────────────────────────────── */
+function showNotificari() {
+  const emailOn = state.user?.user_metadata?.notif_email !== false;
+  showModal(`
+    <div class="modal-card">
+      <h2 class="modal-title">Notificări</h2>
+      <div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Notificări prin email</div>
+            <div class="toggle-desc">Prelegeri noi, actualizări de conținut</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="notif-email" ${emailOn ? 'checked' : ''} onchange="saveNotifEmail(this.checked)">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" onclick="closeModal()">Închide</button>
+      </div>
+    </div>`);
+}
+async function saveNotifEmail(val) {
+  const { data } = await _sb.auth.updateUser({ data: { notif_email: val } });
+  if (data?.user) state.user = data.user;
+  showToast(val ? 'Notificările prin email au fost activate.' : 'Notificările prin email au fost dezactivate.');
+}
+
+function showLimba() {
+  showModal(`
+    <div class="modal-card">
+      <h2 class="modal-title">Limbă</h2>
+      <div style="margin-top:4px">
+        <div class="lang-option lang-active">
+          <span>🇲🇩 Română</span>
+          <div class="lang-dot"></div>
+        </div>
+        <div class="lang-option lang-disabled">
+          <span>🇬🇧 English</span>
+          <span style="font-size:12px;color:var(--text-4)">În curând</span>
+        </div>
+        <div class="lang-option lang-disabled">
+          <span>🇷🇺 Русский</span>
+          <span style="font-size:12px;color:var(--text-4)">În curând</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" onclick="closeModal()">Închide</button>
+      </div>
+    </div>`);
+}
+
+function showDescarcari() {
+  showModal(`
+    <div class="modal-card">
+      <h2 class="modal-title">Descărcări</h2>
+      <div class="modal-body">
+        <p>Descărcarea prelegerilor pentru vizionare offline este disponibilă exclusiv în <strong style="color:var(--text-1)">aplicația mobilă</strong> Berliba Prelegeri.</p>
+        <p>În browser, toate prelegerile sunt accesibile în streaming oriunde ai conexiune la internet.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" onclick="closeModal()">Închis</button>
+      </div>
+    </div>`);
+}
+
+function showAjutor() {
+  showModal(`
+    <div class="modal-card">
+      <h2 class="modal-title">Ajutor și suport</h2>
+      <div class="modal-body">
+        <p>Dacă ai întrebări despre platformă, abonament sau conținut, ne poți contacta direct:</p>
+        <p style="margin-top:4px">
+          <strong style="color:var(--text-1)">Email:</strong>
+          <a href="mailto:berlibaflorentiu@gmail.com" style="color:var(--gold);margin-left:6px">berlibaflorentiu@gmail.com</a>
+        </p>
+        <p>Răspundem în maxim 24 de ore în zilele lucrătoare.</p>
+      </div>
+      <div class="modal-footer">
+        <a href="mailto:berlibaflorentiu@gmail.com" class="btn-gold" style="padding:8px 20px;font-size:14px;font-weight:600;color:var(--cta-text);background:var(--gold);border-radius:8px;text-decoration:none">Trimite email</a>
+        <button class="btn-ghost" onclick="closeModal()">Închide</button>
+      </div>
+    </div>`);
+}
+
+function showTermeni() {
+  showModal(`
+    <div class="modal-card">
+      <h2 class="modal-title">Termeni și condiții</h2>
+      <div class="modal-terms-body">
+        <h4>1. Acceptarea termenilor</h4>
+        <p>Prin crearea unui cont și utilizarea platformei Berliba Prelegeri, ești de acord cu prezenții termeni. Dacă nu ești de acord, te rugăm să nu utilizezi platforma.</p>
+        <h4>2. Abonamentul</h4>
+        <p>Accesul la conținut necesită un abonament activ. Abonamentul se reînnoiește automat la finalul perioadei. Îl poți anula oricând înainte de reînnoire fără costuri suplimentare.</p>
+        <h4>3. Utilizarea conținutului</h4>
+        <p>Conținutul platformei — prelegerile video, materialele și structura acestora — este protejat de dreptul de autor. Este interzisă descărcarea, redistribuirea sau reproducerea fără acordul scris al autorului.</p>
+        <h4>4. Contul tău</h4>
+        <p>Ești responsabil pentru securitatea contului tău. Nu partaja datele de autentificare. Orice activitate din contul tău îți este atribuită.</p>
+        <h4>5. Politica de rambursare</h4>
+        <p>Rambursările se acordă în termen de 7 zile de la plată dacă nu ai accesat mai mult de 2 prelegeri. Contactează-ne la adresa de email indicată în secțiunea de suport.</p>
+        <h4>6. Modificări</h4>
+        <p>Ne rezervăm dreptul de a modifica acești termeni. Vei fi notificat prin email cu cel puțin 14 zile înainte de orice modificare semnificativă.</p>
+        <h4>7. Contact</h4>
+        <p>Pentru orice întrebări juridice sau legate de termeni: <a href="mailto:berlibaflorentiu@gmail.com" style="color:var(--gold)">berlibaflorentiu@gmail.com</a></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" onclick="closeModal()">Am înțeles</button>
+      </div>
+    </div>`);
+}
+
+function showGestioneaza() {
+  showModal(`
+    <div class="modal-card">
+      <h2 class="modal-title">Gestionează abonamentul</h2>
+      <div class="modal-body">
+        <p>Pentru a modifica, anula sau reînnoi abonamentul tău, contactează-ne direct:</p>
+        <p>
+          <strong style="color:var(--text-1)">Email:</strong>
+          <a href="mailto:berlibaflorentiu@gmail.com" style="color:var(--gold);margin-left:6px">berlibaflorentiu@gmail.com</a>
+        </p>
+        <p>Includeți în mesaj adresa de email a contului și tipul de modificare solicitat.</p>
+      </div>
+      <div class="modal-footer">
+        <a href="mailto:berlibaflorentiu@gmail.com" class="btn-gold" style="padding:8px 20px;font-size:14px;font-weight:600;color:var(--cta-text);background:var(--gold);border-radius:8px;text-decoration:none">Contactează-ne</a>
+        <button class="btn-ghost" onclick="closeModal()">Închide</button>
+      </div>
+    </div>`);
 }
 
 /* ── Event attachment ──────────────────────────────────── */

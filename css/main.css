@@ -1005,3 +1005,98 @@ h1,h2,h3 { font-family: 'EB Garamond', serif; font-weight: 500; line-height: 1.1
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--hair-2); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+/* ── Modal overlay ─────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,.65);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  animation: fadeIn .18s ease;
+}
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+.modal-card {
+  background: var(--card);
+  border: 1px solid var(--hair-2);
+  border-radius: var(--radius-md);
+  width: 100%; max-width: 460px;
+  padding: 28px;
+  animation: slideUp .2s ease;
+}
+@keyframes slideUp { from { transform: translateY(12px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+.modal-title {
+  font-family: 'EB Garamond', serif;
+  font-size: 22px; font-weight: 500;
+  margin-bottom: 18px;
+}
+.modal-body { color: var(--text-2); font-size: 14px; line-height: 1.7; }
+.modal-body p { margin-bottom: 12px; }
+.modal-body p:last-child { margin-bottom: 0; }
+.modal-footer {
+  display: flex; gap: 10px; justify-content: flex-end;
+  margin-top: 24px;
+}
+.modal-terms-body {
+  max-height: 320px; overflow-y: auto;
+  color: var(--text-2); font-size: 13px; line-height: 1.75;
+  padding-right: 8px;
+}
+.modal-terms-body h4 { color: var(--text-1); font-size: 14px; margin: 16px 0 6px; }
+.modal-terms-body h4:first-child { margin-top: 0; }
+
+/* ── Toggle switch ─────────────────────────────────────── */
+.toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--hair);
+}
+.toggle-row:last-child { border-bottom: none; }
+.toggle-label { font-size: 15px; }
+.toggle-desc { font-size: 13px; color: var(--text-3); margin-top: 2px; }
+.toggle-switch {
+  position: relative; width: 44px; height: 26px; flex-shrink: 0;
+  cursor: pointer;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  position: absolute; inset: 0;
+  background: var(--hair-2); border-radius: 13px;
+  transition: background .2s;
+}
+.toggle-switch input:checked + .toggle-track { background: var(--gold); }
+.toggle-thumb {
+  position: absolute; top: 3px; left: 3px;
+  width: 20px; height: 20px;
+  background: #fff; border-radius: 50%;
+  transition: transform .2s;
+  pointer-events: none;
+}
+.toggle-switch input:checked ~ .toggle-thumb { transform: translateX(18px); }
+
+/* ── Language option ───────────────────────────────────── */
+.lang-option {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 16px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.lang-option:hover:not(.lang-disabled) { background: var(--card-hover); }
+.lang-option.lang-active { background: var(--gold-dim); border: 1px solid rgba(201,168,78,.3); }
+.lang-option.lang-disabled { opacity: .4; cursor: not-allowed; }
+.lang-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); }
+
+/* ── Toast ─────────────────────────────────────────────── */
+.toast {
+  position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+  z-index: 2000;
+  background: #1E2436; border: 1px solid var(--hair-2);
+  border-radius: 10px;
+  padding: 12px 20px;
+  font-size: 14px; color: var(--text-1);
+  white-space: nowrap;
+  animation: toastIn .2s ease;
+  pointer-events: none;
+}
+@keyframes toastIn { from { opacity:0; transform: translateX(-50%) translateY(8px) } to { opacity:1; transform: translateX(-50%) translateY(0) } }
