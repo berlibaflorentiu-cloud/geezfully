@@ -364,6 +364,8 @@ async function doLogin() {
       'Email not confirmed': 'Confirmă-ți email-ul înainte de autentificare.',
       'User already registered': 'Există deja un cont cu acest email.',
       'Password should be at least 6 characters': 'Parola trebuie să aibă cel puțin 6 caractere.',
+      'email rate limit exceeded': 'Prea multe încercări. Încearcă din nou peste câteva minute.',
+      'over_email_send_rate_limit': 'Prea multe emailuri trimise. Încearcă din nou mai târziu.',
     };
     errEl.textContent = msgs[error.message] || error.message;
     errEl.style.display = 'block';
