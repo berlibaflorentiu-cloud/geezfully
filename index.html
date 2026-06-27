@@ -10,6 +10,12 @@
   <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
+  <div id="arc-preloader" aria-hidden="true">
+    <span id="arc-greeting"></span>
+    <svg id="arc-curtain" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <path id="arc-path" d="M 0 110 Q 50 135 100 110 L 100 110 L 0 110 Z"/>
+    </svg>
+  </div>
   <div id="root"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/app.js"></script>

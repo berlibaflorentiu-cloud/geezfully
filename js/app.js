@@ -1027,6 +1027,81 @@ function showGestioneaza() {
 function attachLandingEvents() {}
 function attachAppEvents() {}
 
+/* ── Arc Preloader ──────────────────────────────────────── */
+(function arcPreloader() {
+  const STORAGE_KEY = 'berliba-preloader-done';
+  const GREETINGS = ['Drept.', 'Clar.', 'Precis.', 'Riguros.', 'Fundamentat.', 'Pregătit.'];
+  const HOLD_MS = 620;
+  const REVEAL_MS = 1300;
+
+  const overlay = document.getElementById('arc-preloader');
+  const greetEl = document.getElementById('arc-greeting');
+  const pathEl  = document.getElementById('arc-path');
+  if (!overlay || !greetEl || !pathEl) return;
+
+  // Skip if already seen this session
+  try {
+    if (sessionStorage.getItem(STORAGE_KEY) === 'done') {
+      overlay.style.display = 'none';
+      return;
+    }
+  } catch (_) {}
+
+  let idx = 0;
+
+  function arcD(progress) {
+    // progress 0→1: chord rises from y=110 (off-screen) to y=-30 (off-screen above)
+    const edge    = 110 - progress * 140;
+    const control = edge + 25;
+    return `M 0 ${edge} Q 50 ${control} 100 ${edge} L 100 110 L 0 110 Z`;
+  }
+
+  function showGreeting(text, onDone) {
+    greetEl.textContent = text;
+    greetEl.className = 'arc-g-enter';
+    const exitDelay = setTimeout(() => {
+      greetEl.className = 'arc-g-exit';
+      setTimeout(onDone, 280);
+    }, HOLD_MS);
+    return exitDelay;
+  }
+
+  function cycleGreetings() {
+    if (idx >= GREETINGS.length) { startReveal(); return; }
+    showGreeting(GREETINGS[idx++], cycleGreetings);
+  }
+
+  function startReveal() {
+    greetEl.style.display = 'none';
+    const start = performance.now();
+
+    // Custom cubic-bezier [0.85, 0, 0.15, 1] approximated via rAF
+    function ease(t) {
+      // approximation of cubic-bezier(0.85,0,0.15,1) — strong ease-in-out
+      return t < 0.5
+        ? 4 * t * t * t
+        : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    function tick(now) {
+      const raw = Math.min(1, (now - start) / REVEAL_MS);
+      const p   = ease(raw);
+      pathEl.setAttribute('d', arcD(p));
+      if (raw < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        try { sessionStorage.setItem(STORAGE_KEY, 'done'); } catch (_) {}
+        overlay.classList.add('arc-done');
+        setTimeout(() => { overlay.style.display = 'none'; }, 200);
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // Kick off
+  cycleGreetings();
+})();
+
 /* ── Boot ──────────────────────────────────────────────── */
 async function boot() {
   const { data: { session } } = await _sb.auth.getSession();

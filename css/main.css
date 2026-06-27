@@ -1087,6 +1087,56 @@ h1,h2,h3 { font-family: 'EB Garamond', serif; font-weight: 500; line-height: 1.1
 .lang-option.lang-disabled { opacity: .4; cursor: not-allowed; }
 .lang-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); }
 
+/* ── Arc Preloader ──────────────────────────────────────── */
+#arc-preloader {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--ink-deep);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  pointer-events: all;
+}
+#arc-preloader.arc-done {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
+}
+#arc-greeting {
+  position: relative; z-index: 2;
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: clamp(2.8rem, 8vw, 5.5rem);
+  font-weight: 500;
+  color: var(--gold);
+  letter-spacing: -.01em;
+  pointer-events: none;
+  text-align: center;
+  padding: 0 24px;
+}
+#arc-greeting.arc-g-enter {
+  animation: arcGIn .38s cubic-bezier(.22,1,.36,1) forwards;
+}
+#arc-greeting.arc-g-exit {
+  animation: arcGOut .28s cubic-bezier(.4,0,1,1) forwards;
+}
+@keyframes arcGIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes arcGOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-10px); }
+}
+#arc-curtain {
+  position: absolute; inset: 0; z-index: 1;
+  pointer-events: none;
+}
+#arc-curtain path {
+  fill: var(--ink);
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  #arc-preloader { display: none !important; }
+}
+
 /* ── Toast ─────────────────────────────────────────────── */
 .toast {
   position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
