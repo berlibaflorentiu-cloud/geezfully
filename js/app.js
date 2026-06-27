@@ -146,7 +146,7 @@ function render() {
 function renderLanding() {
   return `
   <nav class="site-nav">
-    <div class="nav-logo">Berliba <span>Prelegeri</span></div>
+    <img src="assets/logo.png" alt="Berliba Prelegeri" class="nav-logo" loading="eager">
     <div class="nav-links">
       <a href="#features">Despre</a>
       <a href="#how">Cum funcționează</a>
@@ -367,7 +367,7 @@ function renderLanding() {
   <!-- Footer -->
   <footer class="site-footer">
     <div class="footer-inner">
-      <div class="footer-logo">Berliba <span>Prelegeri</span></div>
+      <img src="assets/logo.png" alt="Berliba Prelegeri" class="footer-logo" loading="lazy">
       <div class="footer-links">
         <a href="#">Termeni</a>
         <a href="#">Confidențialitate</a>
@@ -389,7 +389,7 @@ function renderAuth(mode) {
   return `
   <div class="auth-screen">
     <div class="auth-card">
-      <div class="auth-logo">Berliba <span>Prelegeri</span></div>
+      <img src="assets/logo.png" alt="Berliba Prelegeri" class="auth-logo" loading="lazy">
       <h2 class="auth-title">${isLogin ? 'Bine ai revenit.' : 'Creează-ți contul.'}</h2>
       <p class="auth-sub">${isLogin ? 'Intră în cont pentru a accesa prelegerile.' : 'Înregistrează-te și alege abonamentul tău.'}</p>
       <input type="hidden" id="auth-mode" value="${mode}">
