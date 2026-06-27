@@ -1,0 +1,736 @@
+/* ── Supabase ──────────────────────────────────────────── */
+const _sb = supabase.createClient(
+  'https://rdbbvspwlphsvutpwvkg.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkYmJ2c3B3bHBoc3Z1dHB3dmtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NTE4MzksImV4cCI6MjA5ODEyNzgzOX0.E_q5rr7-9lSpI631Lws8Ey5zsiOmrNBqtiNHrmQLnQU'
+);
+
+/* ── Data ──────────────────────────────────────────────── */
+const materii = [
+  {
+    id: 'drept-penal-general',
+    name: 'Drept penal — Partea generală',
+    icon: 'scale',
+    count: 12,
+    lectures: [
+      { id: 1, title: 'Noțiunea și scopul dreptului penal', dur: '48 min', progress: 1 },
+      { id: 2, title: 'Principiile dreptului penal', dur: '52 min', progress: 0.58 },
+      { id: 3, title: 'Legea penală și acțiunea ei în timp', dur: '44 min', progress: 0 },
+      { id: 4, title: 'Infracțiunea — concept și trăsături', dur: '61 min', progress: 0 },
+      { id: 5, title: 'Componența infracțiunii', dur: '55 min', progress: 0 },
+      { id: 6, title: 'Latura obiectivă a infracțiunii', dur: '50 min', progress: 0 },
+    ]
+  },
+  {
+    id: 'drept-penal-special',
+    name: 'Drept penal — Partea specială',
+    icon: 'book',
+    count: 18,
+    lectures: [
+      { id: 1, title: 'Infracțiuni contra persoanei', dur: '58 min', progress: 0 },
+      { id: 2, title: 'Infracțiuni contra patrimoniului', dur: '63 min', progress: 0 },
+      { id: 3, title: 'Infracțiuni de corupție', dur: '47 min', progress: 0 },
+      { id: 4, title: 'Infracțiuni contra statului', dur: '54 min', progress: 0 },
+    ]
+  },
+  {
+    id: 'procedura-penala',
+    name: 'Procedură penală',
+    icon: 'gavel',
+    count: 14,
+    lectures: [
+      { id: 1, title: 'Principiile procesului penal', dur: '45 min', progress: 0 },
+      { id: 2, title: 'Participanții la procesul penal', dur: '60 min', progress: 0 },
+      { id: 3, title: 'Probele și mijloacele de probă', dur: '72 min', progress: 0 },
+      { id: 4, title: 'Urmărirea penală', dur: '55 min', progress: 0 },
+    ]
+  },
+  {
+    id: 'criminologie',
+    name: 'Criminologie',
+    icon: 'search',
+    count: 10,
+    lectures: [
+      { id: 1, title: 'Obiectul și metoda criminologiei', dur: '40 min', progress: 0 },
+      { id: 2, title: 'Cauzele criminalității', dur: '53 min', progress: 0 },
+      { id: 3, title: 'Personalitatea infractorului', dur: '49 min', progress: 0 },
+    ]
+  }
+];
+
+const continueLecture = { title: 'Principiile dreptului penal', subject: 'Drept penal — Partea generală', dur: '52 min', progress: 0.58 };
+const newestLectures = [
+  { title: 'Infracțiuni de corupție', subject: 'Drept penal — Partea specială', dur: '47 min' },
+  { title: 'Probele și mijloacele de probă', subject: 'Procedură penală', dur: '72 min' },
+  { title: 'Personalitatea infractorului', subject: 'Criminologie', dur: '49 min' },
+  { title: 'Latura obiectivă a infracțiunii', subject: 'Drept penal — Partea generală', dur: '50 min' },
+];
+
+/* ── State ─────────────────────────────────────────────── */
+let state = {
+  loggedIn: false,
+  user: null,
+  activeTab: 'acasa',
+  activeMaterieId: null,
+  activePlayerLecture: null,
+  activePlayerMaterie: null,
+  saved: new Set(),
+  searchQuery: '',
+};
+
+/* ── Icons ─────────────────────────────────────────────── */
+const icons = {
+  home: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>`,
+  book: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>`,
+  bookmark: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>`,
+  bookmarkFill: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>`,
+  person: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+  play: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`,
+  chevronRight: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>`,
+  chevronLeft: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>`,
+  search: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>`,
+  scale: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 7l9-4 9 4M5 10l7 3 7-3M4 17l8 3 8-3"/></svg>`,
+  gavel: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14l-4-4 6-6 4 4-6 6zM4 20l6-6"/><path d="M9 5L5 9"/></svg>`,
+  check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`,
+  logout: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+  settings: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>`,
+  bell: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>`,
+  download: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+  help: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+  terms: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`,
+};
+
+/* ── Router ────────────────────────────────────────────── */
+function render() {
+  const root = document.getElementById('root');
+  if (!state.loggedIn) {
+    root.innerHTML = renderLanding();
+    attachLandingEvents();
+    return;
+  }
+  if (state.activePlayerLecture) {
+    root.innerHTML = renderAppShell(renderPlayer());
+  } else if (state.activeMaterieId) {
+    root.innerHTML = renderAppShell(renderMaterieDetail());
+  } else {
+    const screens = { acasa: renderHome, materii: renderMaterii, salvate: renderSalvate, cont: renderCont };
+    root.innerHTML = renderAppShell((screens[state.activeTab] || renderHome)());
+  }
+  attachAppEvents();
+}
+
+/* ── Landing ───────────────────────────────────────────── */
+function renderLanding() {
+  return `
+  <nav class="site-nav">
+    <div class="nav-logo">Berliba <span>Prelegeri</span></div>
+    <div class="nav-links">
+      <a href="#features">Despre</a>
+      <a href="#how">Cum funcționează</a>
+      <a href="#pricing">Prețuri</a>
+    </div>
+    <div class="nav-cta">
+      <button class="btn-ghost" onclick="showAuth('login')">Autentificare</button>
+      <button class="btn-gold" onclick="showAuth('register')">Încearcă gratuit</button>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <p class="hero-eyebrow">Prelegeri video · Drept penal · Moldova</p>
+        <h1 class="hero-title">Studiază dreptul mai <em>în profunzime.</em></h1>
+        <p class="hero-sub">Un supliment pentru cursurile tale universitare — prelegeri video complete, susținute de Viorel Berliba și organizate pe materii. Acces oricând, de pe orice dispozitiv.</p>
+        <div class="hero-actions">
+          <button class="btn-gold-lg" onclick="showAuth('register')">Începe — 99 lei/lună</button>
+          <span class="hero-note">Sau <a href="#" onclick="showAuth('login');return false;">autentifică-te</a> dacă ai deja cont.</span>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-item"><strong>54+</strong><span>prelegeri video</span></div>
+          <div class="stat-item"><strong>4</strong><span>materii</span></div>
+          <div class="stat-item"><strong>HD</strong><span>calitate video</span></div>
+        </div>
+      </div>
+      <div class="hero-photo-wrap">
+        <img src="assets/img/berliba.jpg" alt="Viorel Berliba" class="hero-photo">
+        <div class="hero-photo-overlay"></div>
+        <div class="hero-photo-badge">
+          <h3>Viorel Berliba</h3>
+          <p>Doctor în drept · Lector universitar</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <div id="features">
+  <div class="section">
+    <p class="section-label">De ce Berliba Prelegeri</p>
+    <h2 class="section-title">Tot ce ai nevoie pentru examen, într-un singur loc.</h2>
+    <p class="section-sub">Nu înlocuiește cursul, îl completează. Prelegeri structurate, explicate clar, cu exemple din practica judiciară.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">${icons.play}</div>
+        <h4>Video de calitate</h4>
+        <p>Prelegeri filmate profesional, cu sunet clar și imagine HD. Poți urmări de pe telefon, tabletă sau laptop.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">${icons.book}</div>
+        <h4>Organizate pe materii</h4>
+        <p>Drept penal general, special, procedură penală și criminologie — fiecare subiect în propriul catalog.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">${icons.bookmark}</div>
+        <h4>Salvează și revino</h4>
+        <p>Marchează prelegerile importante și găsește-le instant. Progresul se păstrează de unde ai rămas.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">${icons.scale}</div>
+        <h4>Practică judiciară</h4>
+        <p>Fiecare prelegere include referințe la cazuri reale și decizii ale instanțelor din Republica Moldova.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">${icons.download}</div>
+        <h4>Viteză ajustabilă</h4>
+        <p>Reglează viteza de redare — 1×, 1.25×, 1.5× sau 2× — ca să înveți în ritmul tău.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">${icons.bell}</div>
+        <h4>Mereu actualizat</h4>
+        <p>Conținut nou adăugat regulat, adaptat la modificările legislative și noile hotărâri judecătorești.</p>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- How it works -->
+  <div id="how">
+  <div class="how-section">
+    <div class="how-inner">
+      <p class="section-label">Cum funcționează</p>
+      <h2 class="section-title">Simplu de la început.</h2>
+      <div class="steps-grid">
+        <div class="step">
+          <div class="step-num">01</div>
+          <h4>Creează-ți contul</h4>
+          <p>Înregistrează-te cu email-ul tău în mai puțin de un minut. Fără carduri de credit obligatorii pentru cont.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">02</div>
+          <h4>Alege abonamentul</h4>
+          <p>Acces lunar sau anual — plătești online securizat cu card bancar sau prin transfer bancar.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">03</div>
+          <h4>Urmărește oricând</h4>
+          <p>Accesezi toate prelegerile imediat după activare, direct în browser sau din aplicația mobilă.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- Pricing -->
+  <div id="pricing">
+  <div class="pricing-section">
+    <p class="section-label">Prețuri</p>
+    <h2 class="section-title">Investiție mică, rezultate mari.</h2>
+    <p class="section-sub" style="margin:12px auto 0;text-align:center;">Acces complet la toate prelegerile, fără limitări.</p>
+    <div class="pricing-cards">
+      <div class="pricing-card">
+        <p class="pricing-tier">Lunar</p>
+        <div class="pricing-price"><strong>99</strong><span>lei / lună</span></div>
+        <p class="pricing-desc">Ideal pentru a testa platforma înainte de sesiune.</p>
+        <div class="pricing-divider"></div>
+        <ul class="pricing-features">
+          <li>${icons.check} Acces la toate prelegerile</li>
+          <li>${icons.check} Toate materiile incluse</li>
+          <li>${icons.check} Acces web și mobil</li>
+          <li>${icons.check} Anulezi oricând</li>
+        </ul>
+        <button class="btn-ghost" onclick="showAuth('register')">Alege lunar</button>
+      </div>
+      <div class="pricing-card featured">
+        <div class="pricing-badge">CEL MAI POPULAR</div>
+        <p class="pricing-tier">Semestrial</p>
+        <div class="pricing-price"><strong>249</strong><span>lei / 6 luni</span></div>
+        <p class="pricing-desc">Economisești 345 lei față de abonamentul lunar. Perfect pentru un semestru.</p>
+        <div class="pricing-divider"></div>
+        <ul class="pricing-features">
+          <li>${icons.check} Tot ce include abonamentul lunar</li>
+          <li>${icons.check} Economie de 58%</li>
+          <li>${icons.check} Priorty la conținut nou</li>
+          <li>${icons.check} Anulezi oricând</li>
+        </ul>
+        <button class="btn-gold" onclick="showAuth('register')">Alege semestrial</button>
+      </div>
+      <div class="pricing-card">
+        <p class="pricing-tier">Anual</p>
+        <div class="pricing-price"><strong>399</strong><span>lei / an</span></div>
+        <p class="pricing-desc">Cel mai bun raport calitate-preț pentru studenții serioși.</p>
+        <div class="pricing-divider"></div>
+        <ul class="pricing-features">
+          <li>${icons.check} Tot ce include semestrial</li>
+          <li>${icons.check} Economie de 66%</li>
+          <li>${icons.check} Acces la arhiva completă</li>
+          <li>${icons.check} Suport prioritar</li>
+        </ul>
+        <button class="btn-ghost" onclick="showAuth('register')">Alege anual</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-logo">Berliba <span>Prelegeri</span></div>
+      <div class="footer-links">
+        <a href="#">Termeni</a>
+        <a href="#">Confidențialitate</a>
+        <a href="#">Contact</a>
+      </div>
+      <p class="footer-copy">© 2026 Berliba Prelegeri. Toate drepturile rezervate.</p>
+    </div>
+  </footer>`;
+}
+
+/* ── Auth ──────────────────────────────────────────────── */
+function showAuth(mode) {
+  const root = document.getElementById('root');
+  root.innerHTML = renderAuth(mode);
+}
+
+function renderAuth(mode) {
+  const isLogin = mode === 'login';
+  return `
+  <div class="auth-screen">
+    <div class="auth-card">
+      <div class="auth-logo">Berliba <span>Prelegeri</span></div>
+      <h2 class="auth-title">${isLogin ? 'Bine ai revenit.' : 'Creează-ți contul.'}</h2>
+      <p class="auth-sub">${isLogin ? 'Intră în cont pentru a accesa prelegerile.' : 'Înregistrează-te și alege abonamentul tău.'}</p>
+      <input type="hidden" id="auth-mode" value="${mode}">
+      <div class="form-group">
+        <label class="form-label">Adresă de email</label>
+        <input class="form-input" type="email" placeholder="email@exemplu.com" id="auth-email" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Parolă</label>
+        <input class="form-input" type="password" placeholder="••••••••" id="auth-pass" autocomplete="${isLogin ? 'current-password' : 'new-password'}"
+               onkeydown="if(event.key==='Enter') doLogin()">
+      </div>
+      <div id="auth-error" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:8px;font-size:13px;color:#FCA5A5;"></div>
+      <div id="auth-success" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(201,168,78,.10);border:1px solid rgba(201,168,78,.3);border-radius:8px;font-size:13px;color:var(--gold);"></div>
+      <button class="btn-gold-full" id="auth-submit" onclick="doLogin()">${isLogin ? 'Autentifică-te' : 'Creează cont'}</button>
+      <p class="auth-switch" style="margin-top:18px">
+        ${isLogin ? 'Nu ai cont? <a onclick="showAuth(\'register\')">Creează unul</a>' : 'Ai deja cont? <a onclick="showAuth(\'login\')">Autentifică-te</a>'}
+      </p>
+      <p class="auth-switch" style="margin-top:10px"><a onclick="render()" style="color:var(--text-3);font-size:13px">← Înapoi la pagina principală</a></p>
+    </div>
+  </div>`;
+}
+
+async function doLogin() {
+  const email = document.getElementById('auth-email')?.value.trim();
+  const pass  = document.getElementById('auth-pass')?.value;
+  const mode  = document.getElementById('auth-mode')?.value;
+  const errEl = document.getElementById('auth-error');
+  const okEl  = document.getElementById('auth-success');
+  const btn   = document.getElementById('auth-submit');
+
+  if (!email || !pass) {
+    errEl.textContent = 'Completează email-ul și parola.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.textContent = mode === 'login' ? 'Se conectează...' : 'Se creează contul...';
+  btn.disabled = true;
+  errEl.style.display = 'none';
+  okEl.style.display = 'none';
+
+  let result;
+  if (mode === 'login') {
+    result = await _sb.auth.signInWithPassword({ email, password: pass });
+  } else {
+    result = await _sb.auth.signUp({ email, password: pass });
+  }
+
+  const { data, error } = result;
+
+  if (error) {
+    const msgs = {
+      'Invalid login credentials': 'Email sau parolă incorectă.',
+      'Email not confirmed': 'Confirmă-ți email-ul înainte de autentificare.',
+      'User already registered': 'Există deja un cont cu acest email.',
+      'Password should be at least 6 characters': 'Parola trebuie să aibă cel puțin 6 caractere.',
+    };
+    errEl.textContent = msgs[error.message] || error.message;
+    errEl.style.display = 'block';
+    btn.textContent = mode === 'login' ? 'Autentifică-te' : 'Creează cont';
+    btn.disabled = false;
+    return;
+  }
+
+  if (mode === 'register' && !data.session) {
+    okEl.textContent = 'Cont creat! Verifică-ți email-ul pentru a confirma înregistrarea.';
+    okEl.style.display = 'block';
+    btn.textContent = 'Creează cont';
+    btn.disabled = false;
+    return;
+  }
+
+  state.loggedIn = true;
+  state.user = data.user || data.session?.user;
+  state.activeTab = 'acasa';
+  render();
+}
+
+/* ── App Shell ─────────────────────────────────────────── */
+function renderAppShell(content) {
+  const tabs = [
+    { id: 'acasa', label: 'Acasă', icon: 'home' },
+    { id: 'materii', label: 'Materii', icon: 'book' },
+    { id: 'salvate', label: 'Salvate', icon: 'bookmark' },
+    { id: 'cont', label: 'Cont', icon: 'person' },
+  ];
+  const topbarTitle = {
+    acasa: 'Acasă', materii: 'Materii', salvate: 'Salvate', cont: 'Contul meu'
+  }[state.activeTab] || 'Berliba Prelegeri';
+
+  return `
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-text">Berliba <span>Prelegeri</span></div>
+        <div class="sidebar-logo-sub">Prelegeri de drept penal</div>
+      </div>
+      <nav class="sidebar-nav">
+        ${tabs.map(t => `
+          <div class="nav-item ${state.activeTab === t.id && !state.activeMaterieId && !state.activePlayerLecture ? 'active' : ''}"
+               onclick="navigate('${t.id}')">
+            ${icons[t.icon]} ${t.label}
+          </div>`).join('')}
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="user-pill" onclick="navigate('cont')">
+          <div class="user-avatar">${(state.user?.email?.[0] || 'U').toUpperCase()}</div>
+          <div class="user-info">
+            <div class="user-name">${state.user?.email?.split('@')[0] || 'Utilizator'}</div>
+            <div class="user-plan">Abonament activ</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+    <main class="app-main">
+      <div class="app-topbar">
+        <h2>${topbarTitle}</h2>
+        <div class="search-bar">
+          ${icons.search}
+          <input type="text" placeholder="Caută prelegeri..." id="search-input"
+                 value="${state.searchQuery}"
+                 oninput="handleSearch(this.value)">
+        </div>
+      </div>
+      <div class="app-content">${content}</div>
+    </main>
+  </div>`;
+}
+
+/* ── Screen: Acasă ─────────────────────────────────────── */
+function renderHome() {
+  const remaining = Math.round(52 * (1 - 0.58));
+  return `
+  <div class="greeting">
+    <h1>Bună ziua.</h1>
+    <p>Continuă-ți studiul de unde ai rămas.</p>
+  </div>
+  <div class="continue-hero" onclick="openPlayer(${JSON.stringify(continueLecture).replace(/"/g,'&quot;')}, null)">
+    <div class="continue-thumb">
+      <span class="continue-thumb-label">CONTINUĂ</span>
+      <div class="play-btn-lg">${icons.play}</div>
+    </div>
+    <div class="continue-info">
+      <p class="eyebrow">Ultima prelegere urmărită</p>
+      <h3>${continueLecture.title}</h3>
+      <p class="meta">${continueLecture.subject} · ${remaining} min rămase</p>
+      <div class="progress-bar"><div class="progress-fill" style="width:${continueLecture.progress*100}%"></div></div>
+    </div>
+  </div>
+  <p class="section-heading">CELE MAI NOI PRELEGERI</p>
+  <div class="lectures-grid">
+    ${newestLectures.map(l => renderLectureCard(l)).join('')}
+  </div>`;
+}
+
+function renderLectureCard(l) {
+  const data = JSON.stringify(l).replace(/"/g, '&quot;');
+  return `
+  <div class="lecture-card" onclick="openPlayer(${data}, null)">
+    <div class="lecture-thumb">${icons.play}</div>
+    <div class="lecture-info">
+      <div class="lecture-title">${l.title}</div>
+      <div class="lecture-meta">${l.subject} · ${l.dur}</div>
+    </div>
+  </div>`;
+}
+
+/* ── Screen: Materii ───────────────────────────────────── */
+function renderMaterii() {
+  const query = state.searchQuery.toLowerCase();
+  const filtered = query
+    ? materii.filter(m =>
+        m.name.toLowerCase().includes(query) ||
+        m.lectures.some(l => l.title.toLowerCase().includes(query)))
+    : materii;
+
+  if (filtered.length === 0) return `
+    <div class="empty-state">
+      <div class="empty-icon">${icons.search}</div>
+      <h3>Niciun rezultat</h3>
+      <p>Nu am găsit prelegeri pentru „${state.searchQuery}".</p>
+    </div>`;
+
+  return `
+  <div class="materii-grid">
+    ${filtered.map(m => `
+      <div class="materie-card" onclick="openMaterie('${m.id}')">
+        <div class="materie-icon">${icons[m.icon] || icons.book}</div>
+        <h3>${m.name}</h3>
+        <p>${m.count} prelegeri · ${m.lectures.length > 0 ? m.lectures[0].dur : ''}</p>
+      </div>`).join('')}
+  </div>`;
+}
+
+/* ── Screen: Materie Detail ────────────────────────────── */
+function renderMaterieDetail() {
+  const m = materii.find(x => x.id === state.activeMaterieId);
+  if (!m) return '';
+  return `
+  <div class="back-btn" onclick="closeMaterie()">
+    ${icons.chevronLeft} Materii
+  </div>
+  <div class="materie-header">
+    <h1>${m.name}</h1>
+    <p>${m.count} prelegeri · Viorel Berliba</p>
+  </div>
+  <div class="lectures-list">
+    ${m.lectures.map((l, i) => {
+      const data = JSON.stringify({...l, subject: m.name}).replace(/"/g,'&quot;');
+      const inProgress = l.progress > 0 && l.progress < 1;
+      return `
+      <div class="lecture-row" onclick="openPlayer(${data}, '${m.id}')">
+        <div class="lecture-num">${String(i+1).padStart(2,'0')}</div>
+        <div class="lecture-row-info">
+          <h4>${l.title}${inProgress ? '<span class="lecture-in-progress">în curs</span>' : ''}</h4>
+          <p>${l.progress === 1 ? 'Vizionată' : inProgress ? Math.round(l.progress*100)+'% completat' : 'Nevizionată'}</p>
+        </div>
+        <div class="lecture-row-dur">${l.dur}</div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+/* ── Screen: Player ────────────────────────────────────── */
+function renderPlayer() {
+  const l = state.activePlayerLecture;
+  const materie = state.activePlayerMaterie ? materii.find(m => m.id === state.activePlayerMaterie) : null;
+  const isSaved = state.saved.has(l.title);
+  const queue = materie ? materie.lectures : newestLectures;
+
+  return `
+  <div class="back-btn" onclick="closePlayer()">
+    ${icons.chevronLeft} ${materie ? materie.name : 'Acasă'}
+  </div>
+  <div class="player-layout">
+    <div>
+      <div class="player-video-wrap">
+        <video id="player-video" controls>
+          <source src="assets/video/intro.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="player-meta">
+        <h2>${l.title}</h2>
+        <p class="subject">${l.subject || (materie ? materie.name : '')} · ${l.dur}</p>
+        <div class="player-controls-row">
+          <div class="speed-btns">
+            ${['1×','1.25×','1.5×','2×'].map(s => `
+              <button class="speed-btn ${s==='1×'?'active':''}" onclick="setSpeed(this,'${s}')">${s}</button>`).join('')}
+          </div>
+          <button class="save-btn ${isSaved?'saved':''}" onclick="toggleSave()">
+            ${isSaved ? icons.bookmarkFill : icons.bookmark}
+            ${isSaved ? 'Salvat' : 'Salvează'}
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="player-sidebar">
+      <h3>Următoarele prelegeri</h3>
+      <div class="queue-list">
+        ${queue.slice(0,6).map((ql,i) => {
+          const qdata = JSON.stringify({...ql, subject: materie ? materie.name : ''}).replace(/"/g,'&quot;');
+          const active = ql.title === l.title;
+          return `
+          <div class="queue-item ${active?'active-queue':''}" onclick="openPlayer(${qdata},'${state.activePlayerMaterie||''}')">
+            <div class="queue-thumb">${icons.play}</div>
+            <div class="queue-info">
+              <h5>${ql.title}</h5>
+              <p>${ql.dur}</p>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── Screen: Salvate ───────────────────────────────────── */
+function renderSalvate() {
+  const saved = [...state.saved];
+  if (saved.length === 0) return `
+    <div class="empty-state">
+      <div class="empty-icon">${icons.bookmark}</div>
+      <h3>Încă nimic salvat</h3>
+      <p>Apasă „Salvează" la o prelegere ca s-o regăsești aici mai târziu.</p>
+    </div>`;
+
+  const lectures = newestLectures.filter(l => state.saved.has(l.title));
+  return `
+  <div class="greeting" style="margin-bottom:24px">
+    <h1>Salvate</h1>
+    <p>${saved.length} ${saved.length===1?'prelegere salvată':'prelegeri salvate'}</p>
+  </div>
+  <div class="lectures-grid">
+    ${lectures.map(l => renderLectureCard(l)).join('')}
+  </div>`;
+}
+
+/* ── Screen: Cont ──────────────────────────────────────── */
+function renderCont() {
+  return `
+  <div class="account-grid">
+    <div>
+      <div class="profile-card">
+        <div class="profile-avatar-lg">${(state.user?.email?.[0] || 'U').toUpperCase()}</div>
+        <h3 class="profile-name">${state.user?.email?.split('@')[0] || 'Utilizator'}</h3>
+        <p class="profile-email">${state.user?.email || ''}</p>
+        <span class="sub-badge">Abonament activ</span>
+      </div>
+    </div>
+    <div>
+      <div class="sub-card-full">
+        <div class="sub-info">
+          <h4>Abonament semestrial</h4>
+          <p>Activ · Se reînnoiește pe 27 decembrie 2026 · 249 lei</p>
+        </div>
+        <button class="btn-ghost" style="white-space:nowrap">Gestionează</button>
+      </div>
+      <div class="settings-section" style="margin-bottom:16px">
+        <div class="settings-heading">Preferințe</div>
+        <div class="settings-row"><span class="row-label">Notificări</span>${icons.chevronRight}</div>
+        <div class="settings-row"><span class="row-label">Limbă</span><span class="row-value">Română</span></div>
+        <div class="settings-row"><span class="row-label">Descărcări</span>${icons.chevronRight}</div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-heading">Cont</div>
+        <div class="settings-row"><span class="row-label">Ajutor și suport</span>${icons.chevronRight}</div>
+        <div class="settings-row"><span class="row-label">Termeni și condiții</span>${icons.chevronRight}</div>
+        <div class="settings-row danger" onclick="doLogout()"><span class="row-label">Deconectează-te</span>${icons.logout}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── Actions ───────────────────────────────────────────── */
+function navigate(tab) {
+  state.activeTab = tab;
+  state.activeMaterieId = null;
+  state.activePlayerLecture = null;
+  state.searchQuery = '';
+  render();
+}
+function openMaterie(id) {
+  state.activeMaterieId = id;
+  state.activePlayerLecture = null;
+  render();
+}
+function closeMaterie() {
+  state.activeMaterieId = null;
+  state.activeTab = 'materii';
+  render();
+}
+function openPlayer(lecture, materieId) {
+  state.activePlayerLecture = lecture;
+  state.activePlayerMaterie = materieId || null;
+  render();
+  setTimeout(() => {
+    const vid = document.getElementById('player-video');
+    if (vid) vid.play().catch(() => {});
+  }, 100);
+}
+function closePlayer() {
+  state.activePlayerLecture = null;
+  render();
+}
+function toggleSave() {
+  const l = state.activePlayerLecture;
+  if (!l) return;
+  if (state.saved.has(l.title)) state.saved.delete(l.title);
+  else state.saved.add(l.title);
+  render();
+  setTimeout(() => {
+    const vid = document.getElementById('player-video');
+    if (vid) vid.play().catch(() => {});
+  }, 100);
+}
+function setSpeed(btn, speed) {
+  document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const vid = document.getElementById('player-video');
+  if (vid) vid.playbackRate = parseFloat(speed);
+}
+function handleSearch(q) {
+  state.searchQuery = q;
+  if (state.activeTab !== 'materii') { state.activeTab = 'materii'; }
+  state.activeMaterieId = null;
+  state.activePlayerLecture = null;
+  // re-render just content area
+  const content = document.querySelector('.app-content');
+  if (content) content.innerHTML = renderMaterii();
+  // keep sidebar active state
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const materiiNav = document.querySelector('.nav-item:nth-child(2)');
+  if (materiiNav) materiiNav.classList.add('active');
+}
+async function doLogout() {
+  await _sb.auth.signOut();
+  state.loggedIn = false;
+  state.user = null;
+  state.activeTab = 'acasa';
+  state.activeMaterieId = null;
+  state.activePlayerLecture = null;
+  render();
+}
+
+/* ── Event attachment ──────────────────────────────────── */
+function attachLandingEvents() {}
+function attachAppEvents() {}
+
+/* ── Boot ──────────────────────────────────────────────── */
+async function boot() {
+  const { data: { session } } = await _sb.auth.getSession();
+  if (session) {
+    state.loggedIn = true;
+    state.user = session.user;
+  }
+  render();
+
+  _sb.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_OUT') {
+      state.loggedIn = false;
+      state.user = null;
+      render();
+    }
+  });
+}
+boot();
