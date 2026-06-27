@@ -56,7 +56,7 @@ h1,h2,h3 { font-family: 'EB Garamond', serif; font-weight: 500; line-height: 1.1
   border-bottom: 1px solid var(--hair);
 }
 .nav-logo {
-  height: 38px;
+  height: 42px;
   width: auto;
   display: block;
   object-fit: contain;
@@ -470,7 +470,7 @@ h1,h2,h3 { font-family: 'EB Garamond', serif; font-weight: 500; line-height: 1.1
   gap: 20px;
 }
 .footer-logo {
-  height: 32px;
+  height: 64px;
   width: auto;
   object-fit: contain;
   display: block;
@@ -994,7 +994,7 @@ h1,h2,h3 { font-family: 'EB Garamond', serif; font-weight: 500; line-height: 1.1
   width: 100%;
   max-width: 420px;
 }
-.auth-logo { height: 40px; width: auto; object-fit: contain; display: block; margin: 0 auto 32px; }
+.auth-logo { height: 88px; width: auto; object-fit: contain; display: block; margin: 0 auto 32px; }
 .auth-title { font-size: 28px; margin-bottom: 6px; }
 .auth-sub { font-size: 14px; color: var(--text-2); margin-bottom: 32px; }
 .form-group { margin-bottom: 18px; }

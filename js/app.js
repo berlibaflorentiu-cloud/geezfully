@@ -146,7 +146,7 @@ function render() {
 function renderLanding() {
   return `
   <nav class="site-nav">
-    <img src="assets/logo.png" alt="Berliba Prelegeri" class="nav-logo" loading="eager">
+    <img src="assets/logo-icon.png" alt="Berliba Prelegeri" class="nav-logo" loading="eager">
     <div class="nav-links">
       <a href="#features">Despre</a>
       <a href="#how">Cum funcționează</a>
