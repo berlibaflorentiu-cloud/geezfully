@@ -698,15 +698,22 @@ function openPlayer(lecture, materieId) {
   setTimeout(() => {
     const vid = document.getElementById('player-video');
     if (!vid) return;
-    const saved = state.videoProgress[lecture.title];
-    if (saved?.position > 3) {
-      const pct = saved.duration ? saved.position / saved.duration : 0;
-      if (pct < 0.95) {
-        vid.addEventListener('loadedmetadata', () => { vid.currentTime = saved.position; }, { once: true });
+
+    const doSeekAndPlay = () => {
+      const saved = state.videoProgress[lecture.title];
+      if (saved?.position > 3) {
+        const pct = saved.duration ? saved.position / saved.duration : 0;
+        if (pct < 0.95) vid.currentTime = saved.position;
       }
+      vid.play().catch(() => {});
+      attachVideoProgress(vid);
+    };
+
+    if (vid.readyState >= 1) {
+      doSeekAndPlay();
+    } else {
+      vid.addEventListener('loadedmetadata', doSeekAndPlay, { once: true });
     }
-    vid.play().catch(() => {});
-    attachVideoProgress(vid);
   }, 150);
 }
 function closePlayer() {
@@ -716,6 +723,11 @@ function closePlayer() {
 async function toggleSave() {
   const l = state.activePlayerLecture;
   if (!l || !state.user) return;
+
+  // save current video position before re-render destroys the element
+  const vid = document.getElementById('player-video');
+  if (vid?.currentTime) saveProgress(l.title, vid.currentTime, vid.duration);
+
   if (state.saved.has(l.title)) {
     state.saved.delete(l.title);
     _sb.from('saved_lectures').delete()
@@ -726,9 +738,20 @@ async function toggleSave() {
   }
   render();
   setTimeout(() => {
-    const vid = document.getElementById('player-video');
-    if (vid) vid.play().catch(() => {});
-  }, 100);
+    const newVid = document.getElementById('player-video');
+    if (!newVid) return;
+    const doSeekAndPlay = () => {
+      const saved = state.videoProgress[l.title];
+      if (saved?.position > 3) {
+        const pct = saved.duration ? saved.position / saved.duration : 0;
+        if (pct < 0.95) newVid.currentTime = saved.position;
+      }
+      newVid.play().catch(() => {});
+      attachVideoProgress(newVid);
+    };
+    if (newVid.readyState >= 1) doSeekAndPlay();
+    else newVid.addEventListener('loadedmetadata', doSeekAndPlay, { once: true });
+  }, 150);
 }
 async function loadSaved() {
   if (!state.user) return;
@@ -758,8 +781,11 @@ async function saveProgress(title, position, duration) {
     updated_at: new Date().toISOString(),
   }, { onConflict: 'user_id,lecture_title' }).then(() => {});
 }
+let _videoPauseHandler = null;
 function attachVideoProgress(vid) {
   if (_videoTimeUpdateHandler) vid.removeEventListener('timeupdate', _videoTimeUpdateHandler);
+  if (_videoPauseHandler) vid.removeEventListener('pause', _videoPauseHandler);
+
   _videoTimeUpdateHandler = () => {
     if (!vid.currentTime || !state.activePlayerLecture) return;
     const now = Date.now();
@@ -768,11 +794,12 @@ function attachVideoProgress(vid) {
       saveProgress(state.activePlayerLecture.title, vid.currentTime, vid.duration);
     }
   };
-  vid.addEventListener('timeupdate', _videoTimeUpdateHandler);
-  vid.addEventListener('pause', () => {
+  _videoPauseHandler = () => {
     if (vid.currentTime && state.activePlayerLecture)
       saveProgress(state.activePlayerLecture.title, vid.currentTime, vid.duration);
-  }, { once: false });
+  };
+  vid.addEventListener('timeupdate', _videoTimeUpdateHandler);
+  vid.addEventListener('pause', _videoPauseHandler);
 }
 function setSpeed(btn, speed) {
   document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
