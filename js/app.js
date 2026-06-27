@@ -128,6 +128,7 @@ function render() {
     root.innerHTML = renderLanding();
     attachLandingEvents();
     attachScrollReveal();
+    attachStickyTabs();
     return;
   }
   if (state.activePlayerLecture) {
@@ -185,46 +186,104 @@ function renderLanding() {
     </div>
   </section>
 
-  <!-- Features -->
-  <div id="features">
-  <div class="section">
-    <p class="section-label" data-sr="line">De ce Berliba Prelegeri</p>
-    <div class="clip-wrap" data-sr="clip"><h2 class="section-title">Tot ce ai nevoie pentru examen, într-un singur loc.</h2></div>
-    <p class="section-sub" data-sr>Nu înlocuiește cursul, îl completează. Prelegeri structurate, explicate clar, cu exemple din practica judiciară.</p>
-    <div class="features-grid">
-      <div class="feature-card" data-sr data-sr-d="1">
-        <div class="feature-icon">${icons.play}</div>
-        <h4>Video de calitate</h4>
-        <p>Prelegeri filmate profesional, cu sunet clar și imagine HD. Poți urmări de pe telefon, tabletă sau laptop.</p>
-      </div>
-      <div class="feature-card" data-sr data-sr-d="2">
-        <div class="feature-icon">${icons.book}</div>
-        <h4>Organizate pe materii</h4>
-        <p>Drept penal general, special, procedură penală și criminologie — fiecare subiect în propriul catalog.</p>
-      </div>
-      <div class="feature-card" data-sr data-sr-d="3">
-        <div class="feature-icon">${icons.bookmark}</div>
-        <h4>Salvează și revino</h4>
-        <p>Marchează prelegerile importante și găsește-le instant. Progresul se păstrează de unde ai rămas.</p>
-      </div>
-      <div class="feature-card" data-sr data-sr-d="4">
-        <div class="feature-icon">${icons.scale}</div>
-        <h4>Practică judiciară</h4>
-        <p>Fiecare prelegere include referințe la cazuri reale și decizii ale instanțelor din Republica Moldova.</p>
-      </div>
-      <div class="feature-card" data-sr data-sr-d="5">
-        <div class="feature-icon">${icons.download}</div>
-        <h4>Viteză ajustabilă</h4>
-        <p>Reglează viteza de redare — 1×, 1.25×, 1.5× sau 2× — ca să înveți în ritmul tău.</p>
-      </div>
-      <div class="feature-card" data-sr data-sr-d="6">
-        <div class="feature-icon">${icons.bell}</div>
-        <h4>Mereu actualizat</h4>
-        <p>Conținut nou adăugat regulat, adaptat la modificările legislative și noile hotărâri judecătorești.</p>
+  <!-- Sticky Tabs -->
+  <section class="stabs-section" id="features">
+    <div class="stabs-height" id="stabs-height">
+      <div class="stabs-sticky">
+        <div class="stabs-inner">
+
+          <!-- LEFT: text panels -->
+          <div class="stabs-left">
+            <div class="stabs-left-top">
+
+              <div class="stab-content" data-stab="1">
+                <p class="stab-label">Calitate</p>
+                <h2 class="stab-title">Video HD cu <span>sunet profesional</span></h2>
+                <div class="stab-line"></div>
+                <p class="stab-desc">Prelegeri filmate în studio, cu imagine HD și sunet clar — urmărește de pe orice dispozitiv, oricând.</p>
+              </div>
+
+              <div class="stab-content" data-stab="2">
+                <p class="stab-label">Structură</p>
+                <h2 class="stab-title">Organizate pe <span>materii și subiecte</span></h2>
+                <div class="stab-line"></div>
+                <p class="stab-desc">Drept penal general, special, procedură penală și criminologie — fiecare prelegere la locul ei, ușor de găsit.</p>
+              </div>
+
+              <div class="stab-content" data-stab="3">
+                <p class="stab-label">Continuitate</p>
+                <h2 class="stab-title">Progresul tău <span>se păstrează mereu</span></h2>
+                <div class="stab-line"></div>
+                <p class="stab-desc">Salvează prelegeri, marchează ce ai văzut și reia exact de unde ai rămas — pe orice dispozitiv.</p>
+              </div>
+
+            </div>
+            <div class="stabs-left-bottom">
+              <button class="btn-gold-lg" onclick="showAuth('register')">Începe — 99 lei/lună</button>
+            </div>
+          </div>
+
+          <!-- RIGHT: visual panels -->
+          <div class="stabs-right">
+
+            <div class="stab-visual" data-stab="1">
+              <div class="stab-mockup">
+                <div class="smock-player">
+                  <div class="smock-thumb">
+                    <div class="smock-play">${icons.play}</div>
+                    <span class="smock-badge">HD</span>
+                  </div>
+                  <div class="smock-bar">
+                    <div class="smock-progress" style="width:38%"></div>
+                  </div>
+                  <div class="smock-meta">
+                    <span>Infracțiunea — noțiune și trăsături</span>
+                    <span>24:15</span>
+                  </div>
+                </div>
+                <div class="smock-speeds">
+                  <span class="smock-speed active">1×</span>
+                  <span class="smock-speed">1.25×</span>
+                  <span class="smock-speed">1.5×</span>
+                  <span class="smock-speed">2×</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="stab-visual" data-stab="2">
+              <div class="stab-mockup">
+                <p class="smock-heading">Materii</p>
+                <div class="smock-subject"><div class="smock-dot"></div><span>Drept penal general</span><span class="smock-count">18</span></div>
+                <div class="smock-subject"><div class="smock-dot"></div><span>Drept penal special</span><span class="smock-count">21</span></div>
+                <div class="smock-subject"><div class="smock-dot"></div><span>Procedură penală</span><span class="smock-count">9</span></div>
+                <div class="smock-subject"><div class="smock-dot"></div><span>Criminologie</span><span class="smock-count">6</span></div>
+              </div>
+            </div>
+
+            <div class="stab-visual" data-stab="3">
+              <div class="stab-mockup">
+                <p class="smock-heading">Progresul meu</p>
+                <div class="smock-prog-item">
+                  <div class="smock-prog-info"><span>Drept penal general</span><span>72%</span></div>
+                  <div class="smock-prog-bar"><div class="smock-prog-fill" style="width:72%"></div></div>
+                </div>
+                <div class="smock-prog-item">
+                  <div class="smock-prog-info"><span>Drept penal special</span><span>41%</span></div>
+                  <div class="smock-prog-bar"><div class="smock-prog-fill" style="width:41%"></div></div>
+                </div>
+                <div class="smock-prog-item">
+                  <div class="smock-prog-info"><span>Procedură penală</span><span>15%</span></div>
+                  <div class="smock-prog-bar"><div class="smock-prog-fill" style="width:15%"></div></div>
+                </div>
+                <div class="smock-saved"><span>${icons.bookmark} 7 prelegeri salvate</span></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-  </div>
+  </section>
 
   <!-- How it works -->
   <div id="how">
@@ -1046,6 +1105,52 @@ function attachScrollReveal() {
   }, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
 
   document.querySelectorAll('[data-sr]').forEach(el => io.observe(el));
+}
+
+/* ── Sticky Tabs ───────────────────────────────────────── */
+function attachStickyTabs() {
+  const heightEl = document.getElementById('stabs-height');
+  if (!heightEl) return;
+
+  const contents = document.querySelectorAll('.stab-content');
+  const visuals  = document.querySelectorAll('.stab-visual');
+  const TOTAL    = contents.length;
+  let current    = -1;
+
+  function setTab(idx) {
+    if (idx === current) return;
+    current = idx;
+    contents.forEach((el, i) => el.classList.toggle('stab-active', i === idx));
+    visuals.forEach((el, i)  => el.classList.toggle('stab-active', i === idx));
+  }
+
+  // On mobile the section is static; just show first tab
+  if (window.matchMedia('(max-width: 768px)').matches) {
+    setTab(0);
+    return;
+  }
+
+  setTab(0);
+
+  function onScroll() {
+    const rect   = heightEl.getBoundingClientRect();
+    const total  = heightEl.offsetHeight - window.innerHeight;
+    const scrolled = -rect.top;
+    const progress = Math.max(0, Math.min(1, scrolled / total));
+    const idx    = Math.min(TOTAL - 1, Math.floor(progress * TOTAL));
+    setTab(idx);
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  // Clean up when page re-renders (SPA navigation)
+  const observer = new MutationObserver(() => {
+    if (!document.getElementById('stabs-height')) {
+      window.removeEventListener('scroll', onScroll);
+      observer.disconnect();
+    }
+  });
+  observer.observe(document.getElementById('root'), { childList: true });
 }
 
 /* ── Event attachment ──────────────────────────────────── */
