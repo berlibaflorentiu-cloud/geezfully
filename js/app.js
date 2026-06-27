@@ -146,15 +146,19 @@ function render() {
 function renderLanding() {
   return `
   <nav class="site-nav">
-    <img src="assets/logo-icon.png" alt="Berliba Prelegeri" class="nav-logo" loading="eager">
+    <div class="nav-left">
+      <img src="assets/logo-icon.png" alt="Berliba Prelegeri" class="nav-logo" loading="eager">
+    </div>
     <div class="nav-links">
       <a href="#features">Despre</a>
       <a href="#how">Cum funcționează</a>
       <a href="#pricing">Prețuri</a>
     </div>
-    <div class="nav-cta">
-      <button class="btn-ghost" onclick="showAuth('login')">Autentificare</button>
-      <button class="btn-gold" onclick="showAuth('register')">Încearcă gratuit</button>
+    <div class="nav-right">
+      <div class="nav-cta">
+        <button class="btn-ghost" onclick="showAuth('login')">Autentificare</button>
+        <button class="btn-gold" onclick="showAuth('register')">Încearcă gratuit</button>
+      </div>
     </div>
   </nav>
 
