@@ -1573,21 +1573,64 @@ h1,h2,h3 { font-family: 'EB Garamond', serif; font-weight: 500; line-height: 1.1
 
 /* Mobile: stack vertically, no scroll-driven */
 @media (max-width: 768px) {
+
+  /* ── Nav ─────────────────────────────────────────────── */
+  .site-nav { padding: 0 20px; height: 56px; }
+  .nav-logo  { height: 40px; }
+  .nav-links { display: none; }
+  .nav-right .btn-ghost { display: none; }
+  .nav-right { flex: 0 0 auto; }
+
+  /* ── Hero ────────────────────────────────────────────── */
+  .hero { padding: 80px 20px 48px; min-height: auto; }
+  .hero-inner {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .hero-photo-wrap { order: -1; max-width: 280px; margin: 0 auto; }
+  .hero-title { font-size: clamp(32px, 9vw, 44px); }
+  .hero-sub   { font-size: 15px; }
+  .hero-stats { gap: 24px; }
+
+  /* ── Features sticky tabs ────────────────────────────── */
   .stabs-height { height: auto; }
   .stabs-sticky { position: static; height: auto; }
-  .stabs-inner { grid-template-columns: 1fr; gap: 40px; padding: 56px 24px; }
-  .stabs-left { gap: 32px; }
+  .stabs-inner  { grid-template-columns: 1fr; gap: 32px; padding: 48px 20px; }
+  .stabs-left   { gap: 24px; }
   .stabs-left-top { position: static; min-height: 0; }
-  .stabs-right { height: auto; perspective: none; }
+  .stabs-right  { height: auto; perspective: none; }
   .stab-content { position: static; opacity: 1; transform: none; pointer-events: auto; }
-  .stab-visual {
+  .stab-visual  {
     position: static; opacity: 1;
     transform: none !important;
     animation: none !important;
     pointer-events: auto;
   }
   .stab-content:not([data-stab="1"]) { display: none; }
-  .stab-visual:not([data-stab="1"]) { display: none; }
+  .stab-visual:not([data-stab="1"])  { display: none; }
+
+  /* ── How it works ────────────────────────────────────── */
+  .how-section { padding: 56px 20px 40px; }
+  .steps-flow  { grid-template-columns: 1fr; gap: 40px; margin-top: 40px; }
+  .steps-track { display: none; }
+  .step-item   { padding-right: 0; }
+  .step-marker { margin-bottom: 16px; }
+  .step-item h4 { font-size: 20px; margin-bottom: 8px; }
+  .step-item p  { max-width: 100%; }
+
+  /* ── Pricing ─────────────────────────────────────────── */
+  .pricing-section { padding: 48px 20px 64px; }
+  .pricing-cards   { grid-template-columns: 1fr; gap: 16px; margin-top: 40px; }
+
+  /* ── Section globals ─────────────────────────────────── */
+  .section { padding: 56px 20px 40px; }
+  .how-inner { max-width: 100%; }
+  .section-title { font-size: clamp(28px, 8vw, 40px); }
+
+  /* ── Footer ──────────────────────────────────────────── */
+  .site-footer { padding: 40px 20px 28px; }
+  .footer-inner { flex-direction: column; align-items: flex-start; gap: 24px; }
+  .footer-logo  { height: 48px; }
 }
 
 /* ── Toast ─────────────────────────────────────────────── */
