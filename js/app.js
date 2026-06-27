@@ -1030,16 +1030,19 @@ function attachAppEvents() {}
 /* ── Arc Preloader ──────────────────────────────────────── */
 (function arcPreloader() {
   const STORAGE_KEY = 'berliba-preloader-v1';
-  const GREETINGS = ['Drept.', 'Clar.', 'Precis.', 'Riguros.', 'Fundamentat.', 'Pregătit.'];
-  const HOLD_MS = 620;
-  const REVEAL_MS = 1300;
+  // 3 punchy words — tight and premium
+  const GREETINGS   = ['Drept.', 'Clar.', 'Pregătit.'];
+  const HOLD_MS     = 560;   // how long each word stays visible
+  const EXIT_MS     = 220;   // exit animation duration
+  const MONO_MS     = 680;   // monogram hold
+  const REVEAL_MS   = 1100;  // arc sweep duration
 
-  const overlay = document.getElementById('arc-preloader');
-  const greetEl = document.getElementById('arc-greeting');
-  const pathEl  = document.getElementById('arc-path');
-  if (!overlay || !greetEl || !pathEl) return;
+  const overlay  = document.getElementById('arc-preloader');
+  const greetEl  = document.getElementById('arc-greeting');
+  const monoEl   = document.getElementById('arc-monogram');
+  const pathEl   = document.getElementById('arc-path');
+  if (!overlay || !greetEl || !monoEl || !pathEl) return;
 
-  // Skip if already seen this session
   try {
     if (localStorage.getItem(STORAGE_KEY) === 'done') {
       overlay.style.display = 'none';
@@ -1049,39 +1052,47 @@ function attachAppEvents() {}
 
   let idx = 0;
 
-  function arcD(progress) {
-    // progress 0→1: chord rises from y=110 (off-screen) to y=-30 (off-screen above)
-    const edge    = 110 - progress * 140;
-    const control = edge + 25;
+  // Quadratic-bezier arc path: chord rises from y=110→y=-30 as p goes 0→1
+  function arcD(p) {
+    const edge    = 110 - p * 140;
+    const control = edge + 32; // slightly more dramatic curve
     return `M 0 ${edge} Q 50 ${control} 100 ${edge} L 100 110 L 0 110 Z`;
+  }
+
+  // Ease: cubic-bezier(0.85,0,0.15,1) — sharp ease-in-out
+  function ease(t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   }
 
   function showGreeting(text, onDone) {
     greetEl.textContent = text;
     greetEl.className = 'arc-g-enter';
-    const exitDelay = setTimeout(() => {
+    setTimeout(() => {
       greetEl.className = 'arc-g-exit';
-      setTimeout(onDone, 280);
+      setTimeout(onDone, EXIT_MS);
     }, HOLD_MS);
-    return exitDelay;
   }
 
   function cycleGreetings() {
-    if (idx >= GREETINGS.length) { startReveal(); return; }
+    if (idx >= GREETINGS.length) { showMonogram(); return; }
+    // Turn on glow on first greeting
+    if (idx === 0) overlay.classList.add('arc-glow-on');
     showGreeting(GREETINGS[idx++], cycleGreetings);
   }
 
-  function startReveal() {
-    greetEl.style.display = 'none';
-    const start = performance.now();
+  function showMonogram() {
+    greetEl.style.opacity = '0';
+    monoEl.classList.add('arc-mono-show');
 
-    // Custom cubic-bezier [0.85, 0, 0.15, 1] approximated via rAF
-    function ease(t) {
-      // approximation of cubic-bezier(0.85,0,0.15,1) — strong ease-in-out
-      return t < 0.5
-        ? 4 * t * t * t
-        : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    }
+    setTimeout(() => {
+      monoEl.classList.add('arc-mono-hide');
+      setTimeout(startReveal, 300);
+    }, MONO_MS);
+  }
+
+  function startReveal() {
+    overlay.classList.remove('arc-glow-on');
+    const start = performance.now();
 
     function tick(now) {
       const raw = Math.min(1, (now - start) / REVEAL_MS);
@@ -1092,13 +1103,12 @@ function attachAppEvents() {}
       } else {
         try { localStorage.setItem(STORAGE_KEY, 'done'); } catch (_) {}
         overlay.classList.add('arc-done');
-        setTimeout(() => { overlay.style.display = 'none'; }, 200);
+        setTimeout(() => { overlay.style.display = 'none'; }, 250);
       }
     }
     requestAnimationFrame(tick);
   }
 
-  // Kick off
   cycleGreetings();
 })();
 
