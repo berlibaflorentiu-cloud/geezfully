@@ -56,7 +56,7 @@ h1,h2,h3 { font-family: 'EB Garamond', serif; font-weight: 500; line-height: 1.1
   border-bottom: 1px solid var(--hair);
 }
 .nav-logo {
-  height: 42px;
+  height: 56px;
   width: auto;
   display: block;
   object-fit: contain;
