@@ -3,29 +3,222 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Berliba Prelegeri — Prelegeri video de drept penal</title>
-  <link rel="icon" type="image/x-icon" href="favicon.ico?v=3">
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png?v=3">
-  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png?v=3">
-  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=3">
+  <title>Geezfully — Studio de web design și development</title>
+  <meta name="description" content="Geezfully este un studio care creează site-uri rapide, spectaculoase și gândite să conversească — de la primul pixel până la lansare. Construite de la zero, niciodată din șabloane.">
+  <meta property="og:title" content="Geezfully — Studio de web design">
+  <meta property="og:description" content="Site-uri rapide, spectaculoase și gândite să vândă. Construite de la zero.">
+  <meta property="og:type" content="website">
+
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/main.css">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/style.css?v=3">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
 </head>
 <body>
+
   <div id="preloader" aria-hidden="true">
     <div class="pl-inner">
-      <div class="pl-mono">
-        <span class="pl-mono-mark">V<i>·</i>B</span>
-        <span class="pl-mono-label">Berliba Prelegeri</span>
-      </div>
+      <div class="pl-word">geezfully<span class="pl-dot">.</span></div>
       <div class="pl-bar"><span class="pl-bar-fill"></span></div>
       <div class="pl-count"><span>0</span></div>
     </div>
   </div>
-  <div id="root"></div>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/app.js"></script>
+
+  <div class="cursor" aria-hidden="true"></div>
+  <div class="scroll-progress" aria-hidden="true"><span></span></div>
+
+  <header class="nav" data-nav>
+    <a class="brand" href="#top" aria-label="Geezfully">geezfully<span>.</span></a>
+    <nav class="nav-links" aria-label="Principal">
+      <a href="#work" data-i18n="nav.work">Lucrări</a>
+      <a href="#services" data-i18n="nav.services">Servicii</a>
+      <a href="#process" data-i18n="nav.process">Proces</a>
+      <a href="#contact" data-i18n="nav.contact">Contact</a>
+    </nav>
+    <div class="nav-right">
+      <div class="lang-switch" role="group" aria-label="Limbă">
+        <button type="button" data-lang="ro" class="active" aria-pressed="true">RO</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <a class="btn btn-accent magnetic" data-wa href="#contact">
+        <span data-i18n="nav.cta">Începe un proiect</span>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </header>
+
+  <main id="top">
+
+    <section class="hero">
+      <div class="aurora" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+      <div class="grain" aria-hidden="true"></div>
+      <div class="hero-inner">
+        <p class="eyebrow reveal"><span class="dot"></span> <span data-i18n="hero.eyebrow">Studio de web design &amp; development</span></p>
+        <h1 class="hero-title" data-i18n="hero.title">
+          <span class="line"><span class="w">Construim</span> <span class="w">site-uri</span></span>
+          <span class="line"><span class="w">care</span> <span class="w grad">chiar</span> <span class="w grad">vând.</span></span>
+        </h1>
+        <p class="hero-sub reveal" data-i18n="hero.sub">Geezfully este un studio mic care creează site-uri rapide, spectaculoase și gândite să conversească — de la primul pixel până la lansare. Construite de la zero, niciodată din șabloane. Genul de site care îți face concurența puțin nervoasă.</p>
+        <div class="hero-cta reveal">
+          <a class="btn btn-accent btn-lg magnetic" data-wa href="#contact"><span data-i18n="hero.cta1">Începe un proiect</span>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a class="btn btn-ghost btn-lg" href="#work" data-i18n="hero.cta2">Vezi lucrările</a>
+        </div>
+        <div class="hero-meta reveal">
+          <div class="meta"><strong data-count="100" data-suffix="%">0</strong><span data-i18n="hero.meta1">Construit de la zero</span></div>
+          <div class="meta-div"></div>
+          <div class="meta"><strong class="static">0</strong><span data-i18n="hero.meta2">Șabloane folosite</span></div>
+          <div class="meta-div"></div>
+          <div class="meta"><strong class="static" data-i18n="hero.meta3val">&lt;1 săpt.</strong><span data-i18n="hero.meta3">Livrare tipică</span></div>
+        </div>
+      </div>
+      <div class="scroll-cue" aria-hidden="true"><span data-i18n="hero.scroll">Derulează</span><i></i></div>
+    </section>
+
+    <div class="marquee" aria-hidden="true">
+      <div class="mq-track">
+        <span data-i18n="marquee">Web Design <b>✦</b> Development <b>✦</b> Branding <b>✦</b> E‑commerce <b>✦</b> Aplicații web <b>✦</b> SEO &amp; Viteză <b>✦</b> Motion <b>✦</b></span>
+        <span data-i18n="marquee">Web Design <b>✦</b> Development <b>✦</b> Branding <b>✦</b> E‑commerce <b>✦</b> Aplicații web <b>✦</b> SEO &amp; Viteză <b>✦</b> Motion <b>✦</b></span>
+      </div>
+    </div>
+
+    <section class="work" id="work">
+      <div class="sec-head">
+        <p class="sec-eyebrow reveal"><span class="dot"></span> <span data-i18n="work.eyebrow">Proiecte selectate</span></p>
+        <h2 class="sec-title reveal" data-i18n="work.title">Proiecte reale. <span class="grad">Live, nu mockup-uri.</span></h2>
+        <p class="sec-lead reveal" data-i18n="work.lead">Fiecare site de mai jos e construit de la zero și funcționează chiar acum. Treci cu mouse-ul pentru preview, dă click ca să-l deschizi.</p>
+      </div>
+      <div class="cases">
+        <article class="case reveal" data-tilt>
+          <div class="case-frame">
+            <div class="frame-bar"><i></i><i></i><i></i><span>alda‑best.com</span></div>
+            <div class="frame-view" data-embed="/alda/"><div class="frame-poster"><span data-i18n="loading">Se încarcă…</span></div></div>
+          </div>
+          <div class="case-meta">
+            <div class="case-tags"><span data-i18n="tag.construction">Construcții</span><span data-i18n="tag.usa">SUA</span></div>
+            <h3>Alda Best Construction</h3>
+            <p data-i18n="alda.desc">Un site de prezentare bold, axat pe imagini, pentru o firmă de tâmplărie și gresie din Sacramento — galerie, servicii și formular de contact.</p>
+            <a class="case-link" href="/alda/" target="_blank" rel="noopener"><span data-i18n="case.viewlive">Vezi live</span>
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          </div>
+        </article>
+        <article class="case reveal" data-tilt>
+          <div class="case-frame">
+            <div class="frame-bar"><i></i><i></i><i></i><span>pontaj.app</span></div>
+            <div class="frame-view" data-embed="/pontaj/"><div class="frame-poster"><span data-i18n="loading">Se încarcă…</span></div></div>
+          </div>
+          <div class="case-meta">
+            <div class="case-tags"><span>SaaS</span><span data-i18n="tag.webapp">Aplicație web</span></div>
+            <h3>Pontaj</h3>
+            <p data-i18n="pontaj.desc">Un tracker curat pentru ore facturabile — interfață de produs concentrată, interacțiuni rapide și un dashboard direct la obiect.</p>
+            <a class="case-link" href="/pontaj/" target="_blank" rel="noopener"><span data-i18n="case.viewlive">Vezi live</span>
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          </div>
+        </article>
+        <article class="case case-wide reveal" data-tilt>
+          <div class="case-frame">
+            <div class="frame-bar"><i></i><i></i><i></i><span>geezfully.com/prelegeri</span></div>
+            <div class="frame-view" data-embed="/prelegeri/"><div class="frame-poster"><span data-i18n="loading">Se încarcă…</span></div></div>
+          </div>
+          <div class="case-meta">
+            <div class="case-tags"><span>EdTech</span><span data-i18n="tag.platform">Platformă</span><span data-i18n="tag.featured">Recomandat</span></div>
+            <h3>Berliba Prelegeri</h3>
+            <p data-i18n="berliba.desc">O platformă de abonament cinematică pentru prelegeri video de drept — hero animat, storytelling la scroll și o zonă de membru completă. Găzduită chiar pe acest domeniu.</p>
+            <a class="case-link" href="/prelegeri/" target="_blank" rel="noopener"><span data-i18n="case.viewlive">Vezi live</span>
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="services" id="services">
+      <div class="sec-head">
+        <p class="sec-eyebrow reveal"><span class="dot"></span> <span data-i18n="services.eyebrow">Ce facem</span></p>
+        <h2 class="sec-title reveal" data-i18n="services.title">Tot ce are nevoie site-ul tău, <span class="grad">într-un singur loc.</span></h2>
+      </div>
+      <div class="svc-grid">
+        <article class="svc reveal">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18M8 21h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <h3>Web Design</h3><p data-i18n="svc1.p">Interfețe distinctive, în identitatea ta, gândite să conversească — nu doar să decoreze. Fiecare pixel își merită locul.</p>
+        </article>
+        <article class="svc reveal">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m8 9-3 3 3 3M16 9l3 3-3 3M13 6l-2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <h3>Development</h3><p data-i18n="svc2.p">Front-end-uri scrise manual, ultra-rapide, și aplicații web complete. Curat, ușor de întreținut și cu adevărat al tău.</p>
+        </article>
+        <article class="svc reveal">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 3a14 14 0 0 0 0 18M3 12h18" stroke="currentColor" stroke-width="1.6"/></svg>
+          <h3 data-i18n="svc3.h3">Branding &amp; Identitate</h3><p data-i18n="svc3.p">Logo, tipografie, culoare și ton care te fac instant recognoscibil și imposibil de ignorat.</p>
+        </article>
+        <article class="svc reveal">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          <h3 data-i18n="svc4.h3">Viteză &amp; SEO</h3><p data-i18n="svc4.p">Încărcare sub o secundă, cod curat și structură optimizată pentru căutări, ca oamenii să te găsească — și să rămână.</p>
+        </article>
+        <article class="svc reveal">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6h18l-2 11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L3 6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 10a3 3 0 0 0 6 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <h3>E‑commerce</h3><p data-i18n="svc5.p">Magazine ușor de folosit și ușor de administrat — construite ca să transforme vizitatorii în clienți.</p>
+        </article>
+        <article class="svc reveal">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v18M5 8l7-5 7 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="14" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
+          <h3 data-i18n="svc6.h3">Mentenanță &amp; Creștere</h3><p data-i18n="svc6.p">Lansarea e doar începutul. Întreținem, rafinăm și creștem site-ul ca să performeze lună de lună.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="process" id="process">
+      <div class="sec-head">
+        <p class="sec-eyebrow reveal"><span class="dot"></span> <span data-i18n="process.eyebrow">Cum lucrăm</span></p>
+        <h2 class="sec-title reveal" data-i18n="process.title">De la idee la lansare în <span class="grad">patru pași.</span></h2>
+      </div>
+      <div class="steps">
+        <div class="steps-rail" aria-hidden="true"><span></span></div>
+        <article class="step reveal"><span class="step-n">01</span><h3 data-i18n="step1.h3">Descoperire</h3><p data-i18n="step1.p">Înțelegem afacerea, obiectivele și publicul tău — apoi stabilim exact ce trebuie să facă site-ul.</p></article>
+        <article class="step reveal"><span class="step-n">02</span><h3>Design</h3><p data-i18n="step2.p">Vezi design-uri reale, în identitatea ta, din start. Rafinăm împreună până simți că e clar al tău.</p></article>
+        <article class="step reveal"><span class="step-n">03</span><h3 data-i18n="step3.h3">Construire</h3><p data-i18n="step3.p">Îl scriem manual — rapid, responsive și pixel-perfect pe orice dispozitiv.</p></article>
+        <article class="step reveal"><span class="step-n">04</span><h3 data-i18n="step4.h3">Lansare</h3><p data-i18n="step4.p">Publicăm, testăm și îți dăm cheile. Apoi rămânem aproape ca să crească.</p></article>
+      </div>
+    </section>
+
+    <section class="cta" id="contact">
+      <div class="aurora cta-aurora" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span></div>
+      <div class="cta-inner">
+        <p class="sec-eyebrow reveal"><span class="dot"></span> <span data-i18n="cta.eyebrow">Hai să vorbim</span></p>
+        <h2 class="cta-title reveal" data-i18n="cta.title">Ai un proiect? <span class="grad">Hai să construim ceva care vinde.</span></h2>
+        <p class="cta-lead reveal" data-i18n="cta.lead">Spune-ne ce ai în minte — un site nou, un redesign sau o aplicație web. Răspundem rapid, de obicei într-o zi.</p>
+        <div class="cta-actions reveal">
+          <a class="btn btn-accent btn-lg magnetic" data-wa href="#">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.004c5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2Zm5.8 14.06c-.24.69-1.4 1.32-1.94 1.4-.5.07-1.13.1-1.82-.11-.42-.13-.96-.31-1.65-.61-2.9-1.25-4.79-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-3s.75-2.13 1.02-2.42c.27-.29.58-.36.78-.36l.56.01c.18 0 .42-.07.66.5.24.59.82 2.02.89 2.17.07.14.12.31.02.5-.09.19-.14.31-.28.48l-.42.49c-.14.14-.28.29-.12.57.16.28.71 1.17 1.53 1.9 1.05.93 1.93 1.22 2.21 1.36.28.14.44.12.6-.07.16-.19.69-.81.87-1.08.18-.27.36-.23.61-.14.25.09 1.6.76 1.87.9.27.14.46.21.53.33.07.12.07.69-.17 1.38Z"/></svg>
+            <span data-i18n="cta.wa">Scrie-ne pe WhatsApp</span>
+          </a>
+          <a class="btn btn-ghost btn-lg" href="mailto:hello@geezfully.com" data-i18n="cta.email">Sau scrie-ne pe email</a>
+        </div>
+        <p class="cta-fine reveal"><span data-i18n="cta.fine">Preferi să suni?</span> <a data-wa-tel href="#">+373 00 000 000</a></p>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="footer-top">
+        <a class="brand" href="#top">geezfully<span>.</span></a>
+        <p data-i18n="footer.tagline">Un studio de web design &amp; development care construiește site-uri cu care te lauzi.</p>
+      </div>
+      <div class="footer-bottom">
+        <nav class="footer-links" aria-label="Subsol">
+          <a href="#work" data-i18n="nav.work">Lucrări</a>
+          <a href="#services" data-i18n="nav.services">Servicii</a>
+          <a href="#process" data-i18n="nav.process">Proces</a>
+          <a data-wa href="#contact" data-i18n="nav.contact">Contact</a>
+        </nav>
+        <p class="copy">© <span id="year">2026</span> <span data-i18n="footer.copy">Geezfully. Construit de la zero, evident.</span></p>
+      </div>
+    </footer>
+
+  </main>
+  <script src="/js/main.js?v=3"></script>
 </body>
 </html>
