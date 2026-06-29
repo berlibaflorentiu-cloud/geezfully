@@ -22,7 +22,7 @@ const WA_NUMBER = '37300000000'; // replace with the real WhatsApp number (digit
 /* Contact form: get a free key at web3forms.com (enter your email, it's mailed to you),
    then paste it here. Until then the form gracefully falls back to opening the email client. */
 const WEB3FORMS_KEY = 'REPLACE_WITH_WEB3FORMS_ACCESS_KEY';
-const CONTACT_EMAIL = 'hello@geezfully.com';
+const CONTACT_EMAIL = 'geezfully@gmail.com';
 
 const I18N = {
   ro: {
