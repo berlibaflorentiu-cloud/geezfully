@@ -21,7 +21,7 @@ if (yearEl) yearEl.textContent = '2026';
 const WA_NUMBER = '37300000000'; // replace with the real WhatsApp number (digits only, intl)
 /* Contact form: get a free key at web3forms.com (enter your email, it's mailed to you),
    then paste it here. Until then the form gracefully falls back to opening the email client. */
-const WEB3FORMS_KEY = 'ed9599ed-2989-4baa-aaae-9908f627946b';
+const WEB3FORMS_KEY = '03db113e-6618-4808-825a-efe6ea59f1ba';
 const CONTACT_EMAIL = 'geezfully@gmail.com';
 
 const I18N = {
