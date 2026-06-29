@@ -857,14 +857,14 @@
   </div>
   <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:24px;padding:0 16px">
     Prin utilizarea acestui sistem, acceptați prelucrarea datelor conform
-    <a href="https://bunpartener.md/privacy.html" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:underline">Politicii de confidențialitate</a>.
+    <a href="#" style="color:var(--muted);text-decoration:underline">Politicii de confidențialitate</a>.
   </p>
 </div>
 
 <!-- ══ APP ══ -->
 <div id="app-shell" style="display:flex;flex-direction:column;min-height:100vh">
   <div id="demo-banner" style="display:none;background:#1a1500;border-bottom:1px solid var(--gold);padding:7px 20px;text-align:center;font-size:12px;color:var(--gold);letter-spacing:0.05em;font-family:'DM Sans',sans-serif">
-    ★ MOD DEMO — date fictive, nicio modificare nu se salvează &nbsp;·&nbsp; <a href="https://bunpartener.md/pontaj" style="color:var(--gold);text-decoration:underline">Creează cont real →</a>
+    ★ MOD DEMO — date fictive, nicio modificare nu se salvează
   </div>
   <header style="flex-shrink:0">
     <div class="header-brand">PONTAJ</div>
@@ -881,10 +881,9 @@
   <main id="main-content" style="flex:1"></main>
   <footer style="text-align:center;padding:14px 24px;border-top:1px solid var(--border);margin-top:auto">
     <p style="font-size:11px;color:var(--muted)">
-      © 2017–2026 Biroul Asociat de Avocați „Berliba și Partenerii" &nbsp;·&nbsp;
+      © 2026 Biroul Asociat de Avocați „Lexis și Asociații" &nbsp;·&nbsp;
       Sistem intern de evidență a activității &nbsp;·&nbsp;
-      Datele prelucrate în conformitate cu Legea RM nr. 133/2011 &nbsp;·&nbsp;
-      <a href="https://bunpartener.md/privacy.html" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:underline">Politica de confidențialitate</a>
+      Datele prelucrate în conformitate cu Legea RM nr. 133/2011
     </p>
   </footer>
 </div>
@@ -2135,8 +2134,8 @@ function renderAdminPontaj(container) {
     </div>
 
     <div class="invite-box">
-      <p>Avocații noi se înregistrează la <strong>bunpartener.md/pontaj</strong> → fila "Cont nou".</p>
-      <button class="btn-ghost" onclick="navigator.clipboard.writeText('bunpartener.md/pontaj').then(()=>this.textContent='Copiat!').catch(()=>{})">Copiază link</button>
+      <p>Avocații noi se înregistrează la <strong>pontaj.lexis.md</strong> → fila "Cont nou".</p>
+      <button class="btn-ghost" onclick="navigator.clipboard.writeText('pontaj.lexis.md').then(()=>this.textContent='Copiat!').catch(()=>{})">Copiază link</button>
     </div>
 
     <div class="table-wrap">
@@ -2920,11 +2919,11 @@ async function showReportForm() {
       <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em">Cabinet</div>
       <div class="field">
         <label>Denumirea cabinetului</label>
-        <input type="text" id="rf-firm" value="${settings.firm || ''}" placeholder='ex. BIROUL ASOCIAT DE AVOCAȚI „BERLIBA ȘI PARTENERII"'>
+        <input type="text" id="rf-firm" value="${settings.firm || ''}" placeholder='ex. BIROUL ASOCIAT DE AVOCAȚI „LEXIS ȘI ASOCIAȚII"'>
       </div>
       <div class="field">
         <label>Avocatul coordonator</label>
-        <input type="text" id="rf-coordinator" value="${settings.coordinator || ''}" placeholder="ex. Viorel V. BERLIBA">
+        <input type="text" id="rf-coordinator" value="${settings.coordinator || ''}" placeholder="ex. Alexandru RUSU">
       </div>
       <div class="field">
         <label>IDNO</label>
@@ -3081,7 +3080,7 @@ async function generateAct() {
   const dayNow    = String(now.getDate()).padStart(2,'0');
   const monthNow  = MONTHS[now.getMonth()].toLowerCase();
   const yearNow   = now.getFullYear();
-  const firmDisplay   = firm || 'BIROUL ASOCIAT DE AVOCAȚI';
+  const firmDisplay   = firm || 'BIROUL ASOCIAT DE AVOCAȚI „LEXIS ȘI ASOCIAȚII"';
   const coordDisplay  = coordinator || '___________';
   const clientDisplay = clientName || '___________';
   const periodDisplay = `${fmtDate(state.dateStart)} – ${fmtDate(state.dateEnd)}`;
@@ -3116,7 +3115,7 @@ async function generateAct() {
       </div>
 
       <p style="text-align:justify; margin-bottom:12px;">
-        <strong>${firmDisplay}</strong>${coordinator ? ` (BUNPartener), în persoana avocatului coordonator <strong>${coordDisplay}</strong>, care activează în baza Deciziei de fondare și a Contractului de asociere,` : ','} denumit în continuare <strong>EXECUTOR</strong>, pe de o parte, și
+        <strong>${firmDisplay}</strong>${coordinator ? `, în persoana avocatului coordonator <strong>${coordDisplay}</strong>, care activează în baza Deciziei de fondare și a Contractului de asociere,` : ','} denumit în continuare <strong>EXECUTOR</strong>, pe de o parte, și
       </p>
       <p style="text-align:justify; margin-bottom:18px;">
         <strong>${clientDisplay}</strong>${clientDet ? ', ' + clientDet : ''}, denumit în continuare <strong>„Client"</strong>, denumiţi în continuare <strong>„Părţi"</strong>.
@@ -3201,7 +3200,7 @@ async function generateAct() {
         <tr>
           <td style="width:50%;vertical-align:top;padding-right:20px;">
             <strong>${firmDisplay}</strong><br>
-            ${coordinator ? `BUNPartener<br>` : ''}
+            ${coordinator ? `${coordDisplay}<br>` : ''}
             ${idno ? `IDNO: ${idno}<br>` : ''}
             ${ibanMdl ? `IBAN: ${ibanMdl} (MDL)<br>` : ''}
             ${bank ? `${bank}<br>` : ''}
@@ -3235,7 +3234,7 @@ async function downloadDocx() {
   const clone = el.cloneNode(true);
   // Word doesn't render data: URIs — swap to hosted URL so it loads correctly
   const cloneLogo = clone.querySelector('img');
-  if (cloneLogo) cloneLogo.src = 'https://bunpartener.md/pontaj/BU_logo_highres_white_background.png';
+  if (cloneLogo) cloneLogo.remove();
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
     body { font-family: 'Times New Roman', serif; font-size: 11pt; line-height: 1.5; margin: 0; }
