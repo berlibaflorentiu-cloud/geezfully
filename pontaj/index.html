@@ -10,9 +10,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"
-    onerror="document.getElementById('loading-screen').style.display='none';document.getElementById('auth-screen').style.display='flex';document.getElementById('auth-screen').innerHTML='<div style=\'text-align:center;padding:60px 24px;font-family:DM Sans,sans-serif;color:#C8A96E\'><div style=\'font-size:48px;letter-spacing:0.2em;font-family:Cormorant Garamond,serif;margin-bottom:24px\'>PONTAJ</div><p style=\'color:#8B949E;font-size:14px\'>Eroare: nu s-a putut încărca librăria Supabase.<br>Verificați conexiunea la internet și reîncărcați pagina.</p><button onclick=\'location.reload()\' style=\'margin-top:20px;padding:10px 24px;background:#C8A96E;border:none;border-radius:7px;color:#0D1117;font-size:14px;font-weight:600;cursor:pointer\'>Reîncarcă</button></div>'">
-  </script>
+  <!-- DEMO MODE: no real Supabase connection -->
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { overflow-x: hidden; }
@@ -822,6 +820,10 @@
       </div>
       <button class="auth-submit" id="btn-login" onclick="login()">Autentificare</button>
       <div class="auth-msg" id="login-msg"></div>
+      <div style="margin-top:6px;text-align:center">
+        <button onclick="loginDemo()" style="width:100%;padding:11px;background:transparent;border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;letter-spacing:0.04em;transition:background .15s" onmouseover="this.style.background='rgba(212,175,55,.1)'" onmouseout="this.style.background='transparent'">▶ Intră în modul Demo</button>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">Date fictive · nicio autentificare necesară</div>
+      </div>
     </div>
 
     <!-- Register form -->
@@ -861,6 +863,9 @@
 
 <!-- ══ APP ══ -->
 <div id="app-shell" style="display:flex;flex-direction:column;min-height:100vh">
+  <div id="demo-banner" style="display:none;background:#1a1500;border-bottom:1px solid var(--gold);padding:7px 20px;text-align:center;font-size:12px;color:var(--gold);letter-spacing:0.05em;font-family:'DM Sans',sans-serif">
+    ★ MOD DEMO — date fictive, nicio modificare nu se salvează &nbsp;·&nbsp; <a href="https://bunpartener.md/pontaj" style="color:var(--gold);text-decoration:underline">Creează cont real →</a>
+  </div>
   <header style="flex-shrink:0">
     <div class="header-brand">PONTAJ</div>
     <div class="header-right">
@@ -920,16 +925,171 @@ window._earlyTimeout = setTimeout(function() {
 // SUPABASE
 // ═══════════════════════════════════════
 
-const SUPA_URL = 'https://beuseulqtgtesavswxyy.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJldXNldWxxdGd0ZXNhdnN3eHl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNzM0MzYsImV4cCI6MjA5NzY0OTQzNn0.IV-pknNPnOyeRgZDi5sV413HHrPbqbtdPY_sxQ-HORc';
+// ═══════════════════════════════════════
+// DEMO MODE — mock Supabase + fake data
+// ═══════════════════════════════════════
 
-let db;
-try {
-  db = supabase.createClient(SUPA_URL, SUPA_KEY);
-} catch(e) {
-  clearTimeout(window._earlyTimeout);
-  showLoginScreen();
+const DEMO_ADMIN_ID = 'demo-u1';
+const _DD = {
+  profiles: [
+    { id:'demo-u1', name:'Viorel Berliba', role:'admin',  rate:200, status:'approved', created_at:'2026-01-01T08:00:00Z' },
+    { id:'demo-u2', name:'Ana Moraru',     role:'avocat', rate:150, status:'approved', created_at:'2026-01-10T08:00:00Z' },
+    { id:'demo-u3', name:'Ion Popa',       role:'avocat', rate:120, status:'approved', created_at:'2026-02-01T08:00:00Z' },
+  ],
+  entries: [
+    { id:'demo-e01', user_id:'demo-u1', date:'2026-01-08', hours:2.5,  client:'Cristin GHEMU',     description:'Consultație penală — pregătire apărare',        fixed_price:null, fixed_type:null,         created_at:'2026-01-08T10:00:00Z' },
+    { id:'demo-e02', user_id:'demo-u2', date:'2026-01-12', hours:null, client:'Marin GABUJA',       description:'Ședința de judecată',                           fixed_price:2000, fixed_type:'onorariu',   created_at:'2026-01-12T10:00:00Z' },
+    { id:'demo-e03', user_id:'demo-u1', date:'2026-01-15', hours:3.0,  client:'SRL TehnoConstruct', description:'Redactare contract de prestări servicii',        fixed_price:null, fixed_type:null,         created_at:'2026-01-15T10:00:00Z' },
+    { id:'demo-e04', user_id:'demo-u2', date:'2026-01-20', hours:null, client:'Cristin GHEMU',     description:'Întrevederea la Penitenciar',                    fixed_price:1500, fixed_type:'onorariu',   created_at:'2026-01-20T10:00:00Z' },
+    { id:'demo-e05', user_id:'demo-u1', date:'2026-01-28', hours:1.5,  client:'Elena STRATU',       description:'Consultație — drept civil',                      fixed_price:null, fixed_type:null,         created_at:'2026-01-28T10:00:00Z' },
+    { id:'demo-e06', user_id:'demo-u3', date:'2026-02-03', hours:2.0,  client:'Oleg ALEXANDROV',   description:'Pregătire dosar civil',                          fixed_price:null, fixed_type:null,         created_at:'2026-02-03T10:00:00Z' },
+    { id:'demo-e07', user_id:'demo-u1', date:'2026-02-07', hours:null, client:'Marin GABUJA',       description:'Acțiunea de urmărire penală',                    fixed_price:1800, fixed_type:'onorariu',   created_at:'2026-02-07T10:00:00Z' },
+    { id:'demo-e08', user_id:'demo-u2', date:'2026-02-11', hours:3.5,  client:'SRL TehnoConstruct', description:'Negocieri contract — ședință cu clientul',        fixed_price:null, fixed_type:null,         created_at:'2026-02-11T10:00:00Z' },
+    { id:'demo-e09', user_id:'demo-u3', date:'2026-02-14', hours:null, client:'Oleg ALEXANDROV',   description:'Cheltuieli de deplasare la Bălți',               fixed_price:1000, fixed_type:'cheltuiala', created_at:'2026-02-14T10:00:00Z' },
+    { id:'demo-e10', user_id:'demo-u1', date:'2026-02-19', hours:2.0,  client:'Cristin GHEMU',     description:'Studiu de cauza — analiză probatoriu',           fixed_price:null, fixed_type:null,         created_at:'2026-02-19T10:00:00Z' },
+    { id:'demo-e11', user_id:'demo-u2', date:'2026-02-25', hours:1.5,  client:'Elena STRATU',       description:'Redactare cerere de chemare în judecată',        fixed_price:null, fixed_type:null,         created_at:'2026-02-25T10:00:00Z' },
+    { id:'demo-e12', user_id:'demo-u1', date:'2026-03-04', hours:null, client:'Cristin GHEMU',     description:'Ședința de judecată',                           fixed_price:2000, fixed_type:'onorariu',   created_at:'2026-03-04T10:00:00Z' },
+    { id:'demo-e13', user_id:'demo-u3', date:'2026-03-08', hours:2.5,  client:'Oleg ALEXANDROV',   description:'Analiză acte — litigiu comercial',               fixed_price:null, fixed_type:null,         created_at:'2026-03-08T10:00:00Z' },
+    { id:'demo-e14', user_id:'demo-u2', date:'2026-03-12', hours:null, client:'Marin GABUJA',       description:'Întrevederea la Penitenciar',                    fixed_price:1500, fixed_type:'onorariu',   created_at:'2026-03-12T10:00:00Z' },
+    { id:'demo-e15', user_id:'demo-u1', date:'2026-03-17', hours:3.0,  client:'SRL TehnoConstruct', description:'Reprezentare în instanță — tribunal',            fixed_price:null, fixed_type:null,         created_at:'2026-03-17T10:00:00Z' },
+    { id:'demo-e16', user_id:'demo-u3', date:'2026-03-21', hours:1.0,  client:'Elena STRATU',       description:'Consultație — stare de fapt',                    fixed_price:null, fixed_type:null,         created_at:'2026-03-21T10:00:00Z' },
+    { id:'demo-e17', user_id:'demo-u2', date:'2026-03-26', hours:null, client:'Cristin GHEMU',     description:'Cheltuieli transport – ședință Chișinău',        fixed_price:100,  fixed_type:'cheltuiala', created_at:'2026-03-26T10:00:00Z' },
+    { id:'demo-e18', user_id:'demo-u1', date:'2026-04-02', hours:2.0,  client:'Marin GABUJA',       description:'Ședința de judecată — fond',                    fixed_price:null, fixed_type:null,         created_at:'2026-04-02T10:00:00Z' },
+    { id:'demo-e19', user_id:'demo-u3', date:'2026-04-08', hours:null, client:'Oleg ALEXANDROV',   description:'Ședința de judecată',                           fixed_price:2000, fixed_type:'onorariu',   created_at:'2026-04-08T10:00:00Z' },
+    { id:'demo-e20', user_id:'demo-u2', date:'2026-04-14', hours:3.0,  client:'SRL TehnoConstruct', description:'Redactare memoriu — analiză juridică',           fixed_price:null, fixed_type:null,         created_at:'2026-04-14T10:00:00Z' },
+    { id:'demo-e21', user_id:'demo-u1', date:'2026-04-19', hours:1.5,  client:'Elena STRATU',       description:'Pregătire dovezi — dosar civil',                 fixed_price:null, fixed_type:null,         created_at:'2026-04-19T10:00:00Z' },
+    { id:'demo-e22', user_id:'demo-u3', date:'2026-04-23', hours:null, client:'Marin GABUJA',       description:'Cheltuieli de deplasare la Soroca',              fixed_price:1500, fixed_type:'cheltuiala', created_at:'2026-04-23T10:00:00Z' },
+    { id:'demo-e23', user_id:'demo-u1', date:'2026-05-05', hours:2.5,  client:'Cristin GHEMU',     description:'Studiu jurisprudență CEDO',                       fixed_price:null, fixed_type:null,         created_at:'2026-05-05T10:00:00Z' },
+    { id:'demo-e24', user_id:'demo-u2', date:'2026-05-09', hours:null, client:'Oleg ALEXANDROV',   description:'Acțiunea de urmărire penală',                    fixed_price:1800, fixed_type:'onorariu',   created_at:'2026-05-09T10:00:00Z' },
+    { id:'demo-e25', user_id:'demo-u3', date:'2026-05-14', hours:2.0,  client:'SRL TehnoConstruct', description:'Consultație juridică — drept corporativ',         fixed_price:null, fixed_type:null,         created_at:'2026-05-14T10:00:00Z' },
+    { id:'demo-e26', user_id:'demo-u1', date:'2026-05-20', hours:null, client:'Cristin GHEMU',     description:'Întrevederea la Penitenciar',                    fixed_price:1500, fixed_type:'onorariu',   created_at:'2026-05-20T10:00:00Z' },
+    { id:'demo-e27', user_id:'demo-u2', date:'2026-05-27', hours:3.0,  client:'Elena STRATU',       description:'Reprezentare în instanță',                       fixed_price:null, fixed_type:null,         created_at:'2026-05-27T10:00:00Z' },
+    { id:'demo-e28', user_id:'demo-u1', date:'2026-06-03', hours:2.0,  client:'Marin GABUJA',       description:'Ședința de judecată — apel',                    fixed_price:null, fixed_type:null,         created_at:'2026-06-03T10:00:00Z' },
+    { id:'demo-e29', user_id:'demo-u3', date:'2026-06-10', hours:null, client:'Oleg ALEXANDROV',   description:'Ședința de judecată',                           fixed_price:2000, fixed_type:'onorariu',   created_at:'2026-06-10T10:00:00Z' },
+    { id:'demo-e30', user_id:'demo-u2', date:'2026-06-17', hours:2.5,  client:'Cristin GHEMU',     description:'Redactare recurs — analiză hotărâre',            fixed_price:null, fixed_type:null,         created_at:'2026-06-17T10:00:00Z' },
+    { id:'demo-e31', user_id:'demo-u1', date:'2026-06-24', hours:1.5,  client:'SRL TehnoConstruct', description:'Consultație drept fiscal',                       fixed_price:null, fixed_type:null,         created_at:'2026-06-24T10:00:00Z' },
+  ],
+  clients: [
+    { id:'demo-c1', name:'Cristin GHEMU',      notes:'',                           created_at:'2026-01-10T08:00:00Z' },
+    { id:'demo-c2', name:'Marin GABUJA',        notes:'Dosar penal 2024',           created_at:'2026-01-12T08:00:00Z' },
+    { id:'demo-c3', name:'SRL TehnoConstruct',  notes:'Contract civil nr. 14/2025', created_at:'2026-02-01T08:00:00Z' },
+    { id:'demo-c4', name:'Elena STRATU',        notes:'',                           created_at:'2026-03-01T08:00:00Z' },
+    { id:'demo-c5', name:'Oleg ALEXANDROV',     notes:'Litigiu comercial',          created_at:'2026-03-15T08:00:00Z' },
+  ],
+  invoices: [
+    { id:'demo-i1', number:'2026-001', client_name:'Cristin GHEMU',      date_from:'2026-01-01', date_to:'2026-03-31', notes:'Achitat 15.04.2026', status:'paid', created_at:'2026-04-01T08:00:00Z' },
+    { id:'demo-i2', number:'2026-002', client_name:'SRL TehnoConstruct', date_from:'2026-01-01', date_to:'2026-05-31', notes:'',                   status:'sent', created_at:'2026-06-01T08:00:00Z' },
+  ],
+  invoice_entries: [
+    { id:'demo-ie1', invoice_id:'demo-i1', entry_id:'demo-e01' },
+    { id:'demo-ie2', invoice_id:'demo-i1', entry_id:'demo-e04' },
+    { id:'demo-ie3', invoice_id:'demo-i1', entry_id:'demo-e10' },
+    { id:'demo-ie4', invoice_id:'demo-i1', entry_id:'demo-e12' },
+    { id:'demo-ie5', invoice_id:'demo-i1', entry_id:'demo-e17' },
+    { id:'demo-ie6', invoice_id:'demo-i2', entry_id:'demo-e03' },
+    { id:'demo-ie7', invoice_id:'demo-i2', entry_id:'demo-e08' },
+    { id:'demo-ie8', invoice_id:'demo-i2', entry_id:'demo-e15' },
+    { id:'demo-ie9', invoice_id:'demo-i2', entry_id:'demo-e20' },
+  ],
+  receipts: [
+    { id:'demo-r1', serie_nr:'DAA58646041', date:'2026-03-11', client_name:'Cristin GHEMU',     cod_personal:'2001234567890', contract_nr:'VB-17.285/03-24', plata_baza:4000, compensare:100,  semnat:true,  contabilitate:true,  created_at:'2026-03-11T10:00:00Z' },
+    { id:'demo-r2', serie_nr:'DAA58646042', date:'2026-03-11', client_name:'Marin GABUJA',       cod_personal:'2009876543210', contract_nr:'VB-20.288/03-24', plata_baza:3500, compensare:1500, semnat:true,  contabilitate:true,  created_at:'2026-03-11T10:00:00Z' },
+    { id:'demo-r3', serie_nr:'DAA58646043', date:'2026-04-08', client_name:'Oleg ALEXANDROV',   cod_personal:'2005678901234', contract_nr:'VB-25.293/03-24', plata_baza:2000, compensare:0,    semnat:true,  contabilitate:false, created_at:'2026-04-08T10:00:00Z' },
+    { id:'demo-r4', serie_nr:'DAA58646044', date:'2026-04-08', client_name:'Elena STRATU',       cod_personal:'2006543210987', contract_nr:'VB-26.294/03-24', plata_baza:1800, compensare:200,  semnat:false, contabilitate:false, created_at:'2026-04-08T10:00:00Z' },
+    { id:'demo-r5', serie_nr:'DAA58646045', date:'2026-05-20', client_name:'Cristin GHEMU',     cod_personal:'2001234567890', contract_nr:'VB-23.250/07-23', plata_baza:1500, compensare:0,    semnat:true,  contabilitate:true,  created_at:'2026-05-20T10:00:00Z' },
+  ],
+};
+
+function _demoId() { return 'demo-' + Math.random().toString(36).slice(2,10); }
+function _demoNow() { return new Date().toISOString(); }
+
+function createDemoClient() {
+  const D = _DD;
+  const _auth = { _user: null, _cbs: [] };
+
+  function qb(table) {
+    const st = { filters:[], orderCol:null, asc:true, single:false };
+    const q = {
+      select(){ return q; },
+      eq(col,val){ st.filters.push([col,val]); return q; },
+      order(col,o){ st.orderCol=col; st.asc=o?.ascending!==false; return q; },
+      single(){ st.single=true; return q; },
+      then(res,rej){
+        let rows = [...(D[table]||[])];
+        st.filters.forEach(([c,v]) => { rows = rows.filter(r=>r[c]===v); });
+        if (st.orderCol) rows.sort((a,b)=>{
+          const av=a[st.orderCol]??'', bv=b[st.orderCol]??'';
+          return (av<bv?-1:av>bv?1:0)*(st.asc?1:-1);
+        });
+        return Promise.resolve(st.single ? {data:rows[0]??null,error:null} : {data:rows,error:null}).then(res,rej);
+      }
+    };
+    return q;
+  }
+
+  return {
+    auth: {
+      getUser: async () => ({ data:{ user: _auth._user }, error:null }),
+      signInWithPassword: async () => {
+        _auth._user = { id:DEMO_ADMIN_ID };
+        _auth._cbs.forEach(cb => cb('SIGNED_IN',{ user:_auth._user }));
+        return { error:null };
+      },
+      signUp: async () => {
+        _auth._user = { id:DEMO_ADMIN_ID };
+        _auth._cbs.forEach(cb => cb('SIGNED_IN',{ user:_auth._user }));
+        return { error:null };
+      },
+      signOut: async () => {
+        _auth._user = null;
+        _auth._cbs.forEach(cb => cb('SIGNED_OUT', null));
+      },
+      onAuthStateChange(cb) {
+        _auth._cbs.push(cb);
+        // Fire immediately like real Supabase does (INITIAL_SESSION)
+        const sess = _auth._user ? { user: _auth._user } : null;
+        setTimeout(() => cb('INITIAL_SESSION', sess), 0);
+        return { data:{ subscription:{ unsubscribe(){ _auth._cbs=_auth._cbs.filter(x=>x!==cb); } } } };
+      },
+    },
+    from(table) {
+      return {
+        select(){ return qb(table); },
+        insert(rows) {
+          const arr = Array.isArray(rows)?rows:[rows];
+          const ins = arr.map(r=>({...r, id:r.id||_demoId(), created_at:_demoNow()}));
+          ins.forEach(r=>(D[table]=D[table]||[],D[table].push(r)));
+          return {
+            select(){ return this; },
+            single: async ()=>({ data:ins[0], error:null }),
+            then(res){ return Promise.resolve({data:ins,error:null}).then(res); },
+          };
+        },
+        update(upd) {
+          return { eq(col,val){
+            D[table]=(D[table]||[]).map(r=>r[col]===val?{...r,...upd}:r);
+            return { then(res){ return Promise.resolve({data:null,error:null}).then(res); } };
+          }};
+        },
+        delete() {
+          return { eq(col,val){
+            D[table]=(D[table]||[]).filter(r=>r[col]!==val);
+            return { then(res){ return Promise.resolve({data:null,error:null}).then(res); } };
+          }};
+        },
+      };
+    },
+    rpc: async (fn,args) => {
+      if (fn==='delete_user_account') {
+        D.profiles = D.profiles.filter(r=>r.id!==args.user_id);
+        D.entries  = D.entries.filter(r=>r.user_id!==args.user_id);
+      }
+      return { error:null };
+    },
+  };
 }
+
+let db = createDemoClient();
 
 // ═══════════════════════════════════════
 // GLOBAL STATE
@@ -1041,25 +1201,18 @@ function dbTimeout(promise, ms = 14000) {
   ]);
 }
 
+async function loginDemo() {
+  await db.auth.signInWithPassword({ email: 'demo@demo.md', password: 'demo' });
+}
+
 async function loadAll() {
   try {
     // Auth check is fast (separate service from DB)
     const { data: { user } } = await dbTimeout(db.auth.getUser(), 8000);
     if (!user) { showLoginScreen(); return; }
 
-    // Use cached profile to show the app instantly on return visits
-    const cached = localStorage.getItem('pontaj_profile');
-    if (cached) {
-      currentUser = JSON.parse(cached);
-      allUsers    = JSON.parse(localStorage.getItem('pontaj_users_cache')  || '[]');
-      allEntries  = JSON.parse(localStorage.getItem('pontaj_entries_cache') || '[]');
-      showApp();
-      // Refresh in background — user already sees the UI
-      refreshInBackground(user.id);
-    } else {
-      // First ever login — must wait for DB
-      await fetchAndShow(user.id);
-    }
+    // Demo mode: always fetch fresh (no real localStorage cache)
+    await fetchAndShow(user.id);
   } catch (e) {
     showLoginScreen();
   }
@@ -1165,6 +1318,7 @@ function showPendingScreen() {
 }
 
 function showApp() {
+  document.getElementById('demo-banner').style.display = 'block';
   if (currentUser?.status === 'pending') { showPendingScreen(); return; }
   document.getElementById('loading-screen').style.display  = 'none';
   document.getElementById('auth-screen').style.display     = 'none';
