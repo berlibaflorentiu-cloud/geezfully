@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/css/style.css?v=5">
+  <link rel="stylesheet" href="/css/style.css?v=7">
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
@@ -39,6 +39,7 @@
       <a href="#work" data-i18n="nav.work">Lucrări</a>
       <a href="#services" data-i18n="nav.services">Servicii</a>
       <a href="#process" data-i18n="nav.process">Proces</a>
+      <a href="#pricing" data-i18n="nav.pricing">Prețuri</a>
       <a href="#contact" data-i18n="nav.contact">Contact</a>
     </nav>
     <div class="nav-right">
@@ -185,20 +186,92 @@
       </div>
     </section>
 
+    <section class="pricing" id="pricing">
+      <div class="sec-head">
+        <p class="sec-eyebrow reveal"><span class="sec-ix">04</span> <span data-i18n="pricing.eyebrow">Pachete</span></p>
+        <h2 class="sec-title reveal" data-i18n="pricing.title">Prețuri clare. <span class="grad">Fără surprize.</span></h2>
+        <p class="sec-lead reveal" data-i18n="pricing.lead">Prețuri de pornire, ca să știi din start la ce să te aștepți. Fiecare proiect primește o ofertă fixă după ce discutăm — fără costuri ascunse.</p>
+      </div>
+      <div class="price-grid">
+        <article class="price reveal">
+          <div class="price-head">
+            <h3 data-i18n="price1.name">Landing page</h3>
+            <p class="price-tag" data-i18n="price1.price">de la €149</p>
+            <p class="price-desc" data-i18n="price1.desc">O singură pagină, gândită să convertească.</p>
+          </div>
+          <ul class="price-feats">
+            <li data-i18n="price1.f1">Design custom, o pagină</li>
+            <li data-i18n="price1.f2">Responsive &amp; ultra-rapid</li>
+            <li data-i18n="price1.f3">Formular de contact</li>
+            <li data-i18n="price1.f4">Livrare în ~1 săptămână</li>
+          </ul>
+          <a class="btn btn-ghost price-cta" href="#contact" data-i18n="price.cta">Începe</a>
+        </article>
+        <article class="price price-featured reveal">
+          <span class="price-badge" data-i18n="price2.badge">Cel mai popular</span>
+          <div class="price-head">
+            <h3 data-i18n="price2.name">Site de prezentare</h3>
+            <p class="price-tag" data-i18n="price2.price">de la €390</p>
+            <p class="price-desc" data-i18n="price2.desc">Mai multe pagini, pentru afacerea ta completă.</p>
+          </div>
+          <ul class="price-feats">
+            <li data-i18n="price2.f1">3–6 pagini, design custom</li>
+            <li data-i18n="price2.f2">Îți editezi singur conținutul</li>
+            <li data-i18n="price2.f3">SEO de bază &amp; viteză</li>
+            <li data-i18n="price2.f4">Galerie, blog sau servicii</li>
+          </ul>
+          <a class="btn btn-accent price-cta" href="#contact" data-i18n="price.cta">Începe</a>
+        </article>
+        <article class="price reveal">
+          <div class="price-head">
+            <h3 data-i18n="price3.name">Custom / Aplicație web</h3>
+            <p class="price-tag" data-i18n="price3.price">Pe bază de cerere</p>
+            <p class="price-desc" data-i18n="price3.desc">E-commerce, dashboard-uri, ceva unic.</p>
+          </div>
+          <ul class="price-feats">
+            <li data-i18n="price3.f1">Funcționalitate la comandă</li>
+            <li data-i18n="price3.f2">Integrări (plăți, conturi)</li>
+            <li data-i18n="price3.f3">Aplicație web completă</li>
+            <li data-i18n="price3.f4">Mentenanță &amp; creștere</li>
+          </ul>
+          <a class="btn btn-ghost price-cta" href="#contact" data-i18n="price.cta">Începe</a>
+        </article>
+      </div>
+      <p class="price-note reveal" data-i18n="price.note">Prețurile sunt orientative și pot varia în funcție de complexitate.</p>
+    </section>
+
     <section class="cta" id="contact">
-      <div class="aurora cta-aurora" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span></div>
-      <div class="cta-inner">
-        <p class="sec-eyebrow reveal"><span class="sec-ix">04</span> <span data-i18n="cta.eyebrow">Hai să vorbim</span></p>
-        <h2 class="cta-title reveal" data-i18n="cta.title">Ai un proiect? <span class="grad">Hai să construim ceva care vinde.</span></h2>
-        <p class="cta-lead reveal" data-i18n="cta.lead">Spune-ne ce ai în minte — un site nou, un redesign sau o aplicație web. Răspundem rapid, de obicei într-o zi.</p>
-        <div class="cta-actions reveal">
-          <a class="btn btn-accent btn-lg magnetic" data-wa href="#">
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.004c5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2Zm5.8 14.06c-.24.69-1.4 1.32-1.94 1.4-.5.07-1.13.1-1.82-.11-.42-.13-.96-.31-1.65-.61-2.9-1.25-4.79-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-3s.75-2.13 1.02-2.42c.27-.29.58-.36.78-.36l.56.01c.18 0 .42-.07.66.5.24.59.82 2.02.89 2.17.07.14.12.31.02.5-.09.19-.14.31-.28.48l-.42.49c-.14.14-.28.29-.12.57.16.28.71 1.17 1.53 1.9 1.05.93 1.93 1.22 2.21 1.36.28.14.44.12.6-.07.16-.19.69-.81.87-1.08.18-.27.36-.23.61-.14.25.09 1.6.76 1.87.9.27.14.46.21.53.33.07.12.07.69-.17 1.38Z"/></svg>
-            <span data-i18n="cta.wa">Scrie-ne pe WhatsApp</span>
-          </a>
-          <a class="btn btn-ghost btn-lg" href="mailto:hello@geezfully.com" data-i18n="cta.email">Sau scrie-ne pe email</a>
+      <div class="cta-grid">
+        <div class="cta-pitch">
+          <p class="sec-eyebrow reveal"><span class="sec-ix">05</span> <span data-i18n="cta.eyebrow">Hai să vorbim</span></p>
+          <h2 class="cta-title reveal" data-i18n="cta.title">Ai un proiect? <span class="grad">Hai să construim ceva care vinde.</span></h2>
+          <p class="cta-lead reveal" data-i18n="cta.lead">Spune-ne ce ai în minte — un site nou, un redesign sau o aplicație web. Răspundem rapid, de obicei într-o zi.</p>
+          <div class="cta-actions reveal">
+            <a class="btn btn-accent btn-lg magnetic" data-wa href="#">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.004c5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2Zm5.8 14.06c-.24.69-1.4 1.32-1.94 1.4-.5.07-1.13.1-1.82-.11-.42-.13-.96-.31-1.65-.61-2.9-1.25-4.79-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-3s.75-2.13 1.02-2.42c.27-.29.58-.36.78-.36l.56.01c.18 0 .42-.07.66.5.24.59.82 2.02.89 2.17.07.14.12.31.02.5-.09.19-.14.31-.28.48l-.42.49c-.14.14-.28.29-.12.57.16.28.71 1.17 1.53 1.9 1.05.93 1.93 1.22 2.21 1.36.28.14.44.12.6-.07.16-.19.69-.81.87-1.08.18-.27.36-.23.61-.14.25.09 1.6.76 1.87.9.27.14.46.21.53.33.07.12.07.69-.17 1.38Z"/></svg>
+              <span data-i18n="cta.wa">Scrie-ne pe WhatsApp</span>
+            </a>
+          </div>
+          <p class="cta-fine reveal"><span data-i18n="cta.fine">Preferi să suni?</span> <a data-wa-tel href="#">+373 00 000 000</a></p>
         </div>
-        <p class="cta-fine reveal"><span data-i18n="cta.fine">Preferi să suni?</span> <a data-wa-tel href="#">+373 00 000 000</a></p>
+        <form class="contact-form reveal" id="leadForm" novalidate>
+          <p class="form-title" data-i18n="contact.formtitle">Sau lasă-ne un mesaj</p>
+          <input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <div class="field">
+            <label for="cf-name" data-i18n="form.name">Nume</label>
+            <input id="cf-name" name="name" type="text" required autocomplete="name" data-i18n-ph="form.namePh" placeholder="Numele tău">
+          </div>
+          <div class="field">
+            <label for="cf-email" data-i18n="form.email">Email</label>
+            <input id="cf-email" name="email" type="email" required autocomplete="email" inputmode="email" data-i18n-ph="form.emailPh" placeholder="tu@email.com">
+          </div>
+          <div class="field">
+            <label for="cf-msg" data-i18n="form.msg">Despre proiect</label>
+            <textarea id="cf-msg" name="message" rows="4" required data-i18n-ph="form.msgPh" placeholder="Spune-ne pe scurt ce ai nevoie…"></textarea>
+          </div>
+          <button type="submit" class="btn btn-accent btn-lg form-submit"><span data-i18n="form.submit">Trimite mesajul</span></button>
+          <p class="form-status" role="status" aria-live="polite"></p>
+        </form>
       </div>
     </section>
 
@@ -219,6 +292,6 @@
     </footer>
 
   </main>
-  <script src="/js/main.js?v=4"></script>
+  <script src="/js/main.js?v=6"></script>
 </body>
 </html>

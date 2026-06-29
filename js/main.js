@@ -19,6 +19,10 @@ if (yearEl) yearEl.textContent = '2026';
 
 /* ── i18n: instant in-page language switch (RO default) ── */
 const WA_NUMBER = '37300000000'; // replace with the real WhatsApp number (digits only, intl)
+/* Contact form: get a free key at web3forms.com (enter your email, it's mailed to you),
+   then paste it here. Until then the form gracefully falls back to opening the email client. */
+const WEB3FORMS_KEY = 'REPLACE_WITH_WEB3FORMS_ACCESS_KEY';
+const CONTACT_EMAIL = 'hello@geezfully.com';
 
 const I18N = {
   ro: {
@@ -60,6 +64,45 @@ const I18N = {
     'cta.wa': `Scrie-ne pe WhatsApp`, 'cta.email': `Sau scrie-ne pe email`, 'cta.fine': `Preferi să suni?`,
     'footer.tagline': `Un studio de web design &amp; development care construiește site-uri cu care te lauzi.`,
     'footer.copy': `Geezfully. Construit de la zero, evident.`,
+    'nav.pricing': `Prețuri`,
+    'pricing.eyebrow': `Pachete`,
+    'pricing.title': `Prețuri clare. <span class="grad">Fără surprize.</span>`,
+    'pricing.lead': `Prețuri de pornire, ca să știi din start la ce să te aștepți. Fiecare proiect primește o ofertă fixă după ce discutăm — fără costuri ascunse.`,
+    'price1.name': `Landing page`,
+    'price1.price': `de la €149`,
+    'price1.desc': `O singură pagină, gândită să convertească.`,
+    'price1.f1': `Design custom, o pagină`,
+    'price1.f2': `Responsive &amp; ultra-rapid`,
+    'price1.f3': `Formular de contact`,
+    'price1.f4': `Livrare în ~1 săptămână`,
+    'price2.name': `Site de prezentare`,
+    'price2.price': `de la €390`,
+    'price2.desc': `Mai multe pagini, pentru afacerea ta completă.`,
+    'price2.f1': `3–6 pagini, design custom`,
+    'price2.f2': `Îți editezi singur conținutul`,
+    'price2.f3': `SEO de bază &amp; viteză`,
+    'price2.f4': `Galerie, blog sau servicii`,
+    'price2.badge': `Cel mai popular`,
+    'price3.name': `Custom / Aplicație web`,
+    'price3.price': `Pe bază de cerere`,
+    'price3.desc': `E-commerce, dashboard-uri, ceva unic.`,
+    'price3.f1': `Funcționalitate la comandă`,
+    'price3.f2': `Integrări (plăți, conturi)`,
+    'price3.f3': `Aplicație web completă`,
+    'price3.f4': `Mentenanță &amp; creștere`,
+    'price.cta': `Începe`,
+    'price.note': `Prețurile sunt orientative și pot varia în funcție de complexitate.`,
+    'contact.formtitle': `Sau lasă-ne un mesaj`,
+    'form.name': `Nume`,
+    'form.email': `Email`,
+    'form.msg': `Despre proiect`,
+    'form.namePh': `Numele tău`,
+    'form.emailPh': `tu@email.com`,
+    'form.msgPh': `Spune-ne pe scurt ce ai nevoie…`,
+    'form.submit': `Trimite mesajul`,
+    'form.sending': `Se trimite…`,
+    'form.success': `Mulțumim! Revenim cât de curând.`,
+    'form.error': `Ceva n-a mers. Încearcă din nou sau scrie-ne pe WhatsApp.`,
   },
   en: {
     'nav.work': `Work`, 'nav.services': `Services`, 'nav.process': `Process`, 'nav.contact': `Contact`,
@@ -100,6 +143,45 @@ const I18N = {
     'cta.wa': `Message us on WhatsApp`, 'cta.email': `Or email us`, 'cta.fine': `Prefer to call?`,
     'footer.tagline': `A web design &amp; development studio building sites worth bragging about.`,
     'footer.copy': `Geezfully. Built from scratch, of course.`,
+    'nav.pricing': `Pricing`,
+    'pricing.eyebrow': `Packages`,
+    'pricing.title': `Clear pricing. <span class="grad">No surprises.</span>`,
+    'pricing.lead': `Starting prices so you know what to expect up front. Every project gets a fixed quote once we talk — no hidden costs.`,
+    'price1.name': `Landing page`,
+    'price1.price': `from €149`,
+    'price1.desc': `One page, built to convert.`,
+    'price1.f1': `Custom one-page design`,
+    'price1.f2': `Responsive &amp; lightning-fast`,
+    'price1.f3': `Contact form`,
+    'price1.f4': `Delivered in ~1 week`,
+    'price2.name': `Business site`,
+    'price2.price': `from €390`,
+    'price2.desc': `Multiple pages for your whole business.`,
+    'price2.f1': `3–6 pages, custom design`,
+    'price2.f2': `Edit your own content`,
+    'price2.f3': `Basic SEO &amp; speed`,
+    'price2.f4': `Gallery, blog or services`,
+    'price2.badge': `Most popular`,
+    'price3.name': `Custom / Web app`,
+    'price3.price': `On request`,
+    'price3.desc': `E-commerce, dashboards, something unique.`,
+    'price3.f1': `Bespoke functionality`,
+    'price3.f2': `Integrations (payments, accounts)`,
+    'price3.f3': `Full web application`,
+    'price3.f4': `Maintenance &amp; growth`,
+    'price.cta': `Get started`,
+    'price.note': `Prices are indicative and vary with project scope.`,
+    'contact.formtitle': `Or drop us a message`,
+    'form.name': `Name`,
+    'form.email': `Email`,
+    'form.msg': `About your project`,
+    'form.namePh': `Your name`,
+    'form.emailPh': `you@email.com`,
+    'form.msgPh': `Tell us briefly what you need…`,
+    'form.submit': `Send message`,
+    'form.sending': `Sending…`,
+    'form.success': `Thanks! We'll get back to you soon.`,
+    'form.error': `Something went wrong. Try again or message us on WhatsApp.`,
   },
 };
 
@@ -114,14 +196,21 @@ function setWA(lang) {
   document.querySelectorAll('[data-wa-tel]').forEach((el) => { el.setAttribute('href', `tel:+${WA_NUMBER}`); });
 }
 
+let curLang = 'ro';
+
 function applyLang(lang) {
   if (!I18N[lang]) lang = 'ro';
+  curLang = lang;
   const dict = I18N[lang];
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const v = dict[el.dataset.i18n];
     if (v == null) return;
     if (v.indexOf('<') >= 0 || v.indexOf('&') >= 0) el.innerHTML = v;
     else el.textContent = v;
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach((el) => {
+    const v = dict[el.dataset.i18nPh];
+    if (v != null) el.setAttribute('placeholder', v);
   });
   docEl.lang = lang;
   document.querySelectorAll('.lang-switch button').forEach((b) => {
@@ -140,6 +229,54 @@ function initLangSwitch() {
   });
 }
 
+function t(key) { return (I18N[curLang] && I18N[curLang][key]) || (I18N.ro[key]) || ''; }
+
+function initContactForm() {
+  const form = document.getElementById('leadForm');
+  if (!form) return;
+  const status = form.querySelector('.form-status');
+  const btn = form.querySelector('button[type="submit"]');
+  const btnLabel = btn ? btn.querySelector('span') : null;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (form.botcheck && form.botcheck.checked) return; // honeypot
+    if (!form.reportValidity()) return;
+
+    const data = Object.fromEntries(new FormData(form).entries());
+
+    // Fallback: no real key yet → open the user's email client with the message prefilled.
+    if (!WEB3FORMS_KEY || WEB3FORMS_KEY.indexOf('REPLACE') === 0) {
+      const subject = encodeURIComponent('Proiect nou — geezfully.com');
+      const body = encodeURIComponent(`Nume: ${data.name || ''}\nEmail: ${data.email || ''}\n\n${data.message || ''}`);
+      window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
+      if (status) { status.textContent = t('form.success'); status.dataset.state = 'ok'; }
+      return;
+    }
+
+    if (btn) btn.disabled = true;
+    if (btnLabel) btnLabel.textContent = t('form.sending');
+    if (status) { status.textContent = ''; status.dataset.state = ''; }
+    try {
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ access_key: WEB3FORMS_KEY, ...data }),
+      });
+      const out = await res.json();
+      if (out.success) {
+        form.reset();
+        if (status) { status.textContent = t('form.success'); status.dataset.state = 'ok'; }
+      } else { throw new Error(out.message || 'failed'); }
+    } catch (_) {
+      if (status) { status.textContent = t('form.error'); status.dataset.state = 'err'; }
+    } finally {
+      if (btn) btn.disabled = false;
+      if (btnLabel) btnLabel.textContent = t('form.submit');
+    }
+  });
+}
+
 let savedLang = 'ro';
 try { savedLang = localStorage.getItem('geez-lang') || 'ro'; } catch (_) {}
 initLangSwitch();
@@ -150,6 +287,7 @@ if (!gsap || !ScrollTrigger) {
   const pl = document.getElementById('preloader');
   if (pl) pl.remove();
   mountAllEmbeds();
+  initContactForm();
 } else {
   gsap.registerPlugin(ScrollTrigger);
   boot();
@@ -347,6 +485,7 @@ function boot() {
   initCursor();
   initAnchors();
   initEmbeds();
+  initContactForm();
   ScrollTrigger.refresh();
   setTimeout(() => {
     const pl = document.getElementById('preloader');
