@@ -850,6 +850,12 @@
     #wheel-group, #ball-orbit-group, #ball-radius-group { transition: none !important; }
     .roul-rimbulb { animation: none !important; opacity: 0.6; }
   }
+
+  /* ── Embedded preview (portfolio thumbnail) ── */
+  html.embedded .marquee,
+  html.embedded .mode-switcher,
+  html.embedded #sound-toggle { display: none; }
+  html.embedded .site-header { padding-top: 18px; }
 </style>
 </head>
 <body data-mode="carnival">
@@ -1500,6 +1506,18 @@ const AudioFX = (function() {
       if (window._rebuildMarquee) window._rebuildMarquee();
     });
   });
+
+  // Preview-embed support: ?mode=cosmic preselects a mode on load, and an
+  // .embedded class strips chrome (ticker/tabs/mute) that's dead weight in a
+  // non-interactive portfolio thumbnail.
+  const requestedMode = new URLSearchParams(location.search).get('mode');
+  if (requestedMode) {
+    const btn = document.querySelector('.mode-btn[data-mode="' + requestedMode + '"]');
+    if (btn) btn.click();
+  }
+  if (window.self !== window.top) {
+    document.documentElement.classList.add('embedded');
+  }
 })();
 </script>
 
