@@ -456,9 +456,10 @@ function mountEmbed(view) {
   view.appendChild(iframe);
 }
 function sizeEmbed(view, iframe) {
+  const viewW = Number(view.dataset.embedW) || VIEW_W;
   const w = view.clientWidth || 1;
-  const scale = w / VIEW_W;
-  iframe.style.width = VIEW_W + 'px';
+  const scale = w / viewW;
+  iframe.style.width = viewW + 'px';
   iframe.style.height = (view.clientHeight / scale) + 'px';
   iframe.style.transform = 'scale(' + scale + ')';
 }
