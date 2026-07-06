@@ -525,7 +525,7 @@ function initTriBg() {
       field.W = rect.width; field.H = rect.height;
       canvas.width = field.W * dpr; canvas.height = field.H * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const count = Math.min(46, Math.round((field.W * field.H) / 9000));
+      const count = Math.min(600, Math.round((field.W * field.H) / 5200));
       field.pts = Array.from({ length: count }, () => ({
         x: Math.random() * field.W, y: Math.random() * field.H,
         size: 5 + Math.random() * 8,
