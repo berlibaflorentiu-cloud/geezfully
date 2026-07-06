@@ -528,13 +528,13 @@ function initTriBg() {
       const count = Math.min(600, Math.round((field.W * field.H) / 5200));
       field.pts = Array.from({ length: count }, () => ({
         x: Math.random() * field.W, y: Math.random() * field.H,
-        size: 5 + Math.random() * 8,
+        size: 6 + Math.random() * 10,
         color: COLORS[(Math.random() * COLORS.length) | 0],
         phase: Math.random() * Math.PI * 2,
         speed: 0.15 + Math.random() * 0.3,
         amp: 6 + Math.random() * 12,
         spin: Math.random() * Math.PI * 2,
-        alpha: 0.08 + Math.random() * 0.14,
+        alpha: 0.18 + Math.random() * 0.24,
       }));
     }
     build();
@@ -552,7 +552,7 @@ function initTriBg() {
       pts.forEach((p) => {
         const dx = Math.sin(t * p.speed + p.phase) * p.amp;
         const dy = Math.cos(t * p.speed * 0.8 + p.phase) * p.amp;
-        triangle(ctx, p.x + dx, p.y + dy, p.size, p.spin + t * 0.1 * p.speed, p.color, p.alpha, 1);
+        triangle(ctx, p.x + dx, p.y + dy, p.size, p.spin + t * 0.1 * p.speed, p.color, p.alpha, 1.3);
       });
     });
   }
