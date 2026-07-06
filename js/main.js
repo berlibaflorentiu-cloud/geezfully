@@ -481,7 +481,7 @@ function initEmbeds() {
   if (!('IntersectionObserver' in window)) { mountAllEmbeds(); return; }
   const io = new IntersectionObserver((entries) => {
     entries.forEach((en) => { if (en.isIntersecting) { mountEmbed(en.target); io.unobserve(en.target); } });
-  }, { rootMargin: '300px 0px' });
+  }, { rootMargin: '100px 0px' });
   views.forEach((v) => io.observe(v));
   let raf;
   window.addEventListener('resize', () => {
@@ -518,14 +518,14 @@ function initTriBg() {
 
   const fields = Array.from(nodes).map((canvas) => {
     const ctx = canvas.getContext('2d');
-    const field = { canvas, ctx, W: 0, H: 0, pts: [] };
+    const field = { canvas, ctx, W: 0, H: 0, pts: [], visible: false };
     function build() {
       const rect = canvas.parentElement.getBoundingClientRect();
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       field.W = rect.width; field.H = rect.height;
       canvas.width = field.W * dpr; canvas.height = field.H * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const count = Math.min(600, Math.round((field.W * field.H) / 5200));
+      const count = Math.min(320, Math.round((field.W * field.H) / 7000));
       field.pts = Array.from({ length: count }, () => ({
         x: Math.random() * field.W, y: Math.random() * field.H,
         size: 6 + Math.random() * 10,
@@ -546,8 +546,19 @@ function initTriBg() {
     return field;
   });
 
+  // Only draw fields currently scrolled into view — the rest sit idle instead of
+  // burning main-thread time on canvases nobody can see.
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((en) => {
+      const field = fields.find((f) => f.canvas.parentElement === en.target);
+      if (field) field.visible = en.isIntersecting;
+    });
+  }, { rootMargin: '200px 0px' });
+  fields.forEach((f) => io.observe(f.canvas.parentElement));
+
   function renderAll(t) {
-    fields.forEach(({ ctx, W, H, pts }) => {
+    fields.forEach(({ ctx, W, H, pts, visible }) => {
+      if (!visible) return;
       ctx.clearRect(0, 0, W, H);
       pts.forEach((p) => {
         const dx = Math.sin(t * p.speed + p.phase) * p.amp;
@@ -557,7 +568,7 @@ function initTriBg() {
     });
   }
 
-  if (reduce) { renderAll(0); return; }
+  if (reduce) { fields.forEach(f => f.visible = true); renderAll(0); return; }
   function frame(ts) { renderAll(ts / 1000); requestAnimationFrame(frame); }
   requestAnimationFrame(frame);
 }
