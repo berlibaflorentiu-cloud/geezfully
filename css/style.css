@@ -173,8 +173,9 @@ html.menu-open, html.menu-open body{ overflow:hidden; }
 .aurora .b1{ width:44vw; height:44vw; left:-10vw; top:-8vw; background:radial-gradient(circle, rgba(255,90,60,.5), transparent 64%); animation:drift1 22s ease-in-out infinite; }
 .aurora .b2{ width:38vw; height:38vw; right:-8vw; top:8vw; background:radial-gradient(circle, rgba(176,58,72,.42), transparent 64%); animation:drift2 26s ease-in-out infinite; }
 .aurora .b3{ width:30vw; height:30vw; left:34vw; bottom:-14vw; background:radial-gradient(circle, rgba(255,124,84,.28), transparent 64%); animation:drift1 30s ease-in-out infinite reverse; }
-.signature-aurora{ position:absolute; inset:0; z-index:0; filter:blur(95px); opacity:.4; pointer-events:none; }
-.signature-aurora .b4{ width:30vw; height:30vw; left:34vw; top:-14vw; background:radial-gradient(circle, rgba(255,124,84,.28), transparent 64%); animation:drift1 30s ease-in-out infinite reverse; }
+.seam-glow{ position:relative; z-index:5; height:0; pointer-events:none; }
+.seam-glow::before{ content:''; position:absolute; left:34vw; top:-15vw; width:30vw; height:30vw; border-radius:50%;
+  background:radial-gradient(circle, rgba(255,124,84,.34), transparent 64%); filter:blur(95px); opacity:.4; }
 @keyframes drift1{ 0%,100%{ transform:translate(0,0) scale(1); } 50%{ transform:translate(6vw,4vw) scale(1.12); } }
 @keyframes drift2{ 0%,100%{ transform:translate(0,0) scale(1); } 50%{ transform:translate(-5vw,3vw) scale(.9); } }
 .grain{ position:absolute; inset:0; z-index:1; pointer-events:none; opacity:.5;
