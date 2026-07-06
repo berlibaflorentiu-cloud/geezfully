@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Geezfully — Studio de web design și development</title>
-  <meta name="description" content="Geezfully este un studio care creează site-uri rapide, spectaculoase și gândite să conversească — de la primul pixel până la lansare. Construite de la zero, niciodată din șabloane.">
+  <meta name="description" content="Geezfully este un studio care creează site-uri rapide, spectaculoase și gândite să convertească — de la primul pixel până la lansare. Construite de la zero, niciodată din șabloane.">
   <meta property="og:title" content="Geezfully — Studio de web design">
   <meta property="og:description" content="Site-uri rapide, spectaculoase și gândite să vândă. Construite de la zero.">
   <meta property="og:type" content="website">
@@ -14,11 +14,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/css/style.css?v=10">
+  <link rel="stylesheet" href="/css/style.css?v=11">
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
+  <script>document.documentElement.classList.add('js');</script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
+  <script defer src="/js/main.js?v=14"></script>
 </head>
 <body>
 
@@ -51,12 +53,30 @@
         <span data-i18n="nav.cta">Începe un proiect</span>
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </a>
+      <button class="nav-burger" type="button" aria-expanded="false" aria-controls="mobile-menu" data-i18n-aria="nav.menu" aria-label="Meniu"><span></span><span></span></button>
     </div>
   </header>
+
+  <div class="mmenu" id="mobile-menu" aria-hidden="true">
+    <nav class="mmenu-links" aria-label="Meniu mobil">
+      <a href="#work"><span class="mmenu-ix">01</span><span data-i18n="nav.work">Lucrări</span></a>
+      <a href="#services"><span class="mmenu-ix">02</span><span data-i18n="nav.services">Servicii</span></a>
+      <a href="#process"><span class="mmenu-ix">03</span><span data-i18n="nav.process">Proces</span></a>
+      <a href="#pricing"><span class="mmenu-ix">04</span><span data-i18n="nav.pricing">Prețuri</span></a>
+      <a href="#contact"><span class="mmenu-ix">05</span><span data-i18n="nav.contact">Contact</span></a>
+    </nav>
+    <div class="mmenu-foot">
+      <a class="btn btn-accent btn-lg" data-wa href="#contact">
+        <span data-i18n="nav.cta">Începe un proiect</span>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </div>
 
   <main id="top">
 
     <section class="hero">
+      <div class="tri-bg" aria-hidden="true"><canvas></canvas></div>
       <div class="aurora" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
       <div class="grain" aria-hidden="true"></div>
       <div class="hero-inner">
@@ -65,7 +85,7 @@
           <span class="line"><span class="w">Construim</span> <span class="w">site-uri</span></span>
           <span class="line"><span class="w">care</span> <span class="w grad">chiar</span> <span class="w grad">vând.</span></span>
         </h1>
-        <p class="hero-sub reveal" data-i18n="hero.sub">Geezfully este un studio mic care creează site-uri rapide, spectaculoase și gândite să conversească — de la primul pixel până la lansare. Construite de la zero, niciodată din șabloane. Genul de site care îți face concurența puțin nervoasă.</p>
+        <p class="hero-sub reveal" data-i18n="hero.sub">Geezfully este un studio mic care creează site-uri rapide, spectaculoase și gândite să convertească — de la primul pixel până la lansare. Construite de la zero, niciodată din șabloane. Genul de site care îți face concurența puțin nervoasă.</p>
         <div class="hero-cta reveal">
           <a class="btn btn-accent btn-lg magnetic" data-wa href="#contact"><span data-i18n="hero.cta1">Începe un proiect</span>
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -83,6 +103,17 @@
       <div class="scroll-cue" aria-hidden="true"><span data-i18n="hero.scroll">Derulează</span><i></i></div>
     </section>
 
+    <section class="signature">
+      <div class="signature-bg"><canvas id="brain-canvas" aria-hidden="true"></canvas></div>
+      <div class="signature-inner">
+        <div class="signature-text">
+          <p class="signature-eyebrow reveal"><span class="dot"></span> <span data-i18n="signature.eyebrow">Cum gândim</span></p>
+          <h2 class="signature-title reveal" data-i18n="signature.title">Fiecare proiect pornește de la <span class="grad">o singură idee clară.</span></h2>
+          <p class="signature-body reveal" data-i18n="signature.body">Nu umplem site-uri cu tot ce se poate — găsim ideea centrală și construim totul în jurul ei. Restul e doar zgomot.</p>
+        </div>
+      </div>
+    </section>
+
     <div class="marquee" aria-hidden="true">
       <div class="mq-track">
         <span data-i18n="marquee">Web Design <b>✦</b> Development <b>✦</b> Branding <b>✦</b> E‑commerce <b>✦</b> Aplicații web <b>✦</b> SEO &amp; Viteză <b>✦</b> Motion <b>✦</b></span>
@@ -91,6 +122,7 @@
     </div>
 
     <section class="work" id="work">
+      <div class="tri-bg" aria-hidden="true"><canvas></canvas></div>
       <div class="sec-head">
         <p class="sec-eyebrow reveal"><span class="sec-ix">01</span> <span data-i18n="work.eyebrow">Proiecte selectate</span></p>
         <h2 class="sec-title reveal" data-i18n="work.title">Proiecte reale. <span class="grad">Live, nu mockup-uri.</span></h2>
@@ -112,7 +144,7 @@
         </article>
         <article class="case reveal" data-tilt>
           <div class="case-frame">
-            <div class="frame-bar"><i></i><i></i><i></i><span>pontaj.app</span></div>
+            <div class="frame-bar"><i></i><i></i><i></i><span>geezfully.com/pontaj</span></div>
             <div class="frame-view" data-embed="/pontaj/"><div class="frame-poster"><span data-i18n="loading">Se încarcă…</span></div></div>
           </div>
           <div class="case-meta">
@@ -157,6 +189,7 @@
     </section>
 
     <section class="services" id="services">
+      <div class="tri-bg" aria-hidden="true"><canvas></canvas></div>
       <div class="sec-head">
         <p class="sec-eyebrow reveal"><span class="sec-ix">02</span> <span data-i18n="services.eyebrow">Ce facem</span></p>
         <h2 class="sec-title reveal" data-i18n="services.title">Tot ce are nevoie site-ul tău, <span class="grad">într-un singur loc.</span></h2>
@@ -164,7 +197,7 @@
       <div class="svc-grid">
         <article class="svc reveal">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18M8 21h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-          <h3>Web Design</h3><p data-i18n="svc1.p">Interfețe distinctive, în identitatea ta, gândite să conversească — nu doar să decoreze. Fiecare pixel își merită locul.</p>
+          <h3>Web Design</h3><p data-i18n="svc1.p">Interfețe distinctive, în identitatea ta, gândite să convertească — nu doar să decoreze. Fiecare pixel își merită locul.</p>
         </article>
         <article class="svc reveal">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m8 9-3 3 3 3M16 9l3 3-3 3M13 6l-2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -190,6 +223,7 @@
     </section>
 
     <section class="process" id="process">
+      <div class="tri-bg" aria-hidden="true"><canvas></canvas></div>
       <div class="sec-head">
         <p class="sec-eyebrow reveal"><span class="sec-ix">03</span> <span data-i18n="process.eyebrow">Cum lucrăm</span></p>
         <h2 class="sec-title reveal" data-i18n="process.title">De la idee la lansare în <span class="grad">patru pași.</span></h2>
@@ -204,6 +238,7 @@
     </section>
 
     <section class="pricing" id="pricing">
+      <div class="tri-bg" aria-hidden="true"><canvas></canvas></div>
       <div class="sec-head">
         <p class="sec-eyebrow reveal"><span class="sec-ix">04</span> <span data-i18n="pricing.eyebrow">Pachete</span></p>
         <h2 class="sec-title reveal" data-i18n="pricing.title">Prețuri clare. <span class="grad">Fără surprize.</span></h2>
@@ -213,7 +248,7 @@
         <article class="price reveal">
           <div class="price-head">
             <h3 data-i18n="price1.name">Landing page</h3>
-            <p class="price-tag" data-i18n="price1.price">de la €149</p>
+            <p class="price-tag" data-i18n="price1.price">de la €200</p>
             <p class="price-desc" data-i18n="price1.desc">O singură pagină, gândită să convertească.</p>
           </div>
           <ul class="price-feats">
@@ -227,8 +262,8 @@
         <article class="price price-featured reveal">
           <span class="price-badge" data-i18n="price2.badge">Cel mai popular</span>
           <div class="price-head">
-            <h3 data-i18n="price2.name">Site de prezentare</h3>
-            <p class="price-tag" data-i18n="price2.price">de la €390</p>
+            <h3 data-i18n="price2.name">Site corporativ</h3>
+            <p class="price-tag" data-i18n="price2.price">de la €500</p>
             <p class="price-desc" data-i18n="price2.desc">Mai multe pagini, pentru afacerea ta completă.</p>
           </div>
           <ul class="price-feats">
@@ -258,6 +293,7 @@
     </section>
 
     <section class="cta" id="contact">
+      <div class="tri-bg" aria-hidden="true"><canvas></canvas></div>
       <div class="cta-grid">
         <div class="cta-pitch">
           <p class="sec-eyebrow reveal"><span class="sec-ix">05</span> <span data-i18n="cta.eyebrow">Hai să vorbim</span></p>
@@ -293,6 +329,7 @@
     </section>
 
     <footer class="footer">
+      <div class="tri-bg" aria-hidden="true"><canvas></canvas></div>
       <div class="footer-top">
         <a class="brand" href="#top">geezfully<span>.</span></a>
         <p data-i18n="footer.tagline">Un studio de web design &amp; development care construiește site-uri cu care te lauzi.</p>
@@ -311,6 +348,222 @@
     </footer>
 
   </main>
-  <script src="/js/main.js?v=12"></script>
+
+  <script>
+  // Signature visual: a constellation of tiny triangles forming a brain shape.
+  // Self-contained and experimental — safe to delete without touching anything else.
+  (function() {
+    const canvas = document.getElementById('brain-canvas');
+    if (!canvas || !canvas.getContext) return;
+    const ctx = canvas.getContext('2d');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const COLORS = ['#FF5A3C', '#FF7C54', '#FFB020', '#8B7CFF', '#2FA89A'];
+
+    let W = 0, H = 0, cx = 0, cy = 0, scale = 0, brain = [], ambient = [], raf = null;
+    const CAM = 3.2;   // camera distance in brain units → perspective strength
+    const TILT = 0.26;  // look slightly DOWN onto the brain → reveals the top fissure
+    const BASE = -0.42; // resting yaw → near-front 3/4 view, both hemispheres + fissure visible
+    const SWING = 0.42; // gentle yaw oscillation instead of a full spin (stays legible)
+
+    // A point on one cerebral hemisphere. Starts as an ellipsoid, then large-scale
+    // "lobe" bumps (frontal / temporal / parietal / occipital) push the surface out
+    // so the silhouette reads as a brain, with fine gyri folds layered on top.
+    // Local frame: +z = front, +y = up, +x = outward (lateral).
+    function hemispherePoint(side) {
+      const u = Math.random(), v = Math.random();
+      const theta = Math.acos(2 * u - 1);      // polar angle from +y
+      const phi = 2 * Math.PI * v;             // azimuth
+      const st = Math.sin(theta);
+      const sx = st * Math.cos(phi), sy = Math.cos(theta), sz = st * Math.sin(phi);
+      const s = side;
+
+      function lobe(dx, dy, dz, amp, w) {
+        const m = Math.hypot(dx, dy, dz);
+        const dot = sx * (dx / m) + sy * (dy / m) + sz * (dz / m);
+        return amp * Math.exp(-Math.pow((1 - dot) / w, 2));
+      }
+
+      const ph = s * 1.7;
+      const r = 1
+        + lobe(0.20 * s,  0.28,  0.95, 0.16, 0.55)   // frontal lobe (front-top)
+        + lobe(0.62 * s, -0.55,  0.55, 0.19, 0.48)   // temporal lobe (the lower-front side hook)
+        + lobe(0.38 * s,  0.95,  0.05, 0.13, 0.60)   // parietal (crown)
+        + lobe(0.14 * s,  0.02, -0.97, 0.15, 0.55)   // occipital lobe (back)
+        + 0.045 * Math.sin(9 * phi + ph) * Math.sin(7 * theta)  // gyri
+        + 0.03  * Math.sin(13 * theta + 4 * phi + ph);
+      const shell = 1 - Math.random() * 0.1;
+
+      const gap = 0.16, rx = 0.60, ry = 0.82, rz = 1.15;
+      const ryEff = sy >= 0 ? ry : ry * 0.74;  // flatter underside
+      return {
+        x: s * gap + sx * rx * r * shell,
+        y: sy * ryEff * r * shell,
+        z: sz * rz * r * shell,
+      };
+    }
+
+    function buildBrain() {
+      brain = [];
+      const wide = W > 860;
+      scale = wide ? Math.min(W * 0.24, H * 0.40) : Math.min(W * 0.38, 135);
+      cx = wide ? W * 0.73 : W * 0.56;  // mobile: nudge right to offset the 3/4-yaw lean
+      cy = wide ? H * 0.5 : 185;        // mobile: sit in the reserved top band, text flows below
+
+      const total = Math.min(W, H) < 300 ? 1500 : 2600;
+      for (let i = 0; i < total; i++) {
+        const side = i % 2 === 0 ? -1 : 1;
+        const p = hemispherePoint(side);
+        // Carve the deep longitudinal fissure between the hemispheres: reject points
+        // hugging the midline across the top and upper-front, leaving a clear valley.
+        if (Math.abs(p.x) < 0.10 && p.y > -0.08) { i--; continue; }
+        brain.push({
+          x: p.x, y: p.y, z: p.z,
+          color: COLORS[(Math.random() * COLORS.length) | 0],
+          size: 1.1 + Math.random() * 1.3,
+          spin: Math.random() * Math.PI * 2,
+        });
+      }
+      // brainstem — a short tapering column below the hemispheres
+      const stem = Math.round(total * 0.05);
+      for (let i = 0; i < stem; i++) {
+        const t = i / stem;
+        const r = 0.12 * (1 - t * 0.5);
+        const a = Math.random() * Math.PI * 2;
+        brain.push({
+          x: Math.cos(a) * r * 0.7,
+          y: -0.92 - t * 0.4,
+          z: Math.sin(a) * r,
+          color: COLORS[(Math.random() * COLORS.length) | 0],
+          size: 1 + Math.random() * 1.1,
+          spin: Math.random() * Math.PI * 2,
+        });
+      }
+    }
+
+    function buildAmbient() {
+      ambient = [];
+      const count = Math.round((W * H) / 5200);
+      for (let i = 0; i < count; i++) {
+        ambient.push({
+          x: Math.random() * W, y: Math.random() * H,
+          size: 0.8 + Math.random() * 1.5,
+          color: COLORS[(Math.random() * COLORS.length) | 0],
+          phase: Math.random() * Math.PI * 2,
+          speed: 0.2 + Math.random() * 0.4,
+          amp: 3 + Math.random() * 7,
+          spin: Math.random() * Math.PI * 2,
+          alpha: 0.12 + Math.random() * 0.16,
+        });
+      }
+    }
+
+    function triangle(x, y, r, rot, color, alpha, lw) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rot);
+      ctx.beginPath();
+      for (let i = 0; i < 3; i++) {
+        const a = (Math.PI * 2 / 3) * i - Math.PI / 2;
+        const px = Math.cos(a) * r, py = Math.sin(a) * r;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lw;
+      ctx.globalAlpha = alpha;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    const projected = [];
+    function drawBrain(angle, t) {
+      const cosA = Math.cos(angle), sinA = Math.sin(angle);
+      const cosT = Math.cos(TILT), sinT = Math.sin(TILT);
+      projected.length = 0;
+
+      for (const p of brain) {
+        // rotate around Y, then tilt around X
+        const x1 = p.x * cosA + p.z * sinA;
+        const z1 = -p.x * sinA + p.z * cosA;
+        const y2 = p.y * cosT - z1 * sinT;
+        const z2 = p.y * sinT + z1 * cosT;
+        const persp = CAM / (CAM - z2);
+        const zn = Math.max(0, Math.min(1, (z2 + 1.6) / 3.2)); // 0 = far, 1 = near
+        projected.push({
+          sx: cx + x1 * scale * persp,
+          sy: cy - y2 * scale * persp,
+          r: p.size * persp * (0.55 + 0.6 * zn),
+          rot: p.spin + t * 0.25,
+          color: p.color,
+          alpha: (0.18 + 0.82 * zn * zn),        // depth cue: back dim, front bright
+          lw: 0.8 + 0.7 * zn,
+          z: z2,
+        });
+      }
+      projected.sort((a, b) => a.z - b.z);       // painter's order: far first
+      for (const q of projected) triangle(q.sx, q.sy, q.r, q.rot, q.color, q.alpha, q.lw);
+    }
+
+    function drawAmbient(t) {
+      for (const p of ambient) {
+        const dx = Math.sin(t * p.speed + p.phase) * p.amp;
+        const dy = Math.cos(t * p.speed * 0.8 + p.phase) * p.amp;
+        triangle(p.x + dx, p.y + dy, p.size * 2, p.spin + t * 0.15 * p.speed, p.color, p.alpha, 1);
+      }
+    }
+
+    function resize() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = rect.width; H = rect.height;
+      canvas.width = W * dpr; canvas.height = H * dpr;
+      canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      buildBrain();
+      buildAmbient();
+    }
+
+    function renderFrame(t) {
+      ctx.clearRect(0, 0, W, H);
+      drawAmbient(t);
+      drawBrain(BASE + Math.sin(t * 0.2) * SWING, t);
+    }
+
+    function frame(ts) {
+      renderFrame(ts / 1000);
+      raf = requestAnimationFrame(frame);
+    }
+
+    function start() {
+      resize();
+      if (reduceMotion) {
+        ctx.clearRect(0, 0, W, H);
+        drawAmbient(0);
+        drawBrain(BASE, 0);
+      } else {
+        raf = requestAnimationFrame(frame);
+      }
+    }
+
+    let resizeTimer;
+    function handleResize() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (raf) cancelAnimationFrame(raf);
+        resize();
+        if (reduceMotion) { ctx.clearRect(0, 0, W, H); drawAmbient(0); drawBrain(BASE, 0); }
+        else raf = requestAnimationFrame(frame);
+      }, 150);
+    }
+
+    if ('ResizeObserver' in window) {
+      new ResizeObserver(handleResize).observe(canvas.parentElement);
+    } else {
+      window.addEventListener('resize', handleResize);
+    }
+
+    start();
+  })();
+  </script>
 </body>
 </html>

@@ -27,14 +27,17 @@ const CONTACT_EMAIL = 'geezfully@gmail.com';
 const I18N = {
   ro: {
     'nav.work': `Lucrări`, 'nav.services': `Servicii`, 'nav.process': `Proces`, 'nav.contact': `Contact`,
-    'nav.cta': `Începe un proiect`,
+    'nav.cta': `Începe un proiect`, 'nav.menu': `Meniu`,
     'hero.eyebrow': `Studio de web design &amp; development`,
     'hero.title': `<span class="line"><span class="w">Construim</span> <span class="w">site-uri</span></span><span class="line"><span class="w">care</span> <span class="w grad">chiar</span> <span class="w grad">vând.</span></span>`,
-    'hero.sub': `Geezfully este un studio mic care creează site-uri rapide, spectaculoase și gândite să conversească — de la primul pixel până la lansare. Construite de la zero, niciodată din șabloane. Genul de site care îți face concurența puțin nervoasă.`,
+    'hero.sub': `Geezfully este un studio mic care creează site-uri rapide, spectaculoase și gândite să convertească — de la primul pixel până la lansare. Construite de la zero, niciodată din șabloane. Genul de site care îți face concurența puțin nervoasă.`,
     'hero.cta1': `Începe un proiect`, 'hero.cta2': `Vezi lucrările`,
     'hero.meta1': `Construit de la zero`, 'hero.meta2': `Șabloane folosite`,
     'hero.meta3val': `&lt;1 săpt.`, 'hero.meta3': `Livrare tipică`, 'hero.scroll': `Derulează`,
     'marquee': `Web Design <b>✦</b> Development <b>✦</b> Branding <b>✦</b> E‑commerce <b>✦</b> Aplicații web <b>✦</b> SEO &amp; Viteză <b>✦</b> Motion <b>✦</b>`,
+    'signature.eyebrow': `Cum gândim`,
+    'signature.title': `Fiecare proiect pornește de la <span class="grad">o singură idee clară.</span>`,
+    'signature.body': `Nu umplem site-uri cu tot ce se poate — găsim ideea centrală și construim totul în jurul ei. Restul e doar zgomot.`,
     'work.eyebrow': `Proiecte selectate`,
     'work.title': `Proiecte reale. <span class="grad">Live, nu mockup-uri.</span>`,
     'work.lead': `Fiecare site de mai jos e construit de la zero și funcționează chiar acum. Treci cu mouse-ul pentru preview, dă click ca să-l deschizi.`,
@@ -47,7 +50,7 @@ const I18N = {
     'yesno.desc': `Un oracol de decizii cu patru fețe complet diferite — un aparat de forță de carnaval, un radar cosmic, un plinko de gameshow și o ruletă de cazino — fiecare cu animații și sunete proprii, sintetizate din zero.`,
     'services.eyebrow': `Ce facem`,
     'services.title': `Tot ce are nevoie site-ul tău, <span class="grad">într-un singur loc.</span>`,
-    'svc1.p': `Interfețe distinctive, în identitatea ta, gândite să conversească — nu doar să decoreze. Fiecare pixel își merită locul.`,
+    'svc1.p': `Interfețe distinctive, în identitatea ta, gândite să convertească — nu doar să decoreze. Fiecare pixel își merită locul.`,
     'svc2.p': `Front-end-uri scrise manual, ultra-rapide, și aplicații web complete. Curat, ușor de întreținut și cu adevărat al tău.`,
     'svc3.h3': `Branding &amp; Identitate`, 'svc3.p': `Logo, tipografie, culoare și ton care te fac instant recognoscibil și imposibil de ignorat.`,
     'svc4.h3': `Viteză &amp; SEO`, 'svc4.p': `Încărcare sub o secundă, cod curat și structură optimizată pentru căutări, ca oamenii să te găsească — și să rămână.`,
@@ -109,7 +112,7 @@ const I18N = {
   },
   en: {
     'nav.work': `Work`, 'nav.services': `Services`, 'nav.process': `Process`, 'nav.contact': `Contact`,
-    'nav.cta': `Start a project`,
+    'nav.cta': `Start a project`, 'nav.menu': `Menu`,
     'hero.eyebrow': `Web design &amp; development studio`,
     'hero.title': `<span class="line"><span class="w">We</span> <span class="w">build</span> <span class="w">websites</span></span><span class="line"><span class="w">that</span> <span class="w grad">mean</span> <span class="w grad">business.</span></span>`,
     'hero.sub': `Geezfully is a small studio crafting fast, striking, conversion‑focused websites — from first pixel to launch. Custom‑built, never templated. The kind of site that makes your competitors a little nervous.`,
@@ -117,6 +120,9 @@ const I18N = {
     'hero.meta1': `Custom‑built`, 'hero.meta2': `Templates used`,
     'hero.meta3val': `&lt;1 wk`, 'hero.meta3': `Typical delivery`, 'hero.scroll': `Scroll`,
     'marquee': `Web Design <b>✦</b> Development <b>✦</b> Branding <b>✦</b> E‑commerce <b>✦</b> Web Apps <b>✦</b> SEO &amp; Speed <b>✦</b> Motion <b>✦</b>`,
+    'signature.eyebrow': `How we think`,
+    'signature.title': `Every project starts from <span class="grad">one clear idea.</span>`,
+    'signature.body': `We don't cram in everything a site could have — we find the one idea worth building around. Everything else is just noise.`,
     'work.eyebrow': `Selected work`,
     'work.title': `Real projects. <span class="grad">Live, not mockups.</span>`,
     'work.lead': `Every site below is built from scratch and running right now. Hover to preview, click to open the real thing.`,
@@ -217,6 +223,10 @@ function applyLang(lang) {
   document.querySelectorAll('[data-i18n-ph]').forEach((el) => {
     const v = dict[el.dataset.i18nPh];
     if (v != null) el.setAttribute('placeholder', v);
+  });
+  document.querySelectorAll('[data-i18n-aria]').forEach((el) => {
+    const v = dict[el.dataset.i18nAria];
+    if (v != null) el.setAttribute('aria-label', v);
   });
   docEl.lang = lang;
   document.querySelectorAll('.lang-switch button').forEach((b) => {
@@ -482,6 +492,76 @@ function initEmbeds() {
   });
 }
 
+/* ── Ambient triangle motif — carries the signature shape into every panel ── */
+function initTriBg() {
+  const nodes = document.querySelectorAll('.tri-bg canvas');
+  if (!nodes.length) return;
+  const COLORS = ['#FF5A3C', '#FF7C54', '#FFB020', '#8B7CFF', '#2FA89A'];
+
+  function triangle(ctx, x, y, r, rot, color, alpha, lw) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    ctx.beginPath();
+    for (let i = 0; i < 3; i++) {
+      const a = (Math.PI * 2 / 3) * i - Math.PI / 2;
+      const px = Math.cos(a) * r, py = Math.sin(a) * r;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lw;
+    ctx.globalAlpha = alpha;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  const fields = Array.from(nodes).map((canvas) => {
+    const ctx = canvas.getContext('2d');
+    const field = { canvas, ctx, W: 0, H: 0, pts: [] };
+    function build() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      field.W = rect.width; field.H = rect.height;
+      canvas.width = field.W * dpr; canvas.height = field.H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const count = Math.min(46, Math.round((field.W * field.H) / 9000));
+      field.pts = Array.from({ length: count }, () => ({
+        x: Math.random() * field.W, y: Math.random() * field.H,
+        size: 5 + Math.random() * 8,
+        color: COLORS[(Math.random() * COLORS.length) | 0],
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.15 + Math.random() * 0.3,
+        amp: 6 + Math.random() * 12,
+        spin: Math.random() * Math.PI * 2,
+        alpha: 0.08 + Math.random() * 0.14,
+      }));
+    }
+    build();
+    let resizeTimer;
+    new ResizeObserver(() => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(build, 150);
+    }).observe(canvas.parentElement);
+    return field;
+  });
+
+  function renderAll(t) {
+    fields.forEach(({ ctx, W, H, pts }) => {
+      ctx.clearRect(0, 0, W, H);
+      pts.forEach((p) => {
+        const dx = Math.sin(t * p.speed + p.phase) * p.amp;
+        const dy = Math.cos(t * p.speed * 0.8 + p.phase) * p.amp;
+        triangle(ctx, p.x + dx, p.y + dy, p.size, p.spin + t * 0.1 * p.speed, p.color, p.alpha, 1);
+      });
+    });
+  }
+
+  if (reduce) { renderAll(0); return; }
+  function frame(ts) { renderAll(ts / 1000); requestAnimationFrame(frame); }
+  requestAnimationFrame(frame);
+}
+
 /* ── Boot ──────────────────────────────────────────────── */
 function boot() {
   initLenis();
@@ -493,6 +573,7 @@ function boot() {
   initAnchors();
   initEmbeds();
   initContactForm();
+  initTriBg();
   ScrollTrigger.refresh();
   setTimeout(() => {
     const pl = document.getElementById('preloader');
