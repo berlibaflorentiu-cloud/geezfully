@@ -41,13 +41,15 @@
   "description": "Custom kitchen cabinetry, handbuilt by hand — dovetail joinery, real hardwood, no shortcuts. Serving Sacramento, CA and the surrounding area.",
   "url": "https://geezfully.com/bsd",
   "image": "https://geezfully.com/bsd/images/hero.jpg",
-  "telephone": "+10000000000",
-  "email": "hello@bestsundan.com",
+  "telephone": "+19165985948",
+  "email": "Bestsundan@yahoo.com",
   "priceRange": "$$",
   "address": {
     "@type": "PostalAddress",
+    "streetAddress": "1031 Arden Way",
     "addressLocality": "Sacramento",
     "addressRegion": "CA",
+    "postalCode": "95815",
     "addressCountry": "US"
   },
   "areaServed": [
@@ -639,11 +641,15 @@
   .material-card{border:1px solid var(--line);}
   .swatch{
     height:150px;position:relative;overflow:hidden;
+    background-size:cover;
+    background-position:center;
   }
   .swatch::before{
     content:'';position:absolute;inset:0;
-    background-image:repeating-linear-gradient(100deg,rgba(0,0,0,.16) 0 2px,transparent 2px 7px);
-    mix-blend-mode:overlay;opacity:.55;
+    background:
+      linear-gradient(180deg,rgba(13,17,16,.04),rgba(13,17,16,.18)),
+      repeating-linear-gradient(100deg,rgba(0,0,0,.08) 0 1px,transparent 1px 8px);
+    mix-blend-mode:multiply;opacity:.35;
   }
   .swatch .code{
     position:absolute;top:10px;left:10px;
@@ -667,10 +673,10 @@
     font-family:'IBM Plex Mono',monospace;font-size:.66rem;color:var(--muted);
     letter-spacing:.06em;text-transform:uppercase;
   }
-  .sw-oak{background:linear-gradient(140deg,#cba36c,#8f6a3f);}
-  .sw-walnut{background:linear-gradient(140deg,#6b4226,#301d10);}
-  .sw-maple{background:linear-gradient(140deg,#e8d6ad,#b8996a);}
-  .sw-cherry{background:linear-gradient(140deg,#8a3d28,#4a1c12);}
+  .sw-oak{background-image:url("images/material-white-oak.jpg");}
+  .sw-walnut{background-image:url("images/material-black-walnut.jpg");}
+  .sw-maple{background-image:url("images/material-hard-maple.jpg");}
+  .sw-cherry{background-image:url("images/material-rift-cherry.jpg");}
   @media(max-width:560px){.material-grid{grid-template-columns:1fr;}}
 
   /* ── PROMISE ─────────────────────────────────── */
@@ -1188,25 +1194,25 @@
   <div class="wrap">
     <div class="section-head reveal">
       <p class="eyebrow">Materials</p>
-      <h2>Wood you can name, tagged the way our shop tracks it</h2>
-      <p>A starting palette — every species below can be stained, oiled, or left natural. Codes match what's on the cut list.</p>
+      <h2>Wood-look finishes with real product names</h2>
+      <p>A starting palette of Swiss Krono TFL finishes from Royal Resource. Exact selections can be reviewed against the product sample before anything is ordered.</p>
     </div>
     <div class="material-grid">
       <div class="material-card reveal">
-        <div class="swatch sw-oak"><span class="code code-oak">WO‑01</span></div>
-        <div class="mc-label"><b>White Oak</b><span>Warm, prominent grain</span></div>
+        <div class="swatch sw-oak"><span class="code code-oak">D3700 OV</span></div>
+        <div class="mc-label"><b>Vanilla Oak</b><span>Swiss Krono TFL decor</span></div>
       </div>
       <div class="material-card reveal">
-        <div class="swatch sw-walnut"><span class="code code-walnut">BW‑02</span></div>
-        <div class="mc-label"><b>Black Walnut</b><span>Deep, rich, formal</span></div>
+        <div class="swatch sw-walnut"><span class="code code-walnut">D3811 OW</span></div>
+        <div class="mc-label"><b>Venice Walnut</b><span>Swiss Krono TFL decor</span></div>
       </div>
       <div class="material-card reveal">
-        <div class="swatch sw-maple"><span class="code code-maple">HM‑03</span></div>
-        <div class="mc-label"><b>Hard Maple</b><span>Tight grain, paints clean</span></div>
+        <div class="swatch sw-maple"><span class="code code-maple">D4825 VL</span></div>
+        <div class="mc-label"><b>Sund Maple</b><span>Swiss Krono TFL decor</span></div>
       </div>
       <div class="material-card reveal">
-        <div class="swatch sw-cherry"><span class="code code-cherry">RC‑04</span></div>
-        <div class="mc-label"><b>Rift Cherry</b><span>Ages to a deep amber</span></div>
+        <div class="swatch sw-cherry"><span class="code code-cherry">D4107 CE</span></div>
+        <div class="mc-label"><b>Ash Classic Tabac</b><span>Swiss Krono TFL decor</span></div>
       </div>
     </div>
   </div>
@@ -1238,7 +1244,7 @@
           </span>
           <div>
             <b>Phone</b>
-            <a href="tel:+10000000000">(000) 000-0000</a>
+            <a href="tel:+19165985948">(916) 598-5948</a>
             <small>Call or text to start a project.</small>
           </div>
         </div>
@@ -1248,7 +1254,7 @@
           </span>
           <div>
             <b>Email</b>
-            <a href="mailto:hello@bestsundan.com">hello@bestsundan.com</a>
+            <a href="mailto:Bestsundan@yahoo.com">Bestsundan@yahoo.com</a>
             <small>Send photos, measurements, or inspiration.</small>
           </div>
         </div>
@@ -1371,7 +1377,7 @@
     </div>
   </div>
   <div class="wrap foot-legal-row">
-    <p class="foot-license">CSLB License #[INSERT CSLB LICENSE NUMBER] · Licensed, Bonded &amp; Insured in California</p>
+    <p class="foot-license">CSLB License #1140078 · Licensed, Bonded &amp; Insured in California</p>
     <div class="foot-legal-links">
       <a href="privacy.html">Privacy Policy</a>
       <a href="terms.html">Terms of Service</a>
