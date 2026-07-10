@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cabinet Catalogue | BSD Custom Cabinetry (Internal)</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
+<meta name="theme-color" content="#0D1110">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Playfair+Display:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --ink:#0D1110;--panel:#14201B;--panel-2:#1C2D26;
+    --brass:#C8A552;--brass-hi:#F1D78A;--rust:#A87B3E;--rust-hi:#D9B56D;
+    --parchment:#F4F0E5;--muted:#B9B7A8;--line:rgba(216,181,109,.22);
+    --danger:#C0574F;--danger-hi:#E38C86;
+    --tr:200ms ease;
+  }
+  html{background:var(--ink);}
+  body{
+    background:var(--ink);color:var(--parchment);font-family:'IBM Plex Sans',sans-serif;
+    font-size:15px;line-height:1.55;min-height:100vh;padding-bottom:88px;
+  }
+  h1,h2,h3{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.01em;color:var(--parchment);}
+  a{color:inherit;}
+  button,input,select{font-family:inherit;}
+
+  header{
+    position:sticky;top:0;z-index:50;
+    background:rgba(13,17,16,.94);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);padding:16px 24px;
+  }
+  .head-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;max-width:1400px;margin:0 auto;}
+  .wordmark{
+    font-family:'Playfair Display',serif;font-weight:900;font-size:1.3rem;
+    background:linear-gradient(160deg,var(--brass-hi),var(--brass) 60%,#A98C4B);
+    -webkit-background-clip:text;background-clip:text;color:transparent;text-decoration:none;
+  }
+  .tool-tag{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-left:10px;}
+  .head-actions{display:flex;align-items:center;gap:14px;}
+  .nav-back{
+    font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);text-decoration:none;transition:color var(--tr);
+  }
+  .nav-back:hover{color:var(--rust-hi);}
+  .cart-toggle{
+    display:none;align-items:center;gap:8px;
+    background:linear-gradient(180deg,var(--brass-hi),var(--brass));border:1px solid var(--rust);color:var(--ink);
+    font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
+    padding:10px 16px;cursor:pointer;
+  }
+  .cart-toggle .count{background:var(--ink);color:var(--brass-hi);border-radius:50%;min-width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:.66rem;padding:0 4px;}
+
+  .layout{
+    max-width:1400px;margin:0 auto;padding:28px 24px 0;
+    display:grid;grid-template-columns:240px 1fr 340px;gap:24px;align-items:start;
+  }
+
+  /* ── category nav ── */
+  .cat-nav{position:sticky;top:88px;border:1px solid var(--line);background:rgba(244,240,229,.02);}
+  .search-box{padding:14px;border-bottom:1px solid var(--line);}
+  .search-box input{
+    width:100%;background:var(--ink);border:1px solid var(--line);color:var(--parchment);
+    padding:10px 12px;font-size:.86rem;
+  }
+  .search-box input:focus{outline:none;border-color:var(--rust-hi);}
+  .cat-list{display:flex;flex-direction:column;max-height:calc(100vh - 200px);overflow-y:auto;}
+  .cat-list button{
+    text-align:left;background:none;border:none;border-bottom:1px solid var(--line);
+    padding:12px 14px;font-family:'IBM Plex Mono',monospace;font-size:.74rem;letter-spacing:.05em;
+    text-transform:uppercase;color:var(--muted);cursor:pointer;transition:var(--tr);
+    display:flex;justify-content:space-between;gap:8px;
+  }
+  .cat-list button:last-child{border-bottom:none;}
+  .cat-list button:hover{color:var(--parchment);background:rgba(244,240,229,.03);}
+  .cat-list button.active{color:var(--brass-hi);background:rgba(217,181,109,.08);}
+  .cat-list button .n{color:var(--muted);font-size:.68rem;}
+
+  /* ── browse area ── */
+  .browse-head{margin-bottom:18px;}
+  .browse-head p{color:var(--muted);font-size:.88rem;max-width:60ch;}
+  .sub-group{margin-bottom:30px;}
+  .sub-title{
+    font-family:'IBM Plex Mono',monospace;font-size:.78rem;letter-spacing:.06em;
+    color:var(--brass-hi);text-transform:uppercase;padding-bottom:8px;margin-bottom:12px;
+    border-bottom:1px solid var(--line);
+  }
+  .item-row{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    padding:12px 14px;border:1px solid var(--line);background:rgba(244,240,229,.02);
+    margin-bottom:8px;
+  }
+  .item-id{min-width:118px;}
+  .item-sku{font-family:'IBM Plex Mono',monospace;font-size:.86rem;color:var(--parchment);}
+  .item-width{font-size:.72rem;color:var(--muted);}
+  .item-style{
+    background:var(--ink);border:1px solid var(--line);color:var(--parchment);
+    padding:7px 8px;font-size:.76rem;min-width:150px;
+  }
+  .item-tier{
+    background:var(--ink);border:1px solid var(--line);color:var(--parchment);
+    padding:7px 8px;font-size:.76rem;min-width:190px;
+  }
+  .item-style:focus,.item-tier:focus{outline:none;border-color:var(--rust-hi);}
+  .item-price{
+    font-family:'IBM Plex Mono',monospace;font-size:.92rem;color:var(--brass-hi);
+    min-width:78px;text-align:right;
+  }
+  .item-add{
+    margin-left:auto;background:none;border:1px solid var(--rust);color:var(--brass-hi);
+    width:34px;height:34px;cursor:pointer;font-size:1.1rem;line-height:1;transition:var(--tr);flex-shrink:0;
+  }
+  .item-add:hover{background:linear-gradient(180deg,var(--brass-hi),var(--brass));color:var(--ink);}
+  .item-add.added{background:linear-gradient(180deg,var(--brass-hi),var(--brass));color:var(--ink);}
+  .no-results{color:var(--muted);padding:40px 0;text-align:center;}
+
+  select{
+    -webkit-appearance:none;appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23B9B7A8'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 8px center;padding-right:24px;
+  }
+
+  /* ── cart panel ── */
+  .cart-panel{
+    position:sticky;top:88px;border:1px solid var(--line);background:rgba(244,240,229,.025);
+    max-height:calc(100vh - 110px);display:flex;flex-direction:column;
+  }
+  .cart-head{padding:16px;border-bottom:1px solid var(--line);}
+  .cart-head h2{font-size:1rem;margin-bottom:10px;}
+  .cart-head .field{margin-bottom:8px;}
+  .cart-head label{
+    display:block;font-family:'IBM Plex Mono',monospace;font-size:.64rem;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:4px;
+  }
+  .cart-head input{
+    width:100%;background:var(--ink);border:1px solid var(--line);color:var(--parchment);
+    padding:8px 10px;font-size:.84rem;
+  }
+  .cart-head input:focus{outline:none;border-color:var(--rust-hi);}
+  .cart-items{flex:1;overflow-y:auto;padding:10px 16px;}
+  .cart-line{padding:10px 0;border-bottom:1px solid var(--line);}
+  .cart-line-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline;}
+  .cart-line-name{font-family:'IBM Plex Mono',monospace;font-size:.82rem;color:var(--parchment);}
+  .cart-line-sub{font-size:.72rem;color:var(--muted);margin-top:2px;}
+  .cart-line-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;}
+  .qty-stepper{display:flex;align-items:center;border:1px solid var(--line);}
+  .qty-stepper button{background:none;border:none;color:var(--muted);width:26px;height:26px;cursor:pointer;font-size:.9rem;}
+  .qty-stepper button:hover{color:var(--rust-hi);}
+  .qty-stepper span{width:28px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:.78rem;}
+  .cart-line-price{font-family:'IBM Plex Mono',monospace;font-size:.86rem;color:var(--brass-hi);}
+  .cart-line-rm{background:none;border:1px solid var(--line);color:var(--danger-hi);width:26px;height:26px;cursor:pointer;transition:var(--tr);flex-shrink:0;}
+  .cart-line-rm:hover{border-color:var(--danger);background:rgba(192,87,79,.1);}
+  .cart-empty{color:var(--muted);text-align:center;padding:40px 14px;font-size:.86rem;}
+  .cart-footer{border-top:1px solid var(--line);padding:14px 16px;}
+  .cart-total-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;}
+  .cart-total-row span{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+  .cart-total-row b{font-family:'Anton',sans-serif;font-size:1.6rem;color:var(--brass-hi);}
+  .cart-actions{display:flex;flex-direction:column;gap:8px;}
+
+  .btn{
+    font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
+    padding:11px 18px;border:1px solid var(--rust);color:var(--ink);cursor:pointer;text-align:center;
+    background:linear-gradient(180deg,var(--brass-hi),var(--brass));transition:var(--tr);
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn-ghost{
+    font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
+    padding:11px 18px;border:1px solid var(--line);color:var(--muted);background:none;cursor:pointer;text-align:center;transition:var(--tr);
+  }
+  .btn-ghost:hover{border-color:var(--rust-hi);color:var(--rust-hi);}
+  .btn-danger{border-color:var(--danger);color:var(--danger-hi);}
+  .btn-danger:hover{background:rgba(192,87,79,.1);}
+
+  .tier-legend{
+    display:flex;gap:16px;flex-wrap:wrap;padding:12px 14px;margin-bottom:18px;
+    border:1px solid var(--line);background:rgba(217,181,109,.05);
+    font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--muted);
+  }
+  .tier-legend b{color:var(--brass-hi);}
+
+  .copied-flash{
+    display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--brass-hi);
+    text-align:center;opacity:0;transition:opacity .25s;
+  }
+  .copied-flash.show{opacity:1;}
+
+  @media print{
+    header,.cat-nav,.tier-legend,.item-add,.cart-actions,.cart-head input,.copied-flash{display:none!important;}
+    body{background:#fff;color:#111;padding-bottom:0;}
+    .layout{grid-template-columns:1fr;display:block;}
+    .cart-panel{position:static;border:none;max-height:none;}
+    .cart-line-rm,.qty-stepper button{display:none;}
+    h1,h2,h3{color:#111;}
+    .cart-total-row b,.cart-line-price{color:#111;}
+  }
+
+  @media(max-width:1100px){
+    .layout{grid-template-columns:1fr;}
+    .cat-nav{position:static;max-height:none;}
+    .cat-list{max-height:280px;}
+    .cart-toggle{display:inline-flex;}
+    .cart-panel{
+      position:fixed;inset:0;top:0;z-index:200;max-height:none;
+      transform:translateY(100%);transition:transform 280ms cubic-bezier(.22,.61,.36,1);
+      border:none;border-top:1px solid var(--line);
+      background:var(--ink);
+    }
+    .cart-panel.open{transform:translateY(0);}
+    .cart-head{padding-top:20px;}
+    .cart-close{
+      display:block;margin-left:auto;background:none;border:1px solid var(--line);color:var(--muted);
+      width:32px;height:32px;cursor:pointer;
+    }
+  }
+  @media(min-width:1101px){.cart-close{display:none;}}
+
+  @media(max-width:640px){
+    .layout{padding:20px 16px 0;}
+    .item-row{flex-direction:column;align-items:stretch;}
+    .item-id{min-width:0;}
+    .item-style,.item-tier{width:100%;}
+    .item-price{text-align:left;}
+    .item-add{margin-left:0;width:100%;height:38px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-row">
+    <div>
+      <a href="index.html" class="wordmark">BSD</a>
+      <span class="tool-tag">Cabinet Catalogue — Internal Tool</span>
+    </div>
+    <div class="head-actions">
+      <a href="index.html" class="nav-back">&larr; Back to Site</a>
+      <button class="cart-toggle" id="cart-toggle-btn">
+        Quote <span class="count" id="cart-toggle-count">0</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ══ CATEGORY NAV ══ -->
+  <aside class="cat-nav">
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="Search SKU or name…">
+    </div>
+    <div class="cat-list" id="cat-list"></div>
+  </aside>
+
+  <!-- ══ BROWSE ══ -->
+  <main>
+    <div class="browse-head">
+      <h1 style="font-size:1.5rem;margin-bottom:6px;" id="browse-title">Catalogue</h1>
+      <p>Prices are pulled straight from the NorthPoint price book. Pick a build tier per item — Prefabricated matches the book price, Euro-Style Customized adds 10%, Full Customized adds 70%.</p>
+    </div>
+    <div class="tier-legend">
+      <span><b>Prefabricated</b> — book price</span>
+      <span><b>Euro-Style Customized</b> — +10%</span>
+      <span><b>Full Customized</b> — +70%</span>
+    </div>
+    <div id="browse-list"></div>
+  </main>
+
+  <!-- ══ CART ══ -->
+  <aside class="cart-panel" id="cart-panel">
+    <div class="cart-head">
+      <button class="cart-close" id="cart-close-btn" aria-label="Close quote panel">&#x2715;</button>
+      <h2>Client Quote</h2>
+      <div class="field">
+        <label for="client-name">Client Name</label>
+        <input type="text" id="client-name" placeholder="e.g. Johnson Residence">
+      </div>
+      <div class="field">
+        <label for="client-note">Project Note</label>
+        <input type="text" id="client-note" placeholder="e.g. Kitchen remodel, phase 1">
+      </div>
+    </div>
+    <div class="cart-items" id="cart-items"></div>
+    <div class="cart-footer">
+      <div class="cart-total-row">
+        <span>Estimate Total</span>
+        <b id="cart-total">$0</b>
+      </div>
+      <div class="cart-actions">
+        <button class="btn" id="copy-summary-btn">Copy Quote Summary</button>
+        <button class="btn-ghost" id="print-btn">Print / Save PDF</button>
+        <button class="btn-ghost btn-danger" id="clear-cart-btn">Clear Quote</button>
+        <span class="copied-flash" id="copied-flash">Copied to clipboard.</span>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<script>
+const CATALOG = [{"category":"Wall Cabinets","subsections":[{"name":"Wall Cabinets - 12\" High - 12\" Deep","items":[{"sku":"W3012","basePrice":317,"hatterasPrice":270},{"sku":"W3312","basePrice":336,"hatterasPrice":287},{"sku":"W3612","basePrice":354,"hatterasPrice":305},{"sku":"W3912","basePrice":371,"hatterasPrice":326}]},{"name":"Wall Cabinets - 15\" High - 12\" Deep","items":[{"sku":"W3015","basePrice":341,"hatterasPrice":284},{"sku":"W3315","basePrice":364,"hatterasPrice":303},{"sku":"W3615","basePrice":392,"hatterasPrice":335},{"sku":"W3915","basePrice":412,"hatterasPrice":362}]},{"name":"Wall Cabinets - 18\" High - 12\" Deep","items":[{"sku":"W2118","basePrice":276,"hatterasPrice":239},{"sku":"W2418","basePrice":318,"hatterasPrice":270},{"sku":"W3018","basePrice":358,"hatterasPrice":305},{"sku":"W3318","basePrice":403,"hatterasPrice":344},{"sku":"W3618","basePrice":421,"hatterasPrice":370},{"sku":"W3918","basePrice":438,"hatterasPrice":398}]},{"name":"Wall Cabinets - 24\" High - 12\" Deep","items":[{"sku":"W3024","basePrice":459,"hatterasPrice":405},{"sku":"W3324","basePrice":496,"hatterasPrice":438},{"sku":"W3624","basePrice":532,"hatterasPrice":473},{"sku":"W3924","basePrice":577,"hatterasPrice":512}]},{"name":"Wall Cabinets - 18\" or 24\" High - 12\" Deep","items":[{"sku":"W361824","basePrice":504,"hatterasPrice":443},{"sku":"W362424","basePrice":572,"hatterasPrice":497},{"sku":"W391824","basePrice":601,"hatterasPrice":512},{"sku":"W392424","basePrice":655,"hatterasPrice":565}]},{"name":"Wall Cabinets - 30\" High - 12\" Deep","items":[{"sku":"W0930","basePrice":271,"hatterasPrice":235},{"sku":"W1230","basePrice":300,"hatterasPrice":260},{"sku":"W1530","basePrice":332,"hatterasPrice":290},{"sku":"W1830","basePrice":366,"hatterasPrice":322},{"sku":"W2130","basePrice":422,"hatterasPrice":367},{"sku":"W2430","basePrice":487,"hatterasPrice":421},{"sku":"W2730","basePrice":524,"hatterasPrice":467},{"sku":"W3030","basePrice":556,"hatterasPrice":489},{"sku":"W3330","basePrice":590,"hatterasPrice":512},{"sku":"W3630","basePrice":631,"hatterasPrice":545},{"sku":"W3930","basePrice":672,"hatterasPrice":579},{"sku":"W4230","basePrice":718,"hatterasPrice":625}]},{"name":"Wall Cabinets - 36\" High - 12\" Deep","items":[{"sku":"W0936","basePrice":294,"hatterasPrice":253},{"sku":"W1236","basePrice":330,"hatterasPrice":282},{"sku":"W1536","basePrice":371,"hatterasPrice":313},{"sku":"W1836","basePrice":416,"hatterasPrice":350},{"sku":"W2136","basePrice":470,"hatterasPrice":398},{"sku":"W2436","basePrice":521,"hatterasPrice":450},{"sku":"W2736","basePrice":563,"hatterasPrice":510},{"sku":"W3036","basePrice":609,"hatterasPrice":548},{"sku":"W3336","basePrice":657,"hatterasPrice":588},{"sku":"W3636","basePrice":698,"hatterasPrice":618},{"sku":"W3936","basePrice":738,"hatterasPrice":653},{"sku":"W4236","basePrice":783,"hatterasPrice":690}]},{"name":"Wall Cabinets - 42\" High - 12\" Deep","items":[{"sku":"W0942","basePrice":339,"hatterasPrice":303},{"sku":"W1242","basePrice":381,"hatterasPrice":338},{"sku":"W1542","basePrice":429,"hatterasPrice":385},{"sku":"W1842","basePrice":485,"hatterasPrice":441},{"sku":"W2142","basePrice":546,"hatterasPrice":493},{"sku":"W2442","basePrice":617,"hatterasPrice":547},{"sku":"W2742","basePrice":667,"hatterasPrice":590},{"sku":"W3042","basePrice":717,"hatterasPrice":634},{"sku":"W3342","basePrice":763,"hatterasPrice":665},{"sku":"W3642","basePrice":808,"hatterasPrice":698},{"sku":"W3942","basePrice":851,"hatterasPrice":731},{"sku":"W4242","basePrice":898,"hatterasPrice":761}]},{"name":"Wall Cabinets - Diagonal Corner - 12\" or 15\" Deep","items":[{"sku":"WDC2430","basePrice":681,"hatterasPrice":575},{"sku":"WDC2436","basePrice":788,"hatterasPrice":684},{"sku":"WDC273615","basePrice":818,"hatterasPrice":709},{"sku":"WDC2442","basePrice":921,"hatterasPrice":781},{"sku":"WDC274215","basePrice":981,"hatterasPrice":848}]},{"name":"Wall Cabinets - Blind Corner - 12\" Deep","items":[{"sku":"WBC30-3330U","basePrice":581,"hatterasPrice":509,"widthHint":"30\""},{"sku":"WBC30-3336U","basePrice":656,"hatterasPrice":567,"widthHint":"30\""},{"sku":"WBC30-3342U","basePrice":741,"hatterasPrice":649,"widthHint":"30\""}]},{"name":"Wall Cabinets - End - 12\" Deep","items":[{"sku":"WEC1230","basePrice":285,"hatterasPrice":251},{"sku":"WEC1236","basePrice":321,"hatterasPrice":282},{"sku":"WEC1242","basePrice":365,"hatterasPrice":321}]},{"name":"Wall Cabinets with Glass Door - 30\" High - 12\" Deep","items":[{"sku":"W1530MI","basePrice":353},{"sku":"W1830MI","basePrice":396},{"sku":"W3030MI","basePrice":591},{"sku":"W3630MI","basePrice":676}]},{"name":"Wall Cabinets with Glass Door - 36\" High - 12\" Deep","items":[{"sku":"W1536MI","basePrice":402},{"sku":"W1836MI","basePrice":447},{"sku":"W3036MI","basePrice":664},{"sku":"W3636MI","basePrice":762}]},{"name":"Wall Cabinets with Glass Door - 42\" High - 12\" Deep","items":[{"sku":"W1542MI","basePrice":459},{"sku":"W1842MI","basePrice":529},{"sku":"W3042MI","basePrice":753},{"sku":"W3642MI","basePrice":869}]},{"name":"Wall Diagonal Corner with Glass Door - 12\" or 15\" Deep","items":[{"sku":"WDC2430MI","basePrice":786},{"sku":"WDC2436MI","basePrice":883},{"sku":"WDC273615MI","basePrice":931},{"sku":"WDC2442MI","basePrice":1054},{"sku":"WDC274215MI","basePrice":1108}]}]},{"category":"Base Cabinets","subsections":[{"name":"Base Cabinets - Full Height Door - 34-1/2\" High - 24\" Deep","items":[{"sku":"BFH09","basePrice":408,"hatterasPrice":351,"widthHint":"09\""},{"sku":"BFH12","basePrice":442,"hatterasPrice":380,"widthHint":"12\""},{"sku":"BFH15","basePrice":480,"hatterasPrice":413,"widthHint":"15\""},{"sku":"BFH18","basePrice":523,"hatterasPrice":449,"widthHint":"18\""}]},{"name":"Base Cabinets - Drawer/door - 34-1/2\" High - 24\" Deep","items":[{"sku":"B12","basePrice":507,"hatterasPrice":444,"widthHint":"12\""},{"sku":"B15","basePrice":552,"hatterasPrice":477,"widthHint":"15\""},{"sku":"B18","basePrice":600,"hatterasPrice":519,"widthHint":"18\""},{"sku":"B21","basePrice":652,"hatterasPrice":561,"widthHint":"21\""},{"sku":"B24","basePrice":718,"hatterasPrice":609,"widthHint":"24\""},{"sku":"B27","basePrice":776,"hatterasPrice":668,"widthHint":"27\""},{"sku":"DB12-3","basePrice":779,"hatterasPrice":665,"widthHint":"12\""},{"sku":"B30","basePrice":844,"hatterasPrice":728,"widthHint":"30\""},{"sku":"DB15-3","basePrice":850,"hatterasPrice":724,"widthHint":"15\""},{"sku":"B33","basePrice":915,"hatterasPrice":767,"widthHint":"33\""},{"sku":"DB18-3","basePrice":923,"hatterasPrice":789,"widthHint":"18\""},{"sku":"B36","basePrice":966,"hatterasPrice":819,"widthHint":"36\""},{"sku":"DB21-3","basePrice":992,"hatterasPrice":857,"widthHint":"21\""},{"sku":"B39","basePrice":1013,"hatterasPrice":862,"widthHint":"39\""},{"sku":"DB30-2","basePrice":1051,"hatterasPrice":901,"widthHint":"30\""},{"sku":"DB24-3","basePrice":1056,"hatterasPrice":917,"widthHint":"24\""},{"sku":"B42","basePrice":1065,"hatterasPrice":922,"widthHint":"42\""},{"sku":"DB30-3","basePrice":1135,"hatterasPrice":986,"widthHint":"30\""},{"sku":"DB36-2","basePrice":1174,"hatterasPrice":1006,"widthHint":"36\""},{"sku":"DB36-3","basePrice":1361,"hatterasPrice":1160,"widthHint":"36\""}]},{"name":"Sink Base - 34-1/2\" High - 24\" Deep","items":[{"sku":"SB30","basePrice":650,"hatterasPrice":562,"widthHint":"30\""},{"sku":"SB33","basePrice":686,"hatterasPrice":599,"widthHint":"33\""},{"sku":"SB36","basePrice":736,"hatterasPrice":649,"widthHint":"36\""},{"sku":"SB39","basePrice":777,"hatterasPrice":675,"widthHint":"39\""}]},{"name":"Farm Sink Base - 34-1/2\" High - 24\" Deep","items":[{"sku":"SBF36","basePrice":771,"hatterasPrice":659,"widthHint":"36\""},{"sku":"SBF39","basePrice":820,"hatterasPrice":699,"widthHint":"39\""}]},{"name":"Sink Front Corner Diagonal","items":[{"sku":"SFCD42","basePrice":420,"hatterasPrice":371,"widthHint":"42\""}]},{"name":"Base Corner - 34-1/2\" High - 24\" Deep","items":[{"sku":"BC33U","basePrice":952,"hatterasPrice":829,"widthHint":"33\""},{"sku":"BC36U","basePrice":1039,"hatterasPrice":889,"widthHint":"36\""}]},{"name":"Base Blind Corner - 34-1/2\" High - 24\" Deep","items":[{"sku":"BBC39-42U","basePrice":871,"hatterasPrice":761,"widthHint":"39\""},{"sku":"BBC42-45U","basePrice":917,"hatterasPrice":796,"widthHint":"42\""},{"sku":"BBC45-48U","basePrice":955,"hatterasPrice":830,"widthHint":"45\""}]}]},{"category":"Pantry Cabinets","subsections":[{"name":"Pantry Cabinet - 24\" Deep","items":[{"sku":"UP1884","basePrice":1313,"hatterasPrice":1146},{"sku":"UP1890","basePrice":1388,"hatterasPrice":1204},{"sku":"UP1896","basePrice":1455,"hatterasPrice":1274},{"sku":"UP2484","basePrice":1521,"hatterasPrice":1332},{"sku":"UP2490","basePrice":1585,"hatterasPrice":1389},{"sku":"UP2496","basePrice":1680,"hatterasPrice":1466},{"sku":"UP3084","basePrice":1723,"hatterasPrice":1531},{"sku":"UP3090","basePrice":1781,"hatterasPrice":1584},{"sku":"UP3096","basePrice":1884,"hatterasPrice":1626}]}]},{"category":"Oven Cabinets","subsections":[{"name":"Universal Oven Cabinet - 24\" Deep","items":[{"sku":"OVD3384U","basePrice":1777,"hatterasPrice":1594},{"sku":"OVD3390U","basePrice":1838,"hatterasPrice":1643},{"sku":"OVD3396U","basePrice":1898,"hatterasPrice":1678}]},{"name":"Universal Oven Drawer Kit","items":[{"sku":"OVD33D","basePrice":700,"hatterasPrice":600,"widthHint":"33\""}]},{"name":"Double Oven Cabinet - 24\" Deep","items":[{"sku":"OVD3384","basePrice":1777,"hatterasPrice":1594},{"sku":"OVD3390","basePrice":1838,"hatterasPrice":1643},{"sku":"OVD3396","basePrice":1898,"hatterasPrice":1678}]},{"name":"Double Oven Panel Overlay","items":[{"sku":"OVD33P","basePrice":184,"widthHint":"33\""}]}]},{"category":"Specialty Cabinets","subsections":[{"name":"Knee Drawers","items":[{"sku":"KD30","basePrice":283,"hatterasPrice":241,"widthHint":"30\""}]},{"name":"Microwave Base Cabinets - 24\" Deep","items":[{"sku":"MWB30","basePrice":843,"hatterasPrice":733,"widthHint":"30\""}]},{"name":"Microwave Cabinets - 12\" Deep","items":[{"sku":"MWC3036","basePrice":601,"hatterasPrice":520}]}]},{"category":"Vanity Cabinets","subsections":[{"name":"Vanity - Full Height Door - 34-1/2\" High - 21\" Deep","items":[{"sku":"VFH12","basePrice":375,"hatterasPrice":316,"widthHint":"12\""}]},{"name":"Vanity - 34-1/2\" High - 21\" Deep","items":[{"sku":"VB12","basePrice":479,"hatterasPrice":405,"widthHint":"12\""},{"sku":"VB15","basePrice":523,"hatterasPrice":445,"widthHint":"15\""},{"sku":"VB18","basePrice":571,"hatterasPrice":487,"widthHint":"18\""}]},{"name":"Vanity Sink Base - 34-1/2\" High - 21\" Deep","items":[{"sku":"VSB24","basePrice":581,"hatterasPrice":505,"widthHint":"24\""},{"sku":"VSB27","basePrice":613,"hatterasPrice":529,"widthHint":"27\""},{"sku":"VSB30","basePrice":644,"hatterasPrice":554,"widthHint":"30\""},{"sku":"VSB33","basePrice":679,"hatterasPrice":581,"widthHint":"33\""},{"sku":"VSB36","basePrice":715,"hatterasPrice":607,"widthHint":"36\""},{"sku":"VSB42","basePrice":773,"hatterasPrice":666,"widthHint":"42\""},{"sku":"VSB48","basePrice":842,"hatterasPrice":728,"widthHint":"48\""}]},{"name":"Vanity Sink Drawer Base - 34-1/2\" High - 21\" Deep \u2013 New","items":[{"sku":"VSDB30L","basePrice":976,"hatterasPrice":862,"widthHint":"30\""},{"sku":"VSDB30R","basePrice":976,"hatterasPrice":862,"widthHint":"30\""},{"sku":"VSDB36L","basePrice":1130,"hatterasPrice":1004,"widthHint":"36\""},{"sku":"VSDB36R","basePrice":1130,"hatterasPrice":1004,"widthHint":"36\""}]},{"name":"Vanity Three Drawer Base - 34-1/2\" High - 21\" Deep","items":[{"sku":"VDB12-3","basePrice":762,"hatterasPrice":640,"widthHint":"12\""},{"sku":"VDB15-3","basePrice":820,"hatterasPrice":698,"widthHint":"15\""},{"sku":"VBTD36","basePrice":881,"hatterasPrice":737,"widthHint":"36\""},{"sku":"VDB18-3","basePrice":883,"hatterasPrice":761,"widthHint":"18\""},{"sku":"VDB21-3","basePrice":950,"hatterasPrice":830,"widthHint":"21\""},{"sku":"VBTD42","basePrice":971,"hatterasPrice":817,"widthHint":"42\""},{"sku":"VBTD48","basePrice":1080,"hatterasPrice":911,"widthHint":"48\""}]},{"name":"Vanity - Combo - 34-1/2\" High - 21\"","items":[{"sku":"VCDB60-3","basePrice":1390,"hatterasPrice":1204,"widthHint":"60\""},{"sku":"VCDB60-6","basePrice":1803,"hatterasPrice":1506,"widthHint":"60\""}]},{"name":"Linen Cabinets - 84\" High - 21\" Deep","items":[{"sku":"VL1584","basePrice":1067,"hatterasPrice":950},{"sku":"VL1884","basePrice":1194,"hatterasPrice":1063},{"sku":"VL2484","basePrice":1435,"hatterasPrice":1271}]}]},{"category":"Accessories","subsections":[{"name":"Plate Rack","items":[{"sku":"PR3015","basePrice":420}]},{"name":"Wine Rack","items":[{"sku":"WR3015","basePrice":421}]},{"name":"Slotted Organizer","items":[{"sku":"ORG36","basePrice":223,"widthHint":"36\""}]},{"name":"Valance Arched","items":[{"sku":"VAR36","basePrice":91,"widthHint":"36\""},{"sku":"VAR48","basePrice":108,"widthHint":"48\""}]},{"name":"Valance Scalloped","items":[{"sku":"VSC48","basePrice":108,"widthHint":"48\""}]},{"name":"Range Hoods","items":[{"sku":"RHAR36","basePrice":595,"widthHint":"36\""},{"sku":"RHCL36","basePrice":610,"widthHint":"36\""}]}]},{"category":"Panels and Fillers","subsections":[{"name":"Wall End Panel - Decorative","items":[{"sku":"WDEP1230","basePrice":152},{"sku":"WDEP1236","basePrice":174},{"sku":"WDEP1242","basePrice":204}]},{"name":"Base End Panel - Decorative","items":[{"sku":"BDEP24","basePrice":306,"widthHint":"24\""}]},{"name":"Full Height Door Fronts - Decorative","items":[{"sku":"BFH09NB","basePrice":153,"widthHint":"09\""},{"sku":"BFH12NB","basePrice":184,"widthHint":"12\""},{"sku":"BFH15NB","basePrice":214,"widthHint":"15\""},{"sku":"BFH18NB","basePrice":245,"widthHint":"18\""}]},{"name":"Back Panel","items":[{"sku":"PV3648","basePrice":225},{"sku":"PH3696","basePrice":255},{"sku":"PV4896","basePrice":286}]},{"name":"Back Panel - Beaded","items":[{"sku":"PBBH4896","basePrice":340}]},{"name":"Wall End Panel","items":[{"sku":"WEP1242","basePrice":36},{"sku":"WEP1542","basePrice":40}]},{"name":"Base End Panel","items":[{"sku":"BEP24","basePrice":52,"widthHint":"24\""}]},{"name":"Tall End Panel","items":[{"sku":"TEP96","basePrice":115,"widthHint":"96\""}]},{"name":"Refrigerator End Panel","items":[{"sku":"REP24-.75","basePrice":300,"widthHint":"24\""},{"sku":"REP24-1.5","basePrice":318,"widthHint":"24\""},{"sku":"REP30-.75","basePrice":338,"widthHint":"30\""},{"sku":"REP30-1.5","basePrice":346,"widthHint":"30\""}]},{"name":"Dishwasher End Panel","items":[{"sku":"F330","basePrice":24},{"sku":"F342","basePrice":30},{"sku":"F630","basePrice":46},{"sku":"F642","basePrice":53},{"sku":"F396","basePrice":128},{"sku":"DWEP1.5","basePrice":140,"widthHint":"1\""},{"sku":"DWEP3","basePrice":144,"widthHint":"3\""},{"sku":"DWEP6","basePrice":154,"widthHint":"6\""},{"sku":"F696","basePrice":188}]},{"name":"Filler - Fluted","items":[{"sku":"FF330","basePrice":31},{"sku":"FF336","basePrice":32},{"sku":"FF342","basePrice":35},{"sku":"FF396","basePrice":136}]},{"name":"Filler - Overlay","items":[{"sku":"FO330","basePrice":31},{"sku":"FO336","basePrice":32},{"sku":"FO342","basePrice":35},{"sku":"FO630","basePrice":60},{"sku":"FO636","basePrice":66},{"sku":"FO642","basePrice":75},{"sku":"FO396","basePrice":136}]},{"name":"Base Filler","items":[{"sku":"BF3","basePrice":38,"widthHint":"3\""},{"sku":"BF6","basePrice":60,"widthHint":"6\""}]}]},{"category":"Mouldings","subsections":[{"name":"Moulding - Batten","items":[{"sku":"BM8","basePrice":41,"widthHint":"8\""}]},{"name":"Moulding - Crown","items":[{"sku":"CM8","basePrice":183,"widthHint":"8\""}]},{"name":"Moulding - Crown Angled","items":[{"sku":"CMA8","basePrice":236,"widthHint":"8\""}]},{"name":"Moulding - Crown Classic","items":[{"sku":"CMC8","basePrice":241,"widthHint":"8\""}]},{"name":"Moulding - Crown Cove","items":[{"sku":"CMV8","basePrice":236,"widthHint":"8\""}]},{"name":"Moulding - Dentil","items":[{"sku":"DM8","basePrice":49,"widthHint":"8\""}]},{"name":"Moulding - Inside Corner","items":[{"sku":"ICM8","basePrice":46,"widthHint":"8\""}]},{"name":"Moulding - Light Rail Bull Nose","items":[{"sku":"LRB8","basePrice":93,"widthHint":"8\""}]},{"name":"Moulding - Light Rail Decorative","items":[{"sku":"LRD8","basePrice":102,"widthHint":"8\""}]},{"name":"Moulding - Light Rail For Tape Lighting","items":[{"sku":"LRS8","basePrice":82,"widthHint":"8\""}]},{"name":"Moulding - Outside Corner","items":[{"sku":"OCM8","basePrice":49,"widthHint":"8\""}]},{"name":"Moulding - Quarter Round","items":[{"sku":"QR8","basePrice":42,"widthHint":"8\""}]},{"name":"Moulding - Rope","items":[{"sku":"RM8","basePrice":42,"widthHint":"8\""}]},{"name":"Moulding - Scribe","items":[{"sku":"SCM8","basePrice":41,"widthHint":"8\""}]},{"name":"Moulding - Shoe","items":[{"sku":"SHM8","basePrice":42,"widthHint":"8\""}]},{"name":"Moulding - Toekick","items":[{"sku":"TKC8","basePrice":29,"widthHint":"8\""}]},{"name":"Moulding - Furniture Base","items":[{"sku":"FB8","basePrice":238,"widthHint":"8\""}]},{"name":"Moulding - Outside Corner 135","items":[{"sku":"OCM8-135","basePrice":48,"widthHint":"8\""}]}]},{"category":"Embellishments","subsections":[{"name":"Bun Foot","items":[{"sku":"HBUNFOOT","basePrice":55},{"sku":"BUNFOOT","basePrice":62}]},{"name":"Tapered Foot","items":[{"sku":"HTFOOT","basePrice":54},{"sku":"TFOOT","basePrice":59},{"sku":"SDECOLEG","basePrice":325},{"sku":"DECOLEG","basePrice":444}]},{"name":"Vanity Trim Kit","items":[{"sku":"VTRIMKIT","basePrice":80}]},{"name":"Corbels","items":[{"sku":"CORBEL-B","basePrice":236},{"sku":"CORBEL-S","basePrice":266},{"sku":"CORBEL-LS","basePrice":392}]}]},{"category":"Organizers","subsections":[{"name":"Rollout Trays","items":[{"sku":"ROT15","basePrice":111,"midlinePrice":138,"widthHint":"15\""},{"sku":"ROT18","basePrice":139,"midlinePrice":152,"widthHint":"18\""},{"sku":"ROT21","basePrice":158,"midlinePrice":171,"widthHint":"21\""},{"sku":"ROT24","basePrice":168,"midlinePrice":189,"widthHint":"24\""},{"sku":"XROT15","basePrice":173,"midlinePrice":200,"widthHint":"15\""},{"sku":"ROT27","basePrice":187,"midlinePrice":205,"widthHint":"27\""},{"sku":"XROT18","basePrice":201,"midlinePrice":214,"widthHint":"18\""},{"sku":"ROT30","basePrice":203,"midlinePrice":223,"widthHint":"30\""},{"sku":"ROT33","basePrice":215,"midlinePrice":240,"widthHint":"33\""},{"sku":"XROT21","basePrice":220,"midlinePrice":233,"widthHint":"21\""},{"sku":"XROT24","basePrice":230,"midlinePrice":251,"widthHint":"24\""},{"sku":"XROT27","basePrice":249,"midlinePrice":267,"widthHint":"27\""},{"sku":"ROT36","basePrice":251,"midlinePrice":267,"widthHint":"36\""},{"sku":"XROT30","basePrice":265,"midlinePrice":277,"widthHint":"30\""},{"sku":"XROT33","basePrice":277,"midlinePrice":302,"widthHint":"33\""},{"sku":"XROT36","basePrice":313,"midlinePrice":329,"widthHint":"36\""}]},{"name":"Lazy Susans","items":[{"sku":"RTA-PLS28","basePrice":194,"widthHint":"28\""},{"sku":"RTA-MLS28","basePrice":219,"widthHint":"28\""},{"sku":"RTA-WLS28","basePrice":459,"widthHint":"28\""}]}]}];
+
+const TIERS = [
+  { id: 'prefab', label: 'Prefabricated', mult: 1.0 },
+  { id: 'euro',   label: 'Euro-Style Customized (+10%)', mult: 1.10 },
+  { id: 'full',   label: 'Full Customized (+70%)', mult: 1.70 }
+];
+
+(function(){
+  const CART_KEY = 'bsd-catalog-tool-cart';
+  const CLIENT_KEY = 'bsd-catalog-tool-client';
+
+  function loadCart(){
+    try { const raw = localStorage.getItem(CART_KEY); if (raw) return JSON.parse(raw); } catch(e){}
+    return [];
+  }
+  function saveCart(){ localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
+  function loadClient(){
+    try { const raw = localStorage.getItem(CLIENT_KEY); if (raw) return JSON.parse(raw); } catch(e){}
+    return { name: '', note: '' };
+  }
+  function saveClient(){ localStorage.setItem(CLIENT_KEY, JSON.stringify(client)); }
+
+  let cart = loadCart();
+  let client = loadClient();
+  let activeCategory = CATALOG[0].category;
+  let searchTerm = '';
+
+  function money(n){
+    return '$' + Math.round(n).toLocaleString('en-US');
+  }
+
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  function styleOptions(item){
+    const opts = [{ id: 'catalina', label: 'Catalina (Standard)', price: item.basePrice }];
+    if (item.mauiPrice) opts.push({ id: 'maui', label: 'Maui', price: item.mauiPrice });
+    if (item.hatterasPrice) opts.push({ id: 'hatteras', label: 'Hatteras', price: item.hatterasPrice });
+    if (item.midlinePrice) opts.push({ id: 'midline', label: 'Midline Slides', price: item.midlinePrice });
+    return opts;
+  }
+
+  function itemLookup(sku){
+    for (const cat of CATALOG) for (const sub of cat.subsections) for (const it of sub.items)
+      if (it.sku === sku) return { cat: cat.category, sub: sub.name, item: it };
+    return null;
+  }
+
+  /* ── category nav ── */
+  function renderCatNav(){
+    const list = document.getElementById('cat-list');
+    list.innerHTML = CATALOG.map(c => {
+      const count = c.subsections.reduce((s,sub) => s + sub.items.length, 0);
+      return '<button data-cat="'+escapeHtml(c.category)+'" class="'+(c.category===activeCategory && !searchTerm ? 'active' : '')+'">'+
+        '<span>'+escapeHtml(c.category)+'</span><span class="n">'+count+'</span></button>';
+    }).join('');
+  }
+
+  document.getElementById('cat-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    activeCategory = btn.dataset.cat;
+    document.getElementById('search-input').value = '';
+    searchTerm = '';
+    renderCatNav();
+    renderBrowse();
+  });
+
+  /* ── browse ── */
+  function matchesSearch(sub, item){
+    if (!searchTerm) return true;
+    const hay = (item.sku + ' ' + sub).toLowerCase();
+    return hay.includes(searchTerm);
+  }
+
+  function renderBrowse(){
+    const title = document.getElementById('browse-title');
+    const listEl = document.getElementById('browse-list');
+    let cats = CATALOG;
+    if (!searchTerm){
+      cats = CATALOG.filter(c => c.category === activeCategory);
+      title.textContent = activeCategory;
+    } else {
+      title.textContent = 'Search results for "' + searchTerm + '"';
+    }
+
+    let html = '';
+    let any = false;
+    cats.forEach(cat => {
+      cat.subsections.forEach(sub => {
+        const items = sub.items.filter(it => matchesSearch(sub.name, it));
+        if (!items.length) return;
+        any = true;
+        html += '<div class="sub-group"><div class="sub-title">'+(searchTerm ? escapeHtml(cat.category)+' — ' : '')+escapeHtml(sub.name)+'</div>';
+        items.forEach(it => {
+          const opts = styleOptions(it);
+          const inCart = cart.some(l => l.sku === it.sku);
+          html +=
+            '<div class="item-row" data-sku="'+escapeHtml(it.sku)+'">'+
+              '<div class="item-id">'+
+                '<div class="item-sku">'+escapeHtml(it.sku)+'</div>'+
+                (it.widthHint ? '<div class="item-width">'+escapeHtml(it.widthHint)+' wide</div>' : '') +
+              '</div>'+
+              (opts.length > 1
+                ? '<select class="item-style" data-role="style">'+opts.map(o=>'<option value="'+o.id+'">'+escapeHtml(o.label)+'</option>').join('')+'</select>'
+                : '') +
+              '<select class="item-tier" data-role="tier">'+TIERS.map(t=>'<option value="'+t.id+'">'+escapeHtml(t.label)+'</option>').join('')+'</select>'+
+              '<div class="item-price" data-role="price">'+money(it.basePrice)+'</div>'+
+              '<button class="item-add'+(inCart ? ' added' : '')+'" data-role="add" title="Add to quote" aria-label="Add to quote">'+(inCart ? '&#10003;' : '+')+'</button>'+
+            '</div>';
+        });
+        html += '</div>';
+      });
+    });
+    listEl.innerHTML = any ? html : '<div class="no-results">No items match your search.</div>';
+  }
+
+  document.getElementById('search-input').addEventListener('input', (e) => {
+    searchTerm = e.target.value.trim().toLowerCase();
+    renderCatNav();
+    renderBrowse();
+  });
+
+  document.getElementById('browse-list').addEventListener('change', (e) => {
+    if (!e.target.dataset.role) return;
+    const row = e.target.closest('.item-row');
+    updateRowPrice(row);
+  });
+
+  function updateRowPrice(row){
+    const sku = row.dataset.sku;
+    const found = itemLookup(sku);
+    if (!found) return;
+    const styleSel = row.querySelector('[data-role="style"]');
+    const tierSel = row.querySelector('[data-role="tier"]');
+    const opts = styleOptions(found.item);
+    const style = styleSel ? opts.find(o => o.id === styleSel.value) : opts[0];
+    const tier = TIERS.find(t => t.id === tierSel.value) || TIERS[0];
+    const price = Math.round((style ? style.price : found.item.basePrice) * tier.mult);
+    row.querySelector('[data-role="price"]').textContent = money(price);
+  }
+
+  document.getElementById('browse-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-role="add"]');
+    if (!btn) return;
+    const row = btn.closest('.item-row');
+    const sku = row.dataset.sku;
+    const found = itemLookup(sku);
+    if (!found) return;
+    const styleSel = row.querySelector('[data-role="style"]');
+    const tierSel = row.querySelector('[data-role="tier"]');
+    const opts = styleOptions(found.item);
+    const style = styleSel ? opts.find(o => o.id === styleSel.value) : opts[0];
+    const tier = TIERS.find(t => t.id === tierSel.value) || TIERS[0];
+    const unitPrice = Math.round((style ? style.price : found.item.basePrice) * tier.mult);
+
+    const lineId = sku + '|' + (style ? style.id : 'catalina') + '|' + tier.id;
+    const existing = cart.find(l => l.lineId === lineId);
+    if (existing){
+      existing.qty += 1;
+    } else {
+      cart.push({
+        lineId, sku, category: found.cat, subsection: found.sub,
+        styleLabel: style ? style.label : null, tierId: tier.id, tierLabel: tier.label,
+        unitPrice, qty: 1
+      });
+    }
+    btn.classList.add('added');
+    btn.innerHTML = '&#10003;';
+    saveCart();
+    renderCart();
+  });
+
+  /* ── cart ── */
+  function cartTotal(){
+    return cart.reduce((s,l) => s + l.unitPrice * l.qty, 0);
+  }
+
+  function renderCart(){
+    const itemsEl = document.getElementById('cart-items');
+    if (!cart.length){
+      itemsEl.innerHTML = '<div class="cart-empty">No items yet. Add cabinets from the catalogue to build a client quote.</div>';
+    } else {
+      itemsEl.innerHTML = cart.map(l => (
+        '<div class="cart-line" data-line="'+escapeHtml(l.lineId)+'">'+
+          '<div class="cart-line-top">'+
+            '<span class="cart-line-name">'+escapeHtml(l.sku)+(l.styleLabel ? ' · '+escapeHtml(l.styleLabel) : '')+'</span>'+
+            '<button class="cart-line-rm" data-role="rm" aria-label="Remove item">&#x2715;</button>'+
+          '</div>'+
+          '<div class="cart-line-sub">'+escapeHtml(l.subsection)+' — '+escapeHtml(l.tierLabel)+'</div>'+
+          '<div class="cart-line-bottom">'+
+            '<div class="qty-stepper">'+
+              '<button data-role="dec" aria-label="Decrease quantity">&minus;</button>'+
+              '<span>'+l.qty+'</span>'+
+              '<button data-role="inc" aria-label="Increase quantity">+</button>'+
+            '</div>'+
+            '<span class="cart-line-price">'+money(l.unitPrice * l.qty)+'</span>'+
+          '</div>'+
+        '</div>'
+      )).join('');
+    }
+    document.getElementById('cart-total').textContent = money(cartTotal());
+    document.getElementById('cart-toggle-count').textContent = cart.reduce((s,l)=>s+l.qty,0);
+    saveCart();
+  }
+
+  document.getElementById('cart-items').addEventListener('click', (e) => {
+    const line = e.target.closest('.cart-line');
+    if (!line) return;
+    const l = cart.find(x => x.lineId === line.dataset.line);
+    if (!l) return;
+    let skuRemoved = false;
+    if (e.target.closest('[data-role="rm"]')){
+      cart = cart.filter(x => x.lineId !== l.lineId);
+      skuRemoved = !cart.some(x => x.sku === l.sku);
+    } else if (e.target.closest('[data-role="inc"]')){
+      l.qty += 1;
+    } else if (e.target.closest('[data-role="dec"]')){
+      l.qty = Math.max(1, l.qty - 1);
+    } else {
+      return;
+    }
+    renderCart();
+    // only rebuild the browse list (which resets in-progress dropdown picks)
+    // when a SKU's "added" checkmark state actually needs to flip back off
+    if (skuRemoved) renderBrowse();
+  });
+
+  document.getElementById('client-name').addEventListener('input', (e) => { client.name = e.target.value; saveClient(); });
+  document.getElementById('client-note').addEventListener('input', (e) => { client.note = e.target.value; saveClient(); });
+
+  document.getElementById('clear-cart-btn').addEventListener('click', () => {
+    if (cart.length && !confirm('Clear all items in this quote? This can\'t be undone.')) return;
+    cart = [];
+    renderCart();
+    renderBrowse();
+  });
+
+  document.getElementById('print-btn').addEventListener('click', () => window.print());
+
+  document.getElementById('copy-summary-btn').addEventListener('click', () => {
+    if (!cart.length){ return; }
+    const lines = [];
+    lines.push('BSD Custom Cabinetry — Estimate');
+    if (client.name) lines.push('Client: ' + client.name);
+    if (client.note) lines.push('Note: ' + client.note);
+    lines.push('');
+    cart.forEach(l => {
+      lines.push(
+        l.sku + (l.styleLabel ? ' (' + l.styleLabel + ')' : '') + ' — ' + l.tierLabel +
+        '  x' + l.qty + '  ' + money(l.unitPrice) + ' ea  =  ' + money(l.unitPrice * l.qty)
+      );
+    });
+    lines.push('');
+    lines.push('Estimate Total: ' + money(cartTotal()));
+    const text = lines.join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+      const flash = document.getElementById('copied-flash');
+      flash.classList.add('show');
+      setTimeout(() => flash.classList.remove('show'), 1800);
+    });
+  });
+
+  /* ── mobile cart drawer ── */
+  const cartPanel = document.getElementById('cart-panel');
+  document.getElementById('cart-toggle-btn').addEventListener('click', () => {
+    cartPanel.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  });
+  document.getElementById('cart-close-btn').addEventListener('click', () => {
+    cartPanel.classList.remove('open');
+    document.body.style.overflow = '';
+  });
+
+  /* ── init ── */
+  document.getElementById('client-name').value = client.name || '';
+  document.getElementById('client-note').value = client.note || '';
+  renderCatNav();
+  renderBrowse();
+  renderCart();
+})();
+</script>
+
+</body>
+</html>
