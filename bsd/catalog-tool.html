@@ -13,6 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Playfair+Display:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
   :root{
@@ -44,11 +45,28 @@
   }
   .tool-tag{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-left:10px;}
   .head-actions{display:flex;align-items:center;gap:14px;}
-  .nav-back{
-    font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
-    color:var(--muted);text-decoration:none;transition:color var(--tr);
+  .page-nav{display:flex;gap:8px;}
+  .page-nav button{
+    background:none;border:1px solid var(--line);color:var(--muted);
+    font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;
+    padding:9px 14px;cursor:pointer;transition:var(--tr);
   }
-  .nav-back:hover{color:var(--rust-hi);}
+  .page-nav button.active{color:var(--brass-hi);border-color:var(--rust-hi);background:rgba(217,181,109,.08);}
+  .page-nav button:hover:not(.active){color:var(--parchment);}
+  .user-chip{
+    display:flex;align-items:center;gap:10px;
+    font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--muted);
+  }
+  .user-chip b{
+    color:var(--parchment);font-weight:500;
+    max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .logout-btn{
+    background:none;border:1px solid var(--line);color:var(--muted);
+    font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;
+    padding:8px 12px;cursor:pointer;transition:var(--tr);
+  }
+  .logout-btn:hover{color:var(--danger-hi);border-color:var(--danger);}
   .cart-toggle{
     display:none;align-items:center;gap:8px;
     background:linear-gradient(180deg,var(--brass-hi),var(--brass));border:1px solid var(--rust);color:var(--ink);
@@ -315,19 +333,100 @@
     .item-style,.item-tier{width:100%;}
     .item-price{text-align:left;}
     .item-add{margin-left:0;width:100%;height:38px;}
+    .head-actions{width:100%;flex-wrap:wrap;gap:10px;}
+    .user-chip{width:100%;justify-content:space-between;}
+    .user-chip b{max-width:none;flex:1;}
+    .cart-toggle{margin-left:auto;}
   }
+
+  /* ── auth screen ── */
+  #auth-screen{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+  }
+  .auth-card{
+    width:100%;max-width:380px;border:1px solid var(--line);background:rgba(244,240,229,.02);
+    padding:36px 32px;
+  }
+  .auth-card .wordmark{display:block;font-size:2rem;text-align:center;margin-bottom:4px;}
+  .auth-sub{
+    text-align:center;font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:28px;
+  }
+  .auth-field{margin-bottom:16px;}
+  .auth-field label{
+    display:block;font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:6px;
+  }
+  .auth-field input{
+    width:100%;background:var(--ink);border:1px solid var(--line);color:var(--parchment);
+    padding:11px 12px;font-size:.9rem;
+  }
+  .auth-field input:focus{outline:none;border-color:var(--rust-hi);}
+  .auth-submit{width:100%;margin-top:6px;}
+  .auth-msg{margin-top:14px;font-size:.82rem;text-align:center;min-height:1.2em;}
+  .auth-msg.error{color:var(--danger-hi);}
+  .auth-msg.success{color:var(--brass-hi);}
+  .auth-forgot{
+    display:block;text-align:center;margin-top:18px;font-family:'IBM Plex Mono',monospace;
+    font-size:.7rem;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer;background:none;border:none;
+  }
+  .auth-forgot:hover{color:var(--rust-hi);}
+  #app-shell{display:none;}
+  #app-shell.ready{display:block;}
+
+  /* ── saved quotes page ── */
+  .saved-wrap{max-width:1000px;margin:0 auto;padding:28px 24px 60px;}
+  .saved-list{display:flex;flex-direction:column;gap:12px;margin-top:20px;}
+  .saved-card{
+    border:1px solid var(--line);background:rgba(244,240,229,.02);
+    padding:16px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  }
+  .saved-card-info{flex:1;min-width:200px;}
+  .saved-card-name{font-family:'Anton',sans-serif;font-size:1.05rem;color:var(--parchment);}
+  .saved-card-meta{font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--muted);margin-top:4px;}
+  .saved-card-total{font-family:'IBM Plex Mono',monospace;font-size:1rem;color:var(--brass-hi);}
+  .saved-card-actions{display:flex;gap:8px;}
+  .saved-empty{color:var(--muted);text-align:center;padding:60px 0;border:1px dashed var(--line);}
+  .saved-loading{color:var(--muted);text-align:center;padding:40px 0;}
 </style>
 </head>
 <body>
 
+<div id="auth-screen">
+  <div class="auth-card">
+    <span class="wordmark">BSD</span>
+    <p class="auth-sub">Cabinet Catalogue — Log In</p>
+    <div class="auth-field">
+      <label for="auth-email">Email</label>
+      <input type="email" id="auth-email" autocomplete="email">
+    </div>
+    <div class="auth-field">
+      <label for="auth-password">Password</label>
+      <input type="password" id="auth-password" autocomplete="current-password">
+    </div>
+    <button class="btn auth-submit" id="auth-login-btn">Log In</button>
+    <p class="auth-msg" id="auth-msg"></p>
+    <button type="button" class="auth-forgot" id="auth-forgot-btn">Forgot password?</button>
+  </div>
+</div>
+
+<div id="app-shell">
+
 <header>
   <div class="head-row">
     <div>
-      <a href="index.html" class="wordmark">BSD</a>
+      <span class="wordmark">BSD</span>
       <span class="tool-tag">Cabinet Catalogue — Internal Tool</span>
     </div>
     <div class="head-actions">
-      <a href="index.html" class="nav-back">&larr; Back to Site</a>
+      <div class="page-nav">
+        <button class="active" id="nav-catalogue-btn">Catalogue</button>
+        <button id="nav-saved-btn">Saved Quotes</button>
+      </div>
+      <div class="user-chip">
+        <b id="user-email"></b>
+        <button class="logout-btn" id="logout-btn">Log Out</button>
+      </div>
       <button class="cart-toggle" id="cart-toggle-btn">
         Quote <span class="count" id="cart-toggle-count">0</span>
       </button>
@@ -335,7 +434,7 @@
   </div>
 </header>
 
-<div class="layout">
+<div class="layout" id="page-catalogue">
 
   <!-- ══ CATEGORY NAV ══ -->
   <aside class="cat-nav">
@@ -390,6 +489,14 @@
 
 </div>
 
+<div class="saved-wrap" id="page-saved" style="display:none;">
+  <h1 style="font-size:1.5rem;margin-bottom:6px;">Saved Quotes</h1>
+  <p style="color:var(--muted);font-size:.88rem;">Estimates you've saved to a client. Reopen any of them to view, print, or download again.</p>
+  <div class="saved-list" id="saved-list">
+    <div class="saved-loading">Loading…</div>
+  </div>
+</div>
+
 <div class="lightbox" id="lightbox">
   <button class="lightbox-close" id="lightbox-close" aria-label="Close image">&#x2715;</button>
   <img id="lightbox-img" src="" alt="">
@@ -400,15 +507,19 @@
   <div class="doc-modal-bar">
     <h2>Estimate Preview</h2>
     <div class="doc-modal-actions">
-      <button class="btn" id="doc-download-btn">Download PDF</button>
+      <button class="btn" id="doc-save-btn">Save to Quotes</button>
+      <button class="btn-ghost" id="doc-download-btn">Download PDF</button>
       <button class="btn-ghost" id="doc-print-btn">Print</button>
       <button class="doc-modal-close" id="doc-modal-close" aria-label="Close preview">&#x2715;</button>
     </div>
   </div>
   <div class="doc-modal-scroll">
     <div class="doc-page" id="doc-page"></div>
+    <p class="copied-flash" id="doc-save-flash" style="text-align:center;margin-top:12px;">Saved.</p>
   </div>
 </div>
+
+</div><!-- /#app-shell -->
 
 <script>
 const CATALOG = [{"category":"Wall Cabinets","subsections":[{"name":"Wall Cabinets - 12\" High - 12\" Deep","items":[{"sku":"W3012","basePrice":317,"hatterasPrice":270},{"sku":"W3312","basePrice":336,"hatterasPrice":287},{"sku":"W3612","basePrice":354,"hatterasPrice":305},{"sku":"W3912","basePrice":371,"hatterasPrice":326}],"image":"wall-12h-12d.png"},{"name":"Wall Cabinets - 15\" High - 12\" Deep","items":[{"sku":"W3015","basePrice":341,"hatterasPrice":284},{"sku":"W3315","basePrice":364,"hatterasPrice":303},{"sku":"W3615","basePrice":392,"hatterasPrice":335},{"sku":"W3915","basePrice":412,"hatterasPrice":362}],"image":"wall-15h-12d.png"},{"name":"Wall Cabinets - 18\" High - 12\" Deep","items":[{"sku":"W2118","basePrice":276,"hatterasPrice":239},{"sku":"W2418","basePrice":318,"hatterasPrice":270},{"sku":"W3018","basePrice":358,"hatterasPrice":305},{"sku":"W3318","basePrice":403,"hatterasPrice":344},{"sku":"W3618","basePrice":421,"hatterasPrice":370},{"sku":"W3918","basePrice":438,"hatterasPrice":398}],"image":"wall-18h-12d.png"},{"name":"Wall Cabinets - 24\" High - 12\" Deep","items":[{"sku":"W3024","basePrice":459,"hatterasPrice":405},{"sku":"W3324","basePrice":496,"hatterasPrice":438},{"sku":"W3624","basePrice":532,"hatterasPrice":473},{"sku":"W3924","basePrice":577,"hatterasPrice":512}],"image":"wall-24h-12d.png"},{"name":"Wall Cabinets - 18\" or 24\" High - 12\" Deep","items":[{"sku":"W361824","basePrice":504,"hatterasPrice":443},{"sku":"W362424","basePrice":572,"hatterasPrice":497},{"sku":"W391824","basePrice":601,"hatterasPrice":512},{"sku":"W392424","basePrice":655,"hatterasPrice":565}],"image":"wall-18or24h-12d.png"},{"name":"Wall Cabinets - 30\" High - 12\" Deep","items":[{"sku":"W0930","basePrice":271,"hatterasPrice":235},{"sku":"W1230","basePrice":300,"hatterasPrice":260},{"sku":"W1530","basePrice":332,"hatterasPrice":290},{"sku":"W1830","basePrice":366,"hatterasPrice":322},{"sku":"W2130","basePrice":422,"hatterasPrice":367},{"sku":"W2430","basePrice":487,"hatterasPrice":421},{"sku":"W2730","basePrice":524,"hatterasPrice":467},{"sku":"W3030","basePrice":556,"hatterasPrice":489},{"sku":"W3330","basePrice":590,"hatterasPrice":512},{"sku":"W3630","basePrice":631,"hatterasPrice":545},{"sku":"W3930","basePrice":672,"hatterasPrice":579},{"sku":"W4230","basePrice":718,"hatterasPrice":625}],"image":"wall-30h-12d.png"},{"name":"Wall Cabinets - 36\" High - 12\" Deep","items":[{"sku":"W0936","basePrice":294,"hatterasPrice":253},{"sku":"W1236","basePrice":330,"hatterasPrice":282},{"sku":"W1536","basePrice":371,"hatterasPrice":313},{"sku":"W1836","basePrice":416,"hatterasPrice":350},{"sku":"W2136","basePrice":470,"hatterasPrice":398},{"sku":"W2436","basePrice":521,"hatterasPrice":450},{"sku":"W2736","basePrice":563,"hatterasPrice":510},{"sku":"W3036","basePrice":609,"hatterasPrice":548},{"sku":"W3336","basePrice":657,"hatterasPrice":588},{"sku":"W3636","basePrice":698,"hatterasPrice":618},{"sku":"W3936","basePrice":738,"hatterasPrice":653},{"sku":"W4236","basePrice":783,"hatterasPrice":690}],"image":"wall-36h-12d.png"},{"name":"Wall Cabinets - 42\" High - 12\" Deep","items":[{"sku":"W0942","basePrice":339,"hatterasPrice":303},{"sku":"W1242","basePrice":381,"hatterasPrice":338},{"sku":"W1542","basePrice":429,"hatterasPrice":385},{"sku":"W1842","basePrice":485,"hatterasPrice":441},{"sku":"W2142","basePrice":546,"hatterasPrice":493},{"sku":"W2442","basePrice":617,"hatterasPrice":547},{"sku":"W2742","basePrice":667,"hatterasPrice":590},{"sku":"W3042","basePrice":717,"hatterasPrice":634},{"sku":"W3342","basePrice":763,"hatterasPrice":665},{"sku":"W3642","basePrice":808,"hatterasPrice":698},{"sku":"W3942","basePrice":851,"hatterasPrice":731},{"sku":"W4242","basePrice":898,"hatterasPrice":761}],"image":"wall-42h-12d.png"},{"name":"Wall Cabinets - Diagonal Corner - 12\" or 15\" Deep","items":[{"sku":"WDC2430","basePrice":681,"hatterasPrice":575},{"sku":"WDC2436","basePrice":788,"hatterasPrice":684},{"sku":"WDC273615","basePrice":818,"hatterasPrice":709},{"sku":"WDC2442","basePrice":921,"hatterasPrice":781},{"sku":"WDC274215","basePrice":981,"hatterasPrice":848}],"image":"wall-diagonal-corner.png"},{"name":"Wall Cabinets - Blind Corner - 12\" Deep","items":[{"sku":"WBC30-3330U","basePrice":581,"hatterasPrice":509,"widthHint":"30\""},{"sku":"WBC30-3336U","basePrice":656,"hatterasPrice":567,"widthHint":"30\""},{"sku":"WBC30-3342U","basePrice":741,"hatterasPrice":649,"widthHint":"30\""}],"image":"wall-blind-corner.png"},{"name":"Wall Cabinets - End - 12\" Deep","items":[{"sku":"WEC1230","basePrice":285,"hatterasPrice":251},{"sku":"WEC1236","basePrice":321,"hatterasPrice":282},{"sku":"WEC1242","basePrice":365,"hatterasPrice":321}],"image":"wall-end.png"},{"name":"Wall Cabinets with Glass Door - 30\" High - 12\" Deep","items":[{"sku":"W1530MI","basePrice":353},{"sku":"W1830MI","basePrice":396},{"sku":"W3030MI","basePrice":591},{"sku":"W3630MI","basePrice":676}],"image":"wall-glass-30h.png"},{"name":"Wall Cabinets with Glass Door - 36\" High - 12\" Deep","items":[{"sku":"W1536MI","basePrice":402},{"sku":"W1836MI","basePrice":447},{"sku":"W3036MI","basePrice":664},{"sku":"W3636MI","basePrice":762}],"image":"wall-glass-36h.png"},{"name":"Wall Cabinets with Glass Door - 42\" High - 12\" Deep","items":[{"sku":"W1542MI","basePrice":459},{"sku":"W1842MI","basePrice":529},{"sku":"W3042MI","basePrice":753},{"sku":"W3642MI","basePrice":869}],"image":"wall-glass-42h.png"},{"name":"Wall Diagonal Corner with Glass Door - 12\" or 15\" Deep","items":[{"sku":"WDC2430MI","basePrice":786},{"sku":"WDC2436MI","basePrice":883},{"sku":"WDC273615MI","basePrice":931},{"sku":"WDC2442MI","basePrice":1054},{"sku":"WDC274215MI","basePrice":1108}],"image":"wall-diagonal-corner.png"}]},{"category":"Base Cabinets","subsections":[{"name":"Base Cabinets - Full Height Door - 34-1/2\" High - 24\" Deep","items":[{"sku":"BFH09","basePrice":408,"hatterasPrice":351,"widthHint":"09\""},{"sku":"BFH12","basePrice":442,"hatterasPrice":380,"widthHint":"12\""},{"sku":"BFH15","basePrice":480,"hatterasPrice":413,"widthHint":"15\""},{"sku":"BFH18","basePrice":523,"hatterasPrice":449,"widthHint":"18\""}],"image":"base-full-height-door.png"},{"name":"Base Cabinets - Drawer/door - 34-1/2\" High - 24\" Deep","items":[{"sku":"B12","basePrice":507,"hatterasPrice":444,"widthHint":"12\""},{"sku":"B15","basePrice":552,"hatterasPrice":477,"widthHint":"15\""},{"sku":"B18","basePrice":600,"hatterasPrice":519,"widthHint":"18\""},{"sku":"B21","basePrice":652,"hatterasPrice":561,"widthHint":"21\""},{"sku":"B24","basePrice":718,"hatterasPrice":609,"widthHint":"24\""},{"sku":"B27","basePrice":776,"hatterasPrice":668,"widthHint":"27\""},{"sku":"DB12-3","basePrice":779,"hatterasPrice":665,"widthHint":"12\""},{"sku":"B30","basePrice":844,"hatterasPrice":728,"widthHint":"30\""},{"sku":"DB15-3","basePrice":850,"hatterasPrice":724,"widthHint":"15\""},{"sku":"B33","basePrice":915,"hatterasPrice":767,"widthHint":"33\""},{"sku":"DB18-3","basePrice":923,"hatterasPrice":789,"widthHint":"18\""},{"sku":"B36","basePrice":966,"hatterasPrice":819,"widthHint":"36\""},{"sku":"DB21-3","basePrice":992,"hatterasPrice":857,"widthHint":"21\""},{"sku":"B39","basePrice":1013,"hatterasPrice":862,"widthHint":"39\""},{"sku":"DB30-2","basePrice":1051,"hatterasPrice":901,"widthHint":"30\""},{"sku":"DB24-3","basePrice":1056,"hatterasPrice":917,"widthHint":"24\""},{"sku":"B42","basePrice":1065,"hatterasPrice":922,"widthHint":"42\""},{"sku":"DB30-3","basePrice":1135,"hatterasPrice":986,"widthHint":"30\""},{"sku":"DB36-2","basePrice":1174,"hatterasPrice":1006,"widthHint":"36\""},{"sku":"DB36-3","basePrice":1361,"hatterasPrice":1160,"widthHint":"36\""}],"image":"base-drawer-door.png"},{"name":"Sink Base - 34-1/2\" High - 24\" Deep","items":[{"sku":"SB30","basePrice":650,"hatterasPrice":562,"widthHint":"30\""},{"sku":"SB33","basePrice":686,"hatterasPrice":599,"widthHint":"33\""},{"sku":"SB36","basePrice":736,"hatterasPrice":649,"widthHint":"36\""},{"sku":"SB39","basePrice":777,"hatterasPrice":675,"widthHint":"39\""}],"image":"base-sink.png"},{"name":"Farm Sink Base - 34-1/2\" High - 24\" Deep","items":[{"sku":"SBF36","basePrice":771,"hatterasPrice":659,"widthHint":"36\""},{"sku":"SBF39","basePrice":820,"hatterasPrice":699,"widthHint":"39\""}],"image":"base-farm-sink.png"},{"name":"Sink Front Corner Diagonal","items":[{"sku":"SFCD42","basePrice":420,"hatterasPrice":371,"widthHint":"42\""}],"image":"base-sink-corner-diagonal.png"},{"name":"Base Corner - 34-1/2\" High - 24\" Deep","items":[{"sku":"BC33U","basePrice":952,"hatterasPrice":829,"widthHint":"33\""},{"sku":"BC36U","basePrice":1039,"hatterasPrice":889,"widthHint":"36\""}],"image":"base-corner.png"},{"name":"Base Blind Corner - 34-1/2\" High - 24\" Deep","items":[{"sku":"BBC39-42U","basePrice":871,"hatterasPrice":761,"widthHint":"39\""},{"sku":"BBC42-45U","basePrice":917,"hatterasPrice":796,"widthHint":"42\""},{"sku":"BBC45-48U","basePrice":955,"hatterasPrice":830,"widthHint":"45\""}],"image":"base-blind-corner.png"}]},{"category":"Pantry Cabinets","subsections":[{"name":"Pantry Cabinet - 24\" Deep","items":[{"sku":"UP1884","basePrice":1313,"hatterasPrice":1146},{"sku":"UP1890","basePrice":1388,"hatterasPrice":1204},{"sku":"UP1896","basePrice":1455,"hatterasPrice":1274},{"sku":"UP2484","basePrice":1521,"hatterasPrice":1332},{"sku":"UP2490","basePrice":1585,"hatterasPrice":1389},{"sku":"UP2496","basePrice":1680,"hatterasPrice":1466},{"sku":"UP3084","basePrice":1723,"hatterasPrice":1531},{"sku":"UP3090","basePrice":1781,"hatterasPrice":1584},{"sku":"UP3096","basePrice":1884,"hatterasPrice":1626}],"image":"pantry-24d.png"}]},{"category":"Oven Cabinets","subsections":[{"name":"Universal Oven Cabinet - 24\" Deep","items":[{"sku":"OVD3384U","basePrice":1777,"hatterasPrice":1594},{"sku":"OVD3390U","basePrice":1838,"hatterasPrice":1643},{"sku":"OVD3396U","basePrice":1898,"hatterasPrice":1678}],"image":"oven-universal.png"},{"name":"Universal Oven Drawer Kit","items":[{"sku":"OVD33D","basePrice":700,"hatterasPrice":600,"widthHint":"33\""}],"image":"oven-drawer-kit.png"},{"name":"Double Oven Cabinet - 24\" Deep","items":[{"sku":"OVD3384","basePrice":1777,"hatterasPrice":1594},{"sku":"OVD3390","basePrice":1838,"hatterasPrice":1643},{"sku":"OVD3396","basePrice":1898,"hatterasPrice":1678}],"image":"oven-double.png"},{"name":"Double Oven Panel Overlay","items":[{"sku":"OVD33P","basePrice":184,"widthHint":"33\""}],"image":"oven-panel-overlay.png"}]},{"category":"Specialty Cabinets","subsections":[{"name":"Knee Drawers","items":[{"sku":"KD30","basePrice":283,"hatterasPrice":241,"widthHint":"30\""}],"image":"knee-drawers.png"},{"name":"Microwave Base Cabinets - 24\" Deep","items":[{"sku":"MWB30","basePrice":843,"hatterasPrice":733,"widthHint":"30\""}],"image":"microwave-base.png"},{"name":"Microwave Cabinets - 12\" Deep","items":[{"sku":"MWC3036","basePrice":601,"hatterasPrice":520}],"image":"microwave-12d.png"}]},{"category":"Vanity Cabinets","subsections":[{"name":"Vanity - Full Height Door - 34-1/2\" High - 21\" Deep","items":[{"sku":"VFH12","basePrice":375,"hatterasPrice":316,"widthHint":"12\""}],"image":"vanity-full-height-door.png"},{"name":"Vanity - 34-1/2\" High - 21\" Deep","items":[{"sku":"VB12","basePrice":479,"hatterasPrice":405,"widthHint":"12\""},{"sku":"VB15","basePrice":523,"hatterasPrice":445,"widthHint":"15\""},{"sku":"VB18","basePrice":571,"hatterasPrice":487,"widthHint":"18\""}],"image":"vanity-standard.png"},{"name":"Vanity Sink Base - 34-1/2\" High - 21\" Deep","items":[{"sku":"VSB24","basePrice":581,"hatterasPrice":505,"widthHint":"24\""},{"sku":"VSB27","basePrice":613,"hatterasPrice":529,"widthHint":"27\""},{"sku":"VSB30","basePrice":644,"hatterasPrice":554,"widthHint":"30\""},{"sku":"VSB33","basePrice":679,"hatterasPrice":581,"widthHint":"33\""},{"sku":"VSB36","basePrice":715,"hatterasPrice":607,"widthHint":"36\""},{"sku":"VSB42","basePrice":773,"hatterasPrice":666,"widthHint":"42\""},{"sku":"VSB48","basePrice":842,"hatterasPrice":728,"widthHint":"48\""}],"image":"vanity-sink-base.png"},{"name":"Vanity Sink Drawer Base - 34-1/2\" High - 21\" Deep \u2013 New","items":[{"sku":"VSDB30L","basePrice":976,"hatterasPrice":862,"widthHint":"30\""},{"sku":"VSDB30R","basePrice":976,"hatterasPrice":862,"widthHint":"30\""},{"sku":"VSDB36L","basePrice":1130,"hatterasPrice":1004,"widthHint":"36\""},{"sku":"VSDB36R","basePrice":1130,"hatterasPrice":1004,"widthHint":"36\""}],"image":"vanity-sink-drawer-base.png"},{"name":"Vanity Three Drawer Base - 34-1/2\" High - 21\" Deep","items":[{"sku":"VDB12-3","basePrice":762,"hatterasPrice":640,"widthHint":"12\""},{"sku":"VDB15-3","basePrice":820,"hatterasPrice":698,"widthHint":"15\""},{"sku":"VBTD36","basePrice":881,"hatterasPrice":737,"widthHint":"36\""},{"sku":"VDB18-3","basePrice":883,"hatterasPrice":761,"widthHint":"18\""},{"sku":"VDB21-3","basePrice":950,"hatterasPrice":830,"widthHint":"21\""},{"sku":"VBTD42","basePrice":971,"hatterasPrice":817,"widthHint":"42\""},{"sku":"VBTD48","basePrice":1080,"hatterasPrice":911,"widthHint":"48\""}],"image":"vanity-three-drawer.png"},{"name":"Vanity - Combo - 34-1/2\" High - 21\"","items":[{"sku":"VCDB60-3","basePrice":1390,"hatterasPrice":1204,"widthHint":"60\""},{"sku":"VCDB60-6","basePrice":1803,"hatterasPrice":1506,"widthHint":"60\""}],"image":"vanity-combo.png"},{"name":"Linen Cabinets - 84\" High - 21\" Deep","items":[{"sku":"VL1584","basePrice":1067,"hatterasPrice":950},{"sku":"VL1884","basePrice":1194,"hatterasPrice":1063},{"sku":"VL2484","basePrice":1435,"hatterasPrice":1271}],"image":"linen-cabinet.png"}]},{"category":"Accessories","subsections":[{"name":"Plate Rack","items":[{"sku":"PR3015","basePrice":420}],"image":"plate-rack.png"},{"name":"Wine Rack","items":[{"sku":"WR3015","basePrice":421}],"image":"wine-rack.png"},{"name":"Slotted Organizer","items":[{"sku":"ORG36","basePrice":223,"widthHint":"36\""}],"image":"slotted-organizer.png"},{"name":"Valance Arched","items":[{"sku":"VAR36","basePrice":91,"widthHint":"36\""},{"sku":"VAR48","basePrice":108,"widthHint":"48\""}],"image":"valance-arched.png"},{"name":"Valance Scalloped","items":[{"sku":"VSC48","basePrice":108,"widthHint":"48\""}],"image":"valance-scalloped.png"},{"name":"Range Hoods","items":[{"sku":"RHAR36","basePrice":595,"widthHint":"36\""},{"sku":"RHCL36","basePrice":610,"widthHint":"36\""}],"image":"range-hood.png"}]},{"category":"Panels and Fillers","subsections":[{"name":"Wall End Panel - Decorative","items":[{"sku":"WDEP1230","basePrice":152},{"sku":"WDEP1236","basePrice":174},{"sku":"WDEP1242","basePrice":204}],"image":"panel-wall-end-decorative.png"},{"name":"Base End Panel - Decorative","items":[{"sku":"BDEP24","basePrice":306,"widthHint":"24\""}],"image":"panel-base-end-decorative.png"},{"name":"Full Height Door Fronts - Decorative","items":[{"sku":"BFH09NB","basePrice":153,"widthHint":"09\""},{"sku":"BFH12NB","basePrice":184,"widthHint":"12\""},{"sku":"BFH15NB","basePrice":214,"widthHint":"15\""},{"sku":"BFH18NB","basePrice":245,"widthHint":"18\""}],"image":"panel-full-height-door-front.png"},{"name":"Back Panel","items":[{"sku":"PV3648","basePrice":225},{"sku":"PH3696","basePrice":255},{"sku":"PV4896","basePrice":286}],"image":"panel-back.png"},{"name":"Back Panel - Beaded","items":[{"sku":"PBBH4896","basePrice":340}],"image":"panel-back-beaded.png"},{"name":"Wall End Panel","items":[{"sku":"WEP1242","basePrice":36},{"sku":"WEP1542","basePrice":40}],"image":"panel-wall-end.png"},{"name":"Base End Panel","items":[{"sku":"BEP24","basePrice":52,"widthHint":"24\""}],"image":"panel-base-end.png"},{"name":"Tall End Panel","items":[{"sku":"TEP96","basePrice":115,"widthHint":"96\""}],"image":"panel-tall-end.png"},{"name":"Refrigerator End Panel","items":[{"sku":"REP24-.75","basePrice":300,"widthHint":"24\""},{"sku":"REP24-1.5","basePrice":318,"widthHint":"24\""},{"sku":"REP30-.75","basePrice":338,"widthHint":"30\""},{"sku":"REP30-1.5","basePrice":346,"widthHint":"30\""}],"image":"panel-refrigerator-end.png"},{"name":"Dishwasher End Panel","items":[{"sku":"F330","basePrice":24},{"sku":"F342","basePrice":30},{"sku":"F630","basePrice":46},{"sku":"F642","basePrice":53},{"sku":"F396","basePrice":128},{"sku":"DWEP1.5","basePrice":140,"widthHint":"1\""},{"sku":"DWEP3","basePrice":144,"widthHint":"3\""},{"sku":"DWEP6","basePrice":154,"widthHint":"6\""},{"sku":"F696","basePrice":188}],"image":"panel-dishwasher-end.png"},{"name":"Filler - Fluted","items":[{"sku":"FF330","basePrice":31},{"sku":"FF336","basePrice":32},{"sku":"FF342","basePrice":35},{"sku":"FF396","basePrice":136}],"image":"filler-fluted.png"},{"name":"Filler - Overlay","items":[{"sku":"FO330","basePrice":31},{"sku":"FO336","basePrice":32},{"sku":"FO342","basePrice":35},{"sku":"FO630","basePrice":60},{"sku":"FO636","basePrice":66},{"sku":"FO642","basePrice":75},{"sku":"FO396","basePrice":136}],"image":"filler-overlay.png"},{"name":"Base Filler","items":[{"sku":"BF3","basePrice":38,"widthHint":"3\""},{"sku":"BF6","basePrice":60,"widthHint":"6\""}],"image":"filler-base.png"}]},{"category":"Mouldings","subsections":[{"name":"Moulding - Batten","items":[{"sku":"BM8","basePrice":41,"widthHint":"8\""}],"image":"moulding-batten.png"},{"name":"Moulding - Crown","items":[{"sku":"CM8","basePrice":183,"widthHint":"8\""}],"image":"moulding-crown.png"},{"name":"Moulding - Crown Angled","items":[{"sku":"CMA8","basePrice":236,"widthHint":"8\""}],"image":"moulding-crown-angled.png"},{"name":"Moulding - Crown Classic","items":[{"sku":"CMC8","basePrice":241,"widthHint":"8\""}],"image":"moulding-crown-classic.png"},{"name":"Moulding - Crown Cove","items":[{"sku":"CMV8","basePrice":236,"widthHint":"8\""}],"image":"moulding-crown-cove.png"},{"name":"Moulding - Dentil","items":[{"sku":"DM8","basePrice":49,"widthHint":"8\""}],"image":"moulding-dentil.png"},{"name":"Moulding - Inside Corner","items":[{"sku":"ICM8","basePrice":46,"widthHint":"8\""}],"image":"moulding-inside-corner.png"},{"name":"Moulding - Light Rail Bull Nose","items":[{"sku":"LRB8","basePrice":93,"widthHint":"8\""}],"image":"moulding-light-rail-bull-nose.png"},{"name":"Moulding - Light Rail Decorative","items":[{"sku":"LRD8","basePrice":102,"widthHint":"8\""}],"image":"moulding-light-rail-decorative.png"},{"name":"Moulding - Light Rail For Tape Lighting","items":[{"sku":"LRS8","basePrice":82,"widthHint":"8\""}],"image":"moulding-light-rail-tape.png"},{"name":"Moulding - Outside Corner","items":[{"sku":"OCM8","basePrice":49,"widthHint":"8\""}],"image":"moulding-outside-corner.png"},{"name":"Moulding - Quarter Round","items":[{"sku":"QR8","basePrice":42,"widthHint":"8\""}],"image":"moulding-quarter-round.png"},{"name":"Moulding - Rope","items":[{"sku":"RM8","basePrice":42,"widthHint":"8\""}],"image":"moulding-rope.png"},{"name":"Moulding - Scribe","items":[{"sku":"SCM8","basePrice":41,"widthHint":"8\""}],"image":"moulding-scribe.png"},{"name":"Moulding - Shoe","items":[{"sku":"SHM8","basePrice":42,"widthHint":"8\""}],"image":"moulding-shoe.png"},{"name":"Moulding - Toekick","items":[{"sku":"TKC8","basePrice":29,"widthHint":"8\""}],"image":"moulding-toekick.png"},{"name":"Moulding - Furniture Base","items":[{"sku":"FB8","basePrice":238,"widthHint":"8\""}],"image":"moulding-furniture-base.png"},{"name":"Moulding - Outside Corner 135","items":[{"sku":"OCM8-135","basePrice":48,"widthHint":"8\""}],"image":"moulding-outside-corner-135.png"}]},{"category":"Embellishments","subsections":[{"name":"Bun Foot","items":[{"sku":"HBUNFOOT","basePrice":55},{"sku":"BUNFOOT","basePrice":62}],"image":"bun-foot.png"},{"name":"Tapered Foot","items":[{"sku":"HTFOOT","basePrice":54},{"sku":"TFOOT","basePrice":59},{"sku":"SDECOLEG","basePrice":325},{"sku":"DECOLEG","basePrice":444}],"image":"tapered-foot.png"},{"name":"Vanity Trim Kit","items":[{"sku":"VTRIMKIT","basePrice":80}],"image":"vanity-trim-kit.png"},{"name":"Corbels","items":[{"sku":"CORBEL-B","basePrice":236},{"sku":"CORBEL-S","basePrice":266},{"sku":"CORBEL-LS","basePrice":392}],"image":"corbels.png"}]},{"category":"Organizers","subsections":[{"name":"Rollout Trays","items":[{"sku":"ROT15","basePrice":111,"midlinePrice":138,"widthHint":"15\""},{"sku":"ROT18","basePrice":139,"midlinePrice":152,"widthHint":"18\""},{"sku":"ROT21","basePrice":158,"midlinePrice":171,"widthHint":"21\""},{"sku":"ROT24","basePrice":168,"midlinePrice":189,"widthHint":"24\""},{"sku":"XROT15","basePrice":173,"midlinePrice":200,"widthHint":"15\""},{"sku":"ROT27","basePrice":187,"midlinePrice":205,"widthHint":"27\""},{"sku":"XROT18","basePrice":201,"midlinePrice":214,"widthHint":"18\""},{"sku":"ROT30","basePrice":203,"midlinePrice":223,"widthHint":"30\""},{"sku":"ROT33","basePrice":215,"midlinePrice":240,"widthHint":"33\""},{"sku":"XROT21","basePrice":220,"midlinePrice":233,"widthHint":"21\""},{"sku":"XROT24","basePrice":230,"midlinePrice":251,"widthHint":"24\""},{"sku":"XROT27","basePrice":249,"midlinePrice":267,"widthHint":"27\""},{"sku":"ROT36","basePrice":251,"midlinePrice":267,"widthHint":"36\""},{"sku":"XROT30","basePrice":265,"midlinePrice":277,"widthHint":"30\""},{"sku":"XROT33","basePrice":277,"midlinePrice":302,"widthHint":"33\""},{"sku":"XROT36","basePrice":313,"midlinePrice":329,"widthHint":"36\""}],"image":"rollout-tray.png"},{"name":"Lazy Susans","items":[{"sku":"RTA-PLS28","basePrice":194,"widthHint":"28\""},{"sku":"RTA-MLS28","basePrice":219,"widthHint":"28\""},{"sku":"RTA-WLS28","basePrice":459,"widthHint":"28\""}],"image":"lazy-susan.png"}]}];
@@ -712,6 +823,7 @@ const TIERS = [
   const docModal = document.getElementById('doc-modal');
   function openDocPreview(){
     document.getElementById('doc-page').innerHTML = buildDocHtml();
+    document.getElementById('doc-save-btn').style.display = '';
     docModal.classList.add('open');
   }
   function closeDocPreview(){ docModal.classList.remove('open'); }
@@ -790,6 +902,171 @@ const TIERS = [
   document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
   lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeLightbox(); closeDocPreview(); } });
+
+  /* ── auth ── */
+  const SUPABASE_URL = 'https://goxqofdcydxbsrlfobrz.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdveHFvZmRjeWR4YnNybGZvYnJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2NzQxNTksImV4cCI6MjA5OTI1MDE1OX0.8aUdU4CL5MQqFfFu9fYOxpotvIgZDdq-I4oMNYK2pxA';
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const authScreen = document.getElementById('auth-screen');
+  const appShell = document.getElementById('app-shell');
+
+  function showApp(user){
+    authScreen.style.display = 'none';
+    appShell.classList.add('ready');
+    document.getElementById('user-email').textContent = user.email;
+  }
+  function showAuth(){
+    appShell.classList.remove('ready');
+    authScreen.style.display = 'flex';
+  }
+
+  document.getElementById('auth-login-btn').addEventListener('click', async () => {
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+    const msg = document.getElementById('auth-msg');
+    msg.className = 'auth-msg';
+    msg.textContent = '';
+    if (!email || !password){ msg.className = 'auth-msg error'; msg.textContent = 'Enter your email and password.'; return; }
+    const btn = document.getElementById('auth-login-btn');
+    btn.disabled = true; btn.textContent = 'Logging in…';
+    const { error } = await db.auth.signInWithPassword({ email, password });
+    btn.disabled = false; btn.textContent = 'Log In';
+    if (error){
+      msg.className = 'auth-msg error';
+      msg.textContent = error.message === 'Invalid login credentials' ? 'Email or password is incorrect.' : error.message;
+    }
+    // on success, onAuthStateChange fires and shows the app
+  });
+
+  document.getElementById('auth-password').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('auth-login-btn').click();
+  });
+
+  document.getElementById('auth-forgot-btn').addEventListener('click', async () => {
+    const email = document.getElementById('auth-email').value.trim();
+    const msg = document.getElementById('auth-msg');
+    if (!email){ msg.className = 'auth-msg error'; msg.textContent = 'Enter your email above first, then click "Forgot password?".'; return; }
+    const { error } = await db.auth.resetPasswordForEmail(email);
+    msg.className = error ? 'auth-msg error' : 'auth-msg success';
+    msg.textContent = error ? error.message : 'Password reset email sent — check your inbox.';
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await db.auth.signOut();
+  });
+
+  db.auth.onAuthStateChange((event, session) => {
+    if (session && session.user){
+      showApp(session.user);
+      loadSavedQuotes();
+    } else {
+      showAuth();
+    }
+  });
+
+  /* ── page nav (Catalogue / Saved Quotes) ── */
+  const pageCatalogue = document.getElementById('page-catalogue');
+  const pageSaved = document.getElementById('page-saved');
+  const navCatalogueBtn = document.getElementById('nav-catalogue-btn');
+  const navSavedBtn = document.getElementById('nav-saved-btn');
+
+  function switchPage(page){
+    const onCatalogue = page === 'catalogue';
+    pageCatalogue.style.display = onCatalogue ? '' : 'none';
+    pageSaved.style.display = onCatalogue ? 'none' : '';
+    navCatalogueBtn.classList.toggle('active', onCatalogue);
+    navSavedBtn.classList.toggle('active', !onCatalogue);
+    document.getElementById('cart-toggle-btn').style.display = onCatalogue ? '' : 'none';
+    if (!onCatalogue) loadSavedQuotes();
+  }
+  navCatalogueBtn.addEventListener('click', () => switchPage('catalogue'));
+  navSavedBtn.addEventListener('click', () => switchPage('saved'));
+
+  /* ── saved quotes ── */
+  let savedQuotes = [];
+
+  async function loadSavedQuotes(){
+    const listEl = document.getElementById('saved-list');
+    listEl.innerHTML = '<div class="saved-loading">Loading…</div>';
+    const { data, error } = await db.from('bsd_saved_quotes').select('*').order('created_at', { ascending: false });
+    if (error){
+      listEl.innerHTML = '<div class="saved-empty">Couldn\'t load saved quotes: ' + escapeHtml(error.message) + '</div>';
+      return;
+    }
+    savedQuotes = data || [];
+    renderSavedList();
+  }
+
+  function renderSavedList(){
+    const listEl = document.getElementById('saved-list');
+    if (!savedQuotes.length){
+      listEl.innerHTML = '<div class="saved-empty">No saved quotes yet. Open a quote\'s preview and click "Save to Quotes".</div>';
+      return;
+    }
+    listEl.innerHTML = savedQuotes.map(q => {
+      const dateStr = new Date(q.created_at).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+      return (
+        '<div class="saved-card" data-id="'+q.id+'">' +
+          '<div class="saved-card-info">' +
+            '<div class="saved-card-name">'+escapeHtml(q.client_name || 'Untitled Quote')+'</div>' +
+            '<div class="saved-card-meta">'+dateStr+(q.client_note ? ' — '+escapeHtml(q.client_note) : '')+'</div>' +
+          '</div>' +
+          '<div class="saved-card-total">'+money(q.total)+'</div>' +
+          '<div class="saved-card-actions">' +
+            '<button class="btn-ghost" data-role="open">View</button>' +
+            '<button class="btn-ghost btn-danger" data-role="delete">Delete</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  document.getElementById('saved-list').addEventListener('click', async (e) => {
+    const card = e.target.closest('.saved-card');
+    if (!card) return;
+    const q = savedQuotes.find(x => x.id === card.dataset.id);
+    if (!q) return;
+    if (e.target.closest('[data-role="open"]')){
+      document.getElementById('doc-page').innerHTML = q.document_html;
+      document.getElementById('doc-save-btn').style.display = 'none';
+      docModal.classList.add('open');
+    } else if (e.target.closest('[data-role="delete"]')){
+      if (!confirm('Delete this saved quote? This can\'t be undone.')) return;
+      const { error } = await db.from('bsd_saved_quotes').delete().eq('id', q.id);
+      if (error){ alert('Couldn\'t delete: ' + error.message); return; }
+      savedQuotes = savedQuotes.filter(x => x.id !== q.id);
+      renderSavedList();
+    }
+  });
+
+  document.getElementById('doc-save-btn').addEventListener('click', async () => {
+    if (!cart.length) return;
+    const btn = document.getElementById('doc-save-btn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    const { data: { user } } = await db.auth.getUser();
+    const { error } = await db.from('bsd_saved_quotes').insert([{
+      created_by: user.id,
+      created_by_email: user.email,
+      client_name: client.name || null,
+      client_note: client.note || null,
+      cart_json: cart,
+      document_html: document.getElementById('doc-page').innerHTML,
+      total: cartTotal()
+    }]);
+    btn.disabled = false; btn.textContent = 'Save to Quotes';
+    const flash = document.getElementById('doc-save-flash');
+    if (error){
+      flash.textContent = 'Couldn\'t save: ' + error.message;
+      flash.style.color = 'var(--danger-hi)';
+    } else {
+      flash.textContent = 'Saved to Quotes.';
+      flash.style.color = 'var(--brass-hi)';
+      loadSavedQuotes();
+    }
+    flash.classList.add('show');
+    setTimeout(() => flash.classList.remove('show'), 2200);
+  });
 
   /* ── init ── */
   document.getElementById('client-name').value = client.name || '';
