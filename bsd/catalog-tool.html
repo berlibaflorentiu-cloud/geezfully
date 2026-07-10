@@ -12,6 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Playfair+Display:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
   :root{
@@ -125,6 +126,57 @@
     position:absolute;top:24px;right:24px;background:none;border:1px solid var(--line);color:var(--parchment);
     width:38px;height:38px;cursor:pointer;
   }
+
+  /* ── document preview modal ── */
+  .doc-modal{
+    position:fixed;inset:0;z-index:400;background:rgba(9,13,11,.92);
+    display:none;flex-direction:column;align-items:center;
+    padding:24px 24px 0;backdrop-filter:blur(6px);
+  }
+  .doc-modal.open{display:flex;}
+  .doc-modal-bar{
+    width:100%;max-width:840px;display:flex;align-items:center;justify-content:space-between;
+    gap:12px;padding-bottom:16px;flex-shrink:0;
+  }
+  .doc-modal-bar h2{font-size:1rem;color:var(--parchment);}
+  .doc-modal-actions{display:flex;gap:10px;flex-wrap:wrap;}
+  .doc-modal-close{
+    background:none;border:1px solid var(--line);color:var(--parchment);
+    width:38px;height:38px;cursor:pointer;flex-shrink:0;
+  }
+  .doc-modal-scroll{width:100%;max-width:840px;flex:1;overflow-y:auto;padding-bottom:32px;}
+
+  .doc-page{
+    background:#fff;color:#1a1a1a;max-width:800px;margin:0 auto;
+    padding:56px 60px;font-family:'IBM Plex Sans',sans-serif;font-size:13.5px;line-height:1.55;
+    box-shadow:0 20px 60px rgba(0,0,0,.4);
+  }
+  .doc-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0D1110;padding-bottom:18px;margin-bottom:24px;}
+  .doc-brand{font-family:'Playfair Display',serif;font-weight:900;font-size:1.8rem;color:#0D1110;}
+  .doc-brand-sub{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:#555;margin-top:2px;}
+  .doc-biz{text-align:right;font-size:11.5px;color:#333;line-height:1.6;}
+  .doc-title{font-family:'Anton',sans-serif;font-size:1.5rem;text-transform:uppercase;letter-spacing:.02em;margin-bottom:4px;color:#0D1110;}
+  .doc-meta{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#666;margin-bottom:20px;}
+  .doc-client{margin-bottom:24px;font-size:13px;}
+  .doc-client b{color:#0D1110;}
+  .doc-table{width:100%;border-collapse:collapse;margin-bottom:20px;}
+  .doc-table th{
+    text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;
+    text-transform:uppercase;color:#666;border-bottom:1px solid #ccc;padding:8px 6px;
+  }
+  .doc-table td{padding:10px 6px;border-bottom:1px solid #e5e5e5;font-size:12.5px;vertical-align:top;}
+  .doc-table td.num{text-align:right;font-family:'IBM Plex Mono',monospace;}
+  .doc-table .doc-sku-sub{color:#777;font-size:11px;}
+  .doc-total-row{display:flex;justify-content:flex-end;gap:24px;padding-top:16px;border-top:2px solid #0D1110;}
+  .doc-total-row span{font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#555;}
+  .doc-total-row b{font-family:'Anton',sans-serif;font-size:1.5rem;color:#0D1110;}
+  .doc-foot{margin-top:36px;padding-top:16px;border-top:1px solid #ddd;font-size:10.5px;color:#888;}
+  .doc-empty{text-align:center;color:#888;padding:60px 0;}
+  @media(max-width:640px){
+    .doc-page{padding:32px 22px;}
+    .doc-head{flex-direction:column;gap:14px;}
+    .doc-biz{text-align:left;}
+  }
   .item-row{
     display:flex;align-items:center;gap:14px;flex-wrap:wrap;
     padding:12px 14px;border:1px solid var(--line);background:rgba(244,240,229,.02);
@@ -224,14 +276,16 @@
   }
   .copied-flash.show{opacity:1;}
 
+  /* printing only ever happens from inside the document preview modal —
+     everything else on the page is hidden so the catalogue browse list
+     and cart UI never leak onto a printed page */
   @media print{
-    header,.cat-nav,.tier-legend,.item-add,.cart-actions,.cart-head input,.copied-flash{display:none!important;}
-    body{background:#fff;color:#111;padding-bottom:0;}
-    .layout{grid-template-columns:1fr;display:block;}
-    .cart-panel{position:static;border:none;max-height:none;}
-    .cart-line-rm,.qty-stepper button{display:none;}
-    h1,h2,h3{color:#111;}
-    .cart-total-row b,.cart-line-price{color:#111;}
+    body *{visibility:hidden;}
+    .doc-modal, .doc-modal .doc-page, .doc-modal .doc-page *{visibility:visible;}
+    .doc-modal{position:static;background:none;backdrop-filter:none;padding:0;display:block;}
+    .doc-modal-bar,.doc-modal-close{display:none!important;}
+    .doc-modal-scroll{overflow:visible;max-width:none;padding:0;}
+    .doc-page{box-shadow:none;margin:0;max-width:none;}
   }
 
   @media(max-width:1100px){
@@ -327,7 +381,7 @@
       </div>
       <div class="cart-actions">
         <button class="btn" id="copy-summary-btn">Copy Quote Summary</button>
-        <button class="btn-ghost" id="print-btn">Print / Save PDF</button>
+        <button class="btn-ghost" id="print-btn">Preview &amp; Print</button>
         <button class="btn-ghost btn-danger" id="clear-cart-btn">Clear Quote</button>
         <span class="copied-flash" id="copied-flash">Copied to clipboard.</span>
       </div>
@@ -340,6 +394,20 @@
   <button class="lightbox-close" id="lightbox-close" aria-label="Close image">&#x2715;</button>
   <img id="lightbox-img" src="" alt="">
   <p class="lightbox-cap" id="lightbox-cap"></p>
+</div>
+
+<div class="doc-modal" id="doc-modal">
+  <div class="doc-modal-bar">
+    <h2>Estimate Preview</h2>
+    <div class="doc-modal-actions">
+      <button class="btn" id="doc-download-btn">Download PDF</button>
+      <button class="btn-ghost" id="doc-print-btn">Print</button>
+      <button class="doc-modal-close" id="doc-modal-close" aria-label="Close preview">&#x2715;</button>
+    </div>
+  </div>
+  <div class="doc-modal-scroll">
+    <div class="doc-page" id="doc-page"></div>
+  </div>
 </div>
 
 <script>
@@ -597,7 +665,73 @@ const TIERS = [
     renderBrowse();
   });
 
-  document.getElementById('print-btn').addEventListener('click', () => window.print());
+  /* ── document preview (Print / Save PDF) ── */
+  const BIZ = {
+    phone: '(916) 598-5948',
+    email: 'Bestsundan@yahoo.com',
+    address: '1031 Arden Way, Sacramento, CA 95815',
+    license: 'CSLB #1140078'
+  };
+
+  function buildDocHtml(){
+    const dateStr = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+    const rows = cart.map(l => (
+      '<tr>' +
+        '<td><b>'+escapeHtml(l.sku)+'</b>'+(l.styleLabel ? '<div class="doc-sku-sub">'+escapeHtml(l.styleLabel)+'</div>' : '')+'<div class="doc-sku-sub">'+escapeHtml(l.subsection)+'</div></td>'+
+        '<td>'+escapeHtml(l.tierLabel)+'</td>'+
+        '<td class="num">'+l.qty+'</td>'+
+        '<td class="num">'+money(l.unitPrice)+'</td>'+
+        '<td class="num">'+money(l.unitPrice * l.qty)+'</td>'+
+      '</tr>'
+    )).join('');
+
+    const body = cart.length
+      ? (
+        '<table class="doc-table">'+
+          '<thead><tr><th>Item</th><th>Build Tier</th><th style="text-align:right;">Qty</th><th style="text-align:right;">Unit</th><th style="text-align:right;">Total</th></tr></thead>'+
+          '<tbody>'+rows+'</tbody>'+
+        '</table>'+
+        '<div class="doc-total-row"><span>Estimate Total</span><b>'+money(cartTotal())+'</b></div>'
+      )
+      : '<div class="doc-empty">No items in this quote yet.</div>';
+
+    return (
+      '<div class="doc-head">'+
+        '<div><div class="doc-brand">BSD</div><div class="doc-brand-sub">Custom Cabinetry</div></div>'+
+        '<div class="doc-biz">'+escapeHtml(BIZ.address)+'<br>'+escapeHtml(BIZ.phone)+' &middot; '+escapeHtml(BIZ.email)+'<br>'+escapeHtml(BIZ.license)+'</div>'+
+      '</div>'+
+      '<div class="doc-title">Estimate</div>'+
+      '<div class="doc-meta">'+dateStr+'</div>'+
+      (client.name || client.note
+        ? '<div class="doc-client">'+(client.name ? '<b>Client:</b> '+escapeHtml(client.name)+'<br>' : '')+(client.note ? '<b>Project:</b> '+escapeHtml(client.note) : '')+'</div>'
+        : '') +
+      body +
+      '<div class="doc-foot">This is a preliminary estimate based on NorthPoint list pricing and BSD build tiers. Final pricing is confirmed after an in-home measure.</div>'
+    );
+  }
+
+  const docModal = document.getElementById('doc-modal');
+  function openDocPreview(){
+    document.getElementById('doc-page').innerHTML = buildDocHtml();
+    docModal.classList.add('open');
+  }
+  function closeDocPreview(){ docModal.classList.remove('open'); }
+
+  document.getElementById('print-btn').addEventListener('click', openDocPreview);
+  document.getElementById('doc-modal-close').addEventListener('click', closeDocPreview);
+  docModal.addEventListener('click', (e) => { if (e.target === docModal) closeDocPreview(); });
+  document.getElementById('doc-print-btn').addEventListener('click', () => window.print());
+  document.getElementById('doc-download-btn').addEventListener('click', () => {
+    const slug = (client.name || 'client').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'') || 'client';
+    const date = new Date().toISOString().split('T')[0];
+    html2pdf().set({
+      margin: [12, 14, 12, 14],
+      filename: 'bsd-estimate-' + slug + '-' + date + '.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    }).from(document.getElementById('doc-page')).save();
+  });
 
   document.getElementById('copy-summary-btn').addEventListener('click', () => {
     if (!cart.length){ return; }
@@ -656,7 +790,7 @@ const TIERS = [
   });
   document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
   lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeLightbox(); closeDocPreview(); } });
 
   /* ── init ── */
   document.getElementById('client-name').value = client.name || '';
