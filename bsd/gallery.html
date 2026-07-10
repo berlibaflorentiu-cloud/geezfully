@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Gallery | BSD Custom Cabinetry</title>
+<meta name="description" content="Browse completed projects by BSD Custom Cabinetry — custom cabinetry, kitchen remodels, fireplace surrounds, stone countertops, and more.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://geezfully.com/bsd/gallery.html">
+<link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
+<meta name="theme-color" content="#0D1110">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Playfair+Display:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+  :root{
+    --ink:       #0D1110;
+    --panel:     #14201B;
+    --panel-2:   #1C2D26;
+    --brass:     #C8A552;
+    --brass-hi:  #F1D78A;
+    --rust:      #A87B3E;
+    --rust-hi:   #D9B56D;
+    --sage:      #516B5D;
+    --sage-hi:   #A8B99E;
+    --parchment: #F4F0E5;
+    --muted:     #B9B7A8;
+    --line:      rgba(216,181,109,.22);
+    --tr: 250ms cubic-bezier(.4,0,.2,1);
+  }
+
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--ink);
+    color:var(--parchment);
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:16px;
+    line-height:1.65;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,h4{
+    font-family:'Anton',sans-serif;font-weight:400;line-height:.98;
+    letter-spacing:.005em;text-transform:uppercase;color:var(--parchment);
+  }
+  a{color:inherit;text-decoration:none;}
+  img{display:block;width:100%;height:100%;object-fit:cover;}
+  button{cursor:pointer;border:none;background:none;font-family:inherit;}
+
+  .wrap{max-width:1280px;margin:0 auto;padding:0 40px;}
+  @media(max-width:640px){.wrap{padding:0 22px;}}
+
+  /* ── NAV ─────────────────────────────────────── */
+  #nav{
+    position:fixed;top:0;left:0;right:0;z-index:300;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:22px 40px;
+    background:rgba(13,17,16,.88);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+    transition:padding var(--tr);
+  }
+  #nav.scrolled{padding:13px 40px;}
+  .nav-logo{display:flex;align-items:center;gap:12px;min-width:92px;}
+  .wordmark{
+    font-family:'Playfair Display',serif;font-weight:900;font-size:1.7rem;letter-spacing:.01em;
+    line-height:1;
+    background:linear-gradient(160deg,var(--brass-hi),var(--brass) 60%,#A98C4B);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    transition:font-size var(--tr);
+  }
+  #nav.scrolled .wordmark{font-size:1.4rem;}
+  .nav-links{display:flex;gap:32px;align-items:center;}
+  .nav-links a{
+    font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);position:relative;padding-bottom:4px;
+    transition:color var(--tr);
+  }
+  .nav-links a::after{
+    content:'';position:absolute;left:0;bottom:0;width:0;height:1px;
+    background:var(--rust-hi);transition:width var(--tr);
+  }
+  .nav-links a:hover{color:var(--rust-hi);}
+  .nav-links a:hover::after{width:100%;}
+  .nav-links a.active{color:var(--rust-hi);}
+  .nav-links a.active::after{width:100%;}
+  .nav-btn{
+    font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
+    padding:11px 20px;border:1px solid var(--rust);color:var(--ink);
+    background:linear-gradient(180deg,var(--brass-hi),var(--brass));
+    transition:transform var(--tr);display:inline-block;
+  }
+  .nav-btn:hover{transform:translateY(-2px);}
+  @media(max-width:900px){.nav-links{display:none;}}
+  .menu-toggle{
+    display:none;
+    width:44px;height:44px;border:1px solid var(--line);
+    place-items:center;color:var(--parchment);
+  }
+  .menu-toggle span,.menu-toggle span::before,.menu-toggle span::after{
+    content:'';display:block;width:18px;height:2px;background:currentColor;
+    transition:transform var(--tr),opacity var(--tr);
+  }
+  .menu-toggle span::before{transform:translateY(-7px);}
+  .menu-toggle span::after{transform:translateY(5px);}
+  body.menu-open .menu-toggle span{transform:rotate(45deg);}
+  body.menu-open .menu-toggle span::before{opacity:0;}
+  body.menu-open .menu-toggle span::after{transform:translateY(-2px) rotate(-90deg);}
+  .mobile-panel{
+    position:fixed;top:78px;left:18px;right:18px;z-index:250;
+    padding:18px;background:rgba(13,17,16,.96);border:1px solid var(--line);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    display:none;
+  }
+  .mobile-panel a{
+    display:block;padding:13px 4px;border-bottom:1px solid var(--line);
+    font-family:'IBM Plex Mono',monospace;font-size:.78rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);
+  }
+  .mobile-panel a.active{color:var(--rust-hi);}
+  .mobile-panel a:last-child{border-bottom:0;color:var(--rust-hi);}
+  body.menu-open .mobile-panel{display:block;}
+  @media(max-width:900px){.menu-toggle{display:grid;}}
+
+  /* ── PAGE HEADER ─────────────────────────────── */
+  .page-header{
+    padding:150px 40px 64px;
+    background:
+      radial-gradient(900px 500px at 50% -10%, rgba(168,185,158,.16), transparent 60%),
+      var(--ink);
+    text-align:center;
+  }
+  .page-header .rule{width:40px;height:2px;background:var(--sage-hi);margin:0 auto 20px;}
+  .page-header .tag{
+    font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--sage-hi);display:block;margin-bottom:16px;
+  }
+  .page-header h1{font-size:clamp(2.2rem,5vw,3.6rem);margin-bottom:16px;}
+  .page-header p{color:var(--muted);font-size:1rem;max-width:520px;margin:0 auto;}
+
+  /* ── MASONRY ─────────────────────────────────── */
+  .gallery-section{padding:64px 40px 96px;max-width:1280px;margin:0 auto;}
+  .masonry{columns:3;column-gap:16px;}
+  .photo-card{break-inside:avoid;margin-bottom:16px;position:relative;overflow:hidden;cursor:pointer;border:1px solid var(--line);}
+  .photo-card img{transition:transform .6s cubic-bezier(.4,0,.2,1);}
+  .photo-card:hover img{transform:scale(1.04);}
+  .photo-cap{
+    position:absolute;bottom:0;left:0;right:0;padding:28px 18px 16px;
+    background:linear-gradient(to top, rgba(13,17,16,.88), transparent);
+    opacity:0;transform:translateY(6px);
+    transition:opacity .3s var(--tr), transform .3s var(--tr);
+  }
+  .photo-card:hover .photo-cap{opacity:1;transform:translateY(0);}
+  .photo-cap h4{font-family:'IBM Plex Sans',sans-serif;font-size:.92rem;font-weight:600;text-transform:none;color:var(--parchment);}
+  .photo-cap span{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(244,240,229,.68);}
+  @media(max-width:900px){.masonry{columns:2;}}
+  @media(max-width:600px){.masonry{columns:1;}.gallery-section{padding:44px 20px 64px;}.page-header{padding:120px 24px 48px;}}
+
+  /* ── LIGHTBOX ────────────────────────────────── */
+  #lightbox{
+    display:none;position:fixed;inset:0;z-index:1000;
+    background:rgba(9,7,5,.94);align-items:center;justify-content:center;padding:24px;
+  }
+  #lightbox.open{display:flex;}
+  #lb-img{max-width:90vw;max-height:90vh;width:auto;height:auto;object-fit:contain;}
+  #lb-close{position:absolute;top:20px;right:24px;color:var(--parchment);font-size:2rem;opacity:.7;transition:opacity .2s;}
+  #lb-close:hover{opacity:1;}
+  #lb-prev,#lb-next{
+    position:absolute;top:50%;transform:translateY(-50%);color:var(--parchment);font-size:2.4rem;
+    opacity:.6;transition:opacity .2s;padding:12px;user-select:none;
+  }
+  #lb-prev:hover,#lb-next:hover{opacity:1;}
+  #lb-prev{left:16px;}
+  #lb-next{right:16px;}
+  #lb-cap{
+    position:absolute;bottom:28px;left:50%;transform:translateX(-50%);text-align:center;
+    font-family:'IBM Plex Mono',monospace;font-size:.82rem;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--parchment);white-space:nowrap;
+  }
+  #lb-cap span{color:rgba(244,240,229,.55);font-family:'IBM Plex Sans',sans-serif;font-size:.78rem;text-transform:none;letter-spacing:0;display:block;margin-top:4px;}
+
+  /* ── CTA STRIP ───────────────────────────────── */
+  .cta-strip{background:linear-gradient(120deg,#1F3B32,#101615 82%);padding:64px 40px;text-align:center;}
+  .cta-strip h2{font-size:clamp(1.6rem,3.5vw,2.4rem);margin-bottom:24px;}
+  .cta-strip a{
+    display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.8rem;letter-spacing:.1em;
+    text-transform:uppercase;background:var(--sage-hi);color:var(--ink);padding:14px 34px;
+    transition:transform var(--tr);
+  }
+  .cta-strip a:hover{transform:translateY(-2px);}
+
+  /* ── FOOTER ──────────────────────────────────── */
+  footer{background:var(--ink);color:var(--muted);text-align:center;padding:32px 24px;font-size:.82rem;border-top:1px solid var(--line);}
+  footer a{color:var(--muted);text-decoration:underline;}
+
+  /* ── COOKIE CONSENT ──────────────────────────── */
+  #cookie-banner{
+    position:fixed;left:18px;right:18px;bottom:18px;z-index:400;
+    max-width:640px;margin:0 auto;
+    background:rgba(13,17,16,.97);border:1px solid var(--line);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    padding:20px 22px;display:none;box-shadow:0 20px 50px rgba(0,0,0,.35);
+  }
+  #cookie-banner.show{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;justify-content:space-between;}
+  #cookie-banner p{font-size:.86rem;color:rgba(244,240,229,.85);flex:1 1 320px;margin:0;text-decoration:none;}
+  #cookie-banner p a{color:var(--sage-hi);}
+  .cookie-actions{display:flex;gap:10px;flex-shrink:0;}
+  .cookie-btn{
+    font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;
+    padding:10px 16px;border:1px solid var(--line);color:var(--muted);transition:var(--tr);cursor:pointer;background:none;
+  }
+  .cookie-btn:hover{border-color:var(--rust-hi);color:var(--rust-hi);}
+  .cookie-btn.accept{
+    border-color:var(--rust);color:var(--ink);
+    background:linear-gradient(180deg,var(--brass-hi),var(--brass));
+  }
+  .cookie-btn.accept:hover{transform:translateY(-1px);}
+  @media(max-width:480px){
+    #cookie-banner{left:12px;right:12px;bottom:12px;padding:16px;}
+    .cookie-actions{width:100%;}
+    .cookie-btn{flex:1;text-align:center;}
+  }
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <a href="index.html" class="nav-logo"><span class="wordmark">BSD</span></a>
+  <div class="nav-links">
+    <a href="index.html#services">Services</a>
+    <a href="index.html#work">Work</a>
+    <a href="gallery.html" class="active">Gallery</a>
+    <a href="index.html#process">Process</a>
+    <a href="index.html#materials">Materials</a>
+    <a href="index.html#contact">Contact</a>
+  </div>
+  <a href="index.html#contact" class="nav-btn">Estimate</a>
+  <button class="menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-panel">
+    <span aria-hidden="true"></span>
+  </button>
+</nav>
+
+<div class="mobile-panel" id="mobile-panel">
+  <a href="index.html#services">Services</a>
+  <a href="index.html#work">Work</a>
+  <a href="gallery.html" class="active">Gallery</a>
+  <a href="index.html#process">Process</a>
+  <a href="index.html#materials">Materials</a>
+  <a href="index.html#contact">Estimate</a>
+</div>
+
+<header class="page-header">
+  <div class="rule"></div>
+  <span class="tag">Our Portfolio</span>
+  <h1>Work That Speaks For Itself</h1>
+  <p>A look at completed projects — from custom cabinetry to full kitchen remodels.</p>
+</header>
+
+<section class="gallery-section">
+  <div class="masonry" id="gallery-grid">
+
+    <div class="photo-card" data-title="Custom Fireplace Surround" data-sub="Millwork &amp; Marble Tile">
+      <img src="images/project-fireplace.jpg" alt="Custom fireplace surround with marble tile and millwork" loading="lazy">
+      <div class="photo-cap"><h4>Custom Fireplace Surround</h4><span>Millwork &amp; Marble Tile</span></div>
+    </div>
+
+    <div class="photo-card" data-title="Kitchen Remodel" data-sub="Custom Cabinetry &amp; Stone">
+      <img src="images/about-kitchen.jpg" alt="Kitchen remodel with custom cabinetry and white island" loading="lazy">
+      <div class="photo-cap"><h4>Kitchen Remodel</h4><span>Custom Cabinetry &amp; Stone</span></div>
+    </div>
+
+    <div class="photo-card" data-title="Hickory Vanity Cabinets" data-sub="Custom Cabinetry">
+      <img src="images/project-cabinetry.jpg" alt="Solid hickory custom vanity cabinets built in workshop" loading="lazy">
+      <div class="photo-cap"><h4>Hickory Vanity Cabinets</h4><span>Custom Cabinetry</span></div>
+    </div>
+
+    <div class="photo-card" data-title="Kitchen Remodel" data-sub="Custom Cabinetry &amp; Butcher Block">
+      <img src="images/project-kitchen-2.jpg" alt="Kitchen remodel with cabinetry and butcher block island" loading="lazy">
+      <div class="photo-cap"><h4>Kitchen Remodel</h4><span>Custom Cabinetry &amp; Butcher Block</span></div>
+    </div>
+
+    <div class="photo-card" data-title="Granite Dining Table" data-sub="Stone &amp; Countertops">
+      <img src="images/project-countertop.jpg" alt="Custom granite dining table" loading="lazy">
+      <div class="photo-cap"><h4>Granite Dining Table</h4><span>Stone &amp; Countertops</span></div>
+    </div>
+
+    <div class="photo-card" data-title="Deep Green Kitchen Package" data-sub="Full Custom Build">
+      <img src="images/GreenKitchen.JPG" alt="Deep green custom kitchen cabinetry with lit upper cabinets" loading="lazy">
+      <div class="photo-cap"><h4>Deep Green Kitchen Package</h4><span>Full Custom Build</span></div>
+    </div>
+
+  </div>
+</section>
+
+<div class="cta-strip">
+  <h2>Ready to start your project?</h2>
+  <a href="index.html#contact">Get an Estimate</a>
+</div>
+
+<footer>
+  <p>CSLB License #[INSERT CSLB LICENSE NUMBER] · Licensed, Bonded &amp; Insured in California</p>
+  <p style="margin-top:8px;">
+    <a href="index.html">Back to Home</a> ·
+    <a href="privacy.html">Privacy Policy</a> ·
+    <a href="terms.html">Terms of Service</a> ·
+    <a href="accessibility.html">Accessibility</a>
+  </p>
+  <p style="margin-top:8px;">&copy; 2026 Best Sundan Inc, DBA BSD Custom Cabinetry. All rights reserved.</p>
+</footer>
+
+<div id="cookie-banner" role="dialog" aria-label="Cookie notice">
+  <p>We use essential cookies for basic site functionality, and may use analytics cookies to understand how visitors use this site. See our <a href="privacy.html">Privacy Policy</a> to learn more.</p>
+  <div class="cookie-actions">
+    <button class="cookie-btn" id="cookie-decline" type="button">Decline</button>
+    <button class="cookie-btn accept" id="cookie-accept" type="button">Accept</button>
+  </div>
+</div>
+
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
+  <button id="lb-close" aria-label="Close">&#x2715;</button>
+  <button id="lb-prev" aria-label="Previous image">&#8249;</button>
+  <img id="lb-img" src="" alt="">
+  <button id="lb-next" aria-label="Next image">&#8250;</button>
+  <div id="lb-cap"><span id="lb-sub"></span></div>
+</div>
+
+<script>
+  // cookie consent banner
+  (function(){
+    const banner = document.getElementById('cookie-banner');
+    const accept = document.getElementById('cookie-accept');
+    const decline = document.getElementById('cookie-decline');
+    const stored = localStorage.getItem('bsd-cookie-consent');
+    if (!stored) {
+      requestAnimationFrame(() => banner.classList.add('show'));
+    }
+    function dismiss(value){
+      localStorage.setItem('bsd-cookie-consent', value);
+      banner.classList.remove('show');
+    }
+    accept.addEventListener('click', () => dismiss('accepted'));
+    decline.addEventListener('click', () => dismiss('declined'));
+  })();
+
+  const nav = document.getElementById('nav');
+  const menuToggle = document.querySelector('.menu-toggle');
+  const mobilePanel = document.getElementById('mobile-panel');
+
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 40);
+  }, {passive:true});
+
+  menuToggle.addEventListener('click', () => {
+    const open = document.body.classList.toggle('menu-open');
+    menuToggle.setAttribute('aria-expanded', String(open));
+  });
+
+  mobilePanel.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      document.body.classList.remove('menu-open');
+      menuToggle.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  const cards = Array.from(document.querySelectorAll('.photo-card'));
+  const lb = document.getElementById('lightbox');
+  const lbImg = document.getElementById('lb-img');
+  const lbCap = document.getElementById('lb-cap');
+  const lbSub = document.getElementById('lb-sub');
+  const lbClose = document.getElementById('lb-close');
+  const lbPrev = document.getElementById('lb-prev');
+  const lbNext = document.getElementById('lb-next');
+  let current = 0;
+
+  function openLb(index){
+    current = index;
+    const card = cards[current];
+    const img = card.querySelector('img');
+    lbImg.src = img.src;
+    lbImg.alt = img.alt;
+    lbCap.firstChild.nodeValue = card.dataset.title || '';
+    lbSub.textContent = card.dataset.sub || '';
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLb(){
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+    lbImg.src = '';
+  }
+  cards.forEach((card, i) => card.addEventListener('click', () => openLb(i)));
+  lbClose.addEventListener('click', closeLb);
+  lbPrev.addEventListener('click', () => openLb((current - 1 + cards.length) % cards.length));
+  lbNext.addEventListener('click', () => openLb((current + 1) % cards.length));
+  lb.addEventListener('click', e => { if (e.target === lb) closeLb(); });
+  document.addEventListener('keydown', e => {
+    if (!lb.classList.contains('open')) return;
+    if (e.key === 'Escape') closeLb();
+    if (e.key === 'ArrowLeft') openLb((current - 1 + cards.length) % cards.length);
+    if (e.key === 'ArrowRight') openLb((current + 1) % cards.length);
+  });
+</script>
+</body>
+</html>

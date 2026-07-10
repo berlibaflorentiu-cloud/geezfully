@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quote Builder | BSD Custom Cabinetry (Internal)</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
+<meta name="theme-color" content="#0D1110">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Playfair+Display:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --ink:#0D1110;--panel:#14201B;--panel-2:#1C2D26;
+    --brass:#C8A552;--brass-hi:#F1D78A;--rust:#A87B3E;--rust-hi:#D9B56D;
+    --parchment:#F4F0E5;--muted:#B9B7A8;--line:rgba(216,181,109,.22);
+    --danger:#C0574F;--danger-hi:#E38C86;
+    --tr:200ms ease;
+  }
+  body{
+    background:var(--ink);color:var(--parchment);font-family:'IBM Plex Sans',sans-serif;
+    font-size:15px;line-height:1.55;min-height:100vh;padding-bottom:120px;
+  }
+  h1,h2,h3{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.01em;color:var(--parchment);}
+  a{color:inherit;}
+  button,input,select{font-family:inherit;}
+  .wrap{max-width:980px;margin:0 auto;padding:0 24px;}
+
+  header{
+    position:sticky;top:0;z-index:50;
+    background:rgba(13,17,16,.94);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);padding:18px 0;
+  }
+  .head-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .wordmark{
+    font-family:'Playfair Display',serif;font-weight:900;font-size:1.3rem;
+    background:linear-gradient(160deg,var(--brass-hi),var(--brass) 60%,#A98C4B);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .tool-tag{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-left:10px;}
+  .tabs{display:flex;gap:8px;}
+  .tab-btn{
+    font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
+    padding:10px 16px;border:1px solid var(--line);color:var(--muted);background:transparent;cursor:pointer;transition:var(--tr);
+  }
+  .tab-btn.active{background:linear-gradient(180deg,var(--brass-hi),var(--brass));color:var(--ink);border-color:var(--rust);}
+  .tab-btn:not(.active):hover{color:var(--parchment);border-color:var(--rust-hi);}
+
+  main{padding:36px 0 20px;}
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .section-title{font-size:1.05rem;margin:34px 0 14px;color:var(--brass-hi);}
+  .section-title:first-child{margin-top:0;}
+  .hint{color:var(--muted);font-size:.86rem;margin-bottom:18px;}
+
+  /* ── Build Quote view ── */
+  .piece-card{
+    border:1px solid var(--line);background:rgba(244,240,229,.025);
+    padding:20px;margin-bottom:16px;position:relative;
+  }
+  .piece-top{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field label{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+  .field input,.field select{
+    background:var(--ink);border:1px solid var(--line);color:var(--parchment);
+    padding:9px 10px;font-size:.88rem;min-width:0;
+  }
+  .field input:focus,.field select:focus{outline:none;border-color:var(--rust-hi);}
+  .piece-label-field{flex:1 1 200px;}
+  .dim-field{width:84px;}
+  .qty-field{width:70px;}
+  .remove-piece{
+    margin-left:auto;background:none;border:1px solid var(--line);color:var(--danger-hi);
+    width:34px;height:34px;cursor:pointer;transition:var(--tr);flex-shrink:0;
+  }
+  .remove-piece:hover{border-color:var(--danger);background:rgba(192,87,79,.1);}
+  .opt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:14px;}
+  .piece-sub{
+    display:flex;justify-content:flex-end;align-items:baseline;gap:8px;
+    border-top:1px solid var(--line);padding-top:12px;margin-top:4px;
+  }
+  .piece-sub span:first-child{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+  .piece-sub b{font-family:'IBM Plex Mono',monospace;font-size:1.15rem;color:var(--brass-hi);}
+
+  .add-piece-btn{
+    width:100%;padding:16px;border:1px dashed var(--line);background:none;color:var(--muted);
+    font-family:'IBM Plex Mono',monospace;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;
+    cursor:pointer;transition:var(--tr);
+  }
+  .add-piece-btn:hover{border-color:var(--rust-hi);color:var(--rust-hi);}
+
+  .empty-state{
+    text-align:center;padding:50px 20px;color:var(--muted);border:1px dashed var(--line);
+  }
+
+  /* summary bar */
+  .summary-bar{
+    position:fixed;left:0;right:0;bottom:0;z-index:60;
+    background:rgba(13,17,16,.97);backdrop-filter:blur(12px);border-top:1px solid var(--line);
+    padding:16px 0;
+  }
+  .summary-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .summary-total{display:flex;align-items:baseline;gap:10px;}
+  .summary-total span{font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+  .summary-total b{font-family:'Anton',sans-serif;font-size:2rem;color:var(--brass-hi);}
+  .summary-actions{display:flex;gap:10px;flex-wrap:wrap;}
+  .btn{
+    font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
+    padding:11px 18px;border:1px solid var(--rust);color:var(--ink);cursor:pointer;
+    background:linear-gradient(180deg,var(--brass-hi),var(--brass));transition:var(--tr);
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn-ghost{
+    font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
+    padding:11px 18px;border:1px solid var(--line);color:var(--muted);background:none;cursor:pointer;transition:var(--tr);
+  }
+  .btn-ghost:hover{border-color:var(--rust-hi);color:var(--rust-hi);}
+  .btn-danger{border-color:var(--danger);color:var(--danger-hi);}
+  .btn-danger:hover{background:rgba(192,87,79,.1);}
+
+  /* ── Manage Pricing view ── */
+  .rate-card{
+    border:1px solid var(--line);background:rgba(244,240,229,.025);padding:20px;margin-bottom:28px;
+    display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  }
+  .rate-card .field{flex:0 0 auto;}
+  .cat-card{border:1px solid var(--line);margin-bottom:18px;}
+  .cat-head{
+    display:flex;align-items:center;gap:12px;padding:14px 18px;background:rgba(244,240,229,.03);
+    border-bottom:1px solid var(--line);flex-wrap:wrap;
+  }
+  .cat-head input{flex:1 1 180px;}
+  .cat-body{padding:16px 18px;}
+  .opt-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .opt-row input[type="text"]{flex:1 1 auto;}
+  .opt-row input[type="number"]{width:100px;}
+  .opt-row .rm{
+    background:none;border:1px solid var(--line);color:var(--danger-hi);width:32px;height:32px;
+    cursor:pointer;flex-shrink:0;transition:var(--tr);
+  }
+  .opt-row .rm:hover{border-color:var(--danger);background:rgba(192,87,79,.1);}
+  .add-opt-btn{
+    font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--muted);background:none;border:1px dashed var(--line);padding:8px 14px;cursor:pointer;transition:var(--tr);
+  }
+  .add-opt-btn:hover{color:var(--rust-hi);border-color:var(--rust-hi);}
+  .pricing-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px;padding-top:20px;border-top:1px solid var(--line);}
+  .saved-flash{
+    display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--brass-hi);
+    margin-left:12px;opacity:0;transition:opacity .25s;
+  }
+  .saved-flash.show{opacity:1;}
+
+  select{
+    -webkit-appearance:none;appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23B9B7A8'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;
+  }
+
+  @media print{
+    header,.summary-bar,.add-piece-btn,.remove-piece,.tabs{display:none!important;}
+    body{background:#fff;color:#111;padding-bottom:0;}
+    .piece-card{border:1px solid #ccc;background:none;break-inside:avoid;}
+    h1,h2,h3{color:#111;}
+    .piece-sub b{color:#111;}
+  }
+  @media(max-width:600px){
+    .summary-total b{font-size:1.5rem;}
+    .summary-row{flex-direction:column;align-items:stretch;}
+    .summary-actions{justify-content:stretch;}
+    .summary-actions .btn,.summary-actions .btn-ghost{flex:1;text-align:center;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap head-row">
+    <div>
+      <span class="wordmark">BSD</span>
+      <span class="tool-tag">Quote Builder — Internal Tool</span>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-view="build">Build Quote</button>
+      <button class="tab-btn" data-view="pricing">Manage Pricing</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ══ BUILD QUOTE VIEW ══ -->
+  <section id="view-build" class="view active">
+    <h1 style="font-size:1.6rem;margin-bottom:6px;">New Quote</h1>
+    <p class="hint">Add a piece for every cabinet, drawer run, or component in the job. Pick its options below and the price fills in automatically.</p>
+
+    <div id="pieces-list"></div>
+    <button class="add-piece-btn" id="add-piece-btn">+ Add a Piece</button>
+  </section>
+
+  <!-- ══ MANAGE PRICING VIEW ══ -->
+  <section id="view-pricing" class="view">
+    <h1 style="font-size:1.6rem;margin-bottom:6px;">Manage Pricing</h1>
+    <p class="hint">These are your real prices — the Build Quote tab calculates off exactly what's here. Everything is saved automatically to this device.</p>
+
+    <h2 class="section-title">Base Rate</h2>
+    <div class="rate-card">
+      <div class="field">
+        <label for="base-rate">$ per square foot</label>
+        <input type="number" id="base-rate" min="0" step="0.5">
+      </div>
+      <p class="hint" style="margin:0;max-width:38ch;">Applied to every piece's width &times; height before options are added on top.</p>
+    </div>
+
+    <h2 class="section-title">Option Categories</h2>
+    <div id="categories-list"></div>
+    <button class="add-piece-btn" id="add-cat-btn">+ Add Category</button>
+
+    <div class="pricing-actions">
+      <button class="btn" id="save-pricing-btn">Save Changes</button>
+      <button class="btn-ghost" id="export-pricing-btn">Export Backup (JSON)</button>
+      <button class="btn-ghost" id="import-pricing-btn">Import Backup</button>
+      <button class="btn-ghost btn-danger" id="reset-pricing-btn">Reset to Defaults</button>
+      <span class="saved-flash" id="saved-flash">Saved.</span>
+      <input type="file" id="import-file" accept="application/json" style="display:none;">
+    </div>
+  </section>
+
+</main>
+
+<div class="summary-bar">
+  <div class="wrap summary-row">
+    <div class="summary-total">
+      <span>Quote Total</span>
+      <b id="grand-total">$0</b>
+    </div>
+    <div class="summary-actions">
+      <button class="btn-ghost btn-danger" id="clear-quote-btn">Clear All</button>
+      <button class="btn" id="print-quote-btn">Print / Save Quote</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const PRICING_KEY = 'bsd-quote-tool-pricing';
+  const QUOTE_KEY = 'bsd-quote-tool-current';
+
+  const DEFAULT_PRICING = {
+    baseRate: 45,
+    categories: [
+      {
+        id: 'hinges', name: 'Hinges',
+        options: [
+          { name: 'Standard Hinge', price: 0 },
+          { name: 'Soft-Close Hinge', price: 8 }
+        ]
+      },
+      {
+        id: 'edges', name: 'Edge Profile',
+        options: [
+          { name: 'Straight Edge', price: 0 },
+          { name: 'Beveled Edge', price: 12 },
+          { name: 'Roundover Edge', price: 15 },
+          { name: 'Ogee Edge', price: 22 }
+        ]
+      },
+      {
+        id: 'corners', name: 'Corner Style',
+        options: [
+          { name: 'Butt Joint', price: 0 },
+          { name: 'Mitered Corner', price: 18 },
+          { name: 'Dovetail Corner', price: 35 }
+        ]
+      },
+      {
+        id: 'material', name: 'Material',
+        options: [
+          { name: 'Hard Maple', price: 0 },
+          { name: 'White Oak', price: 6 },
+          { name: 'Black Walnut', price: 14 },
+          { name: 'Rift Cherry', price: 10 }
+        ]
+      }
+    ]
+  };
+
+  function loadPricing(){
+    try {
+      const raw = localStorage.getItem(PRICING_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch(e){}
+    return JSON.parse(JSON.stringify(DEFAULT_PRICING));
+  }
+  function savePricing(p){
+    localStorage.setItem(PRICING_KEY, JSON.stringify(p));
+  }
+  function loadQuote(){
+    try {
+      const raw = localStorage.getItem(QUOTE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch(e){}
+    return [];
+  }
+  function saveQuote(){
+    localStorage.setItem(QUOTE_KEY, JSON.stringify(pieces));
+  }
+
+  let pricing = loadPricing();
+  let pieces = loadQuote();
+  let pieceCounter = pieces.length;
+
+  function money(n){
+    return '$' + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+
+  function newPiece(){
+    pieceCounter++;
+    const selections = {};
+    pricing.categories.forEach(c => { selections[c.id] = 0; });
+    return { id: 'p'+Date.now()+Math.random().toString(36).slice(2,7), label: 'Piece '+pieceCounter, width: 24, height: 30, qty: 1, selections };
+  }
+
+  function pieceSubtotal(piece){
+    const sqft = Math.max(0, (piece.width||0) * (piece.height||0)) / 144;
+    let total = sqft * pricing.baseRate;
+    pricing.categories.forEach(cat => {
+      const idx = piece.selections[cat.id] || 0;
+      const opt = cat.options[idx];
+      if (opt) total += opt.price;
+    });
+    return total * Math.max(1, piece.qty||1);
+  }
+
+  function grandTotal(){
+    return pieces.reduce((sum,p) => sum + pieceSubtotal(p), 0);
+  }
+
+  function renderPieces(){
+    const list = document.getElementById('pieces-list');
+    if (!pieces.length){
+      list.innerHTML = '<div class="empty-state">No pieces yet. Click "+ Add a Piece" to start a quote.</div>';
+    } else {
+      list.innerHTML = pieces.map(piece => {
+        const optGroups = pricing.categories.map(cat => {
+          const opts = cat.options.map((o,i) =>
+            '<option value="'+i+'"'+(piece.selections[cat.id]==i?' selected':'')+'>'+escapeHtml(o.name)+(o.price?' (+'+money(o.price)+')':'')+'</option>'
+          ).join('');
+          return '<div class="field"><label>'+escapeHtml(cat.name)+'</label><select data-piece="'+piece.id+'" data-cat="'+cat.id+'" class="cat-select">'+opts+'</select></div>';
+        }).join('');
+        return (
+          '<div class="piece-card" data-piece="'+piece.id+'">'+
+            '<div class="piece-top">'+
+              '<div class="field piece-label-field"><label>Piece Name</label><input type="text" class="piece-label" value="'+escapeAttr(piece.label)+'"></div>'+
+              '<div class="field dim-field"><label>Width (in)</label><input type="number" class="piece-width" min="0" step="0.25" value="'+piece.width+'"></div>'+
+              '<div class="field dim-field"><label>Height (in)</label><input type="number" class="piece-height" min="0" step="0.25" value="'+piece.height+'"></div>'+
+              '<div class="field qty-field"><label>Qty</label><input type="number" class="piece-qty" min="1" step="1" value="'+piece.qty+'"></div>'+
+              '<button class="remove-piece" title="Remove piece" aria-label="Remove piece">&#x2715;</button>'+
+            '</div>'+
+            '<div class="opt-grid">'+optGroups+'</div>'+
+            '<div class="piece-sub"><span>Subtotal</span><b>'+money(pieceSubtotal(piece))+'</b></div>'+
+          '</div>'
+        );
+      }).join('');
+    }
+    document.getElementById('grand-total').textContent = money(grandTotal());
+    saveQuote();
+  }
+
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function escapeAttr(s){ return escapeHtml(s); }
+
+  document.getElementById('add-piece-btn').addEventListener('click', () => {
+    pieces.push(newPiece());
+    renderPieces();
+  });
+
+  document.getElementById('pieces-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('.remove-piece');
+    if (!btn) return;
+    const card = btn.closest('.piece-card');
+    pieces = pieces.filter(p => p.id !== card.dataset.piece);
+    renderPieces();
+  });
+
+  document.getElementById('pieces-list').addEventListener('input', (e) => {
+    const card = e.target.closest('.piece-card');
+    if (!card) return;
+    const piece = pieces.find(p => p.id === card.dataset.piece);
+    if (!piece) return;
+    if (e.target.classList.contains('piece-label')) piece.label = e.target.value;
+    if (e.target.classList.contains('piece-width')) piece.width = parseFloat(e.target.value)||0;
+    if (e.target.classList.contains('piece-height')) piece.height = parseFloat(e.target.value)||0;
+    if (e.target.classList.contains('piece-qty')) piece.qty = parseInt(e.target.value)||1;
+    if (e.target.classList.contains('cat-select')) piece.selections[e.target.dataset.cat] = parseInt(e.target.value)||0;
+    // only re-render totals, not the whole list (keeps focus in inputs)
+    const sub = card.querySelector('.piece-sub b');
+    if (sub) sub.textContent = money(pieceSubtotal(piece));
+    document.getElementById('grand-total').textContent = money(grandTotal());
+    saveQuote();
+  });
+
+  document.getElementById('clear-quote-btn').addEventListener('click', () => {
+    if (pieces.length && !confirm('Clear all pieces in this quote? This can\'t be undone.')) return;
+    pieces = [];
+    pieceCounter = 0;
+    renderPieces();
+  });
+
+  document.getElementById('print-quote-btn').addEventListener('click', () => window.print());
+
+  /* ── Manage Pricing ── */
+  function renderPricing(){
+    document.getElementById('base-rate').value = pricing.baseRate;
+    const list = document.getElementById('categories-list');
+    list.innerHTML = pricing.categories.map(cat => {
+      const rows = cat.options.map((o,i) =>
+        '<div class="opt-row" data-idx="'+i+'">'+
+          '<input type="text" class="opt-name" value="'+escapeAttr(o.name)+'" placeholder="Option name">'+
+          '<input type="number" class="opt-price" value="'+o.price+'" step="0.5" placeholder="0.00">'+
+          '<button class="rm opt-rm" title="Remove option" aria-label="Remove option">&#x2715;</button>'+
+        '</div>'
+      ).join('');
+      return (
+        '<div class="cat-card" data-cat="'+cat.id+'">'+
+          '<div class="cat-head">'+
+            '<input type="text" class="cat-name" value="'+escapeAttr(cat.name)+'">'+
+            '<button class="btn-ghost btn-danger cat-rm" style="margin-left:auto;">Delete Category</button>'+
+          '</div>'+
+          '<div class="cat-body">'+
+            '<div class="opt-rows">'+rows+'</div>'+
+            '<button class="add-opt-btn">+ Add Option</button>'+
+          '</div>'+
+        '</div>'
+      );
+    }).join('');
+  }
+
+  function readPricingFromDom(){
+    pricing.baseRate = parseFloat(document.getElementById('base-rate').value) || 0;
+    document.querySelectorAll('.cat-card').forEach(catEl => {
+      const cat = pricing.categories.find(c => c.id === catEl.dataset.cat);
+      if (!cat) return;
+      cat.name = catEl.querySelector('.cat-name').value || cat.name;
+      const opts = [];
+      catEl.querySelectorAll('.opt-row').forEach(row => {
+        opts.push({
+          name: row.querySelector('.opt-name').value || 'Option',
+          price: parseFloat(row.querySelector('.opt-price').value) || 0
+        });
+      });
+      cat.options = opts;
+    });
+  }
+
+  document.getElementById('add-cat-btn').addEventListener('click', () => {
+    readPricingFromDom();
+    pricing.categories.push({ id: 'cat'+Date.now(), name: 'New Category', options: [{name:'Option 1', price:0}] });
+    renderPricing();
+  });
+
+  document.getElementById('categories-list').addEventListener('click', (e) => {
+    if (e.target.closest('.cat-rm')){
+      readPricingFromDom();
+      const catEl = e.target.closest('.cat-card');
+      if (!confirm('Delete this whole category?')) return;
+      pricing.categories = pricing.categories.filter(c => c.id !== catEl.dataset.cat);
+      renderPricing();
+      return;
+    }
+    if (e.target.closest('.add-opt-btn')){
+      readPricingFromDom();
+      const catEl = e.target.closest('.cat-card');
+      const cat = pricing.categories.find(c => c.id === catEl.dataset.cat);
+      cat.options.push({ name: 'New Option', price: 0 });
+      renderPricing();
+      return;
+    }
+    if (e.target.closest('.opt-rm')){
+      readPricingFromDom();
+      const catEl = e.target.closest('.cat-card');
+      const cat = pricing.categories.find(c => c.id === catEl.dataset.cat);
+      const idx = parseInt(e.target.closest('.opt-row').dataset.idx);
+      cat.options.splice(idx, 1);
+      renderPricing();
+      return;
+    }
+  });
+
+  document.getElementById('save-pricing-btn').addEventListener('click', () => {
+    readPricingFromDom();
+    savePricing(pricing);
+    renderPricing();
+    renderPieces();
+    const flash = document.getElementById('saved-flash');
+    flash.classList.add('show');
+    setTimeout(() => flash.classList.remove('show'), 1800);
+  });
+
+  document.getElementById('reset-pricing-btn').addEventListener('click', () => {
+    if (!confirm('Reset all pricing to the built-in defaults? This overwrites your current price list.')) return;
+    pricing = JSON.parse(JSON.stringify(DEFAULT_PRICING));
+    savePricing(pricing);
+    renderPricing();
+    renderPieces();
+  });
+
+  document.getElementById('export-pricing-btn').addEventListener('click', () => {
+    readPricingFromDom();
+    const blob = new Blob([JSON.stringify(pricing, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'bsd-pricing-backup-' + new Date().toISOString().slice(0,10) + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('import-pricing-btn').addEventListener('click', () => {
+    document.getElementById('import-file').click();
+  });
+  document.getElementById('import-file').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        if (!parsed.categories || !Array.isArray(parsed.categories)) throw new Error('bad format');
+        pricing = parsed;
+        savePricing(pricing);
+        renderPricing();
+        renderPieces();
+        alert('Pricing imported successfully.');
+      } catch(err){
+        alert('That file doesn\'t look like a valid pricing backup.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  /* ── Tabs ── */
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('view-' + btn.dataset.view).classList.add('active');
+    });
+  });
+
+  renderPricing();
+  renderPieces();
+})();
+</script>
+
+</body>
+</html>

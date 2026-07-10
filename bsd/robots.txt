@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /bsd/quote-tool.html
+
+Sitemap: https://geezfully.com/bsd/sitemap.xml

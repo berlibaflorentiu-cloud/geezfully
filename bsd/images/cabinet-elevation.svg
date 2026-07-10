@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="560" viewBox="0 0 1160 560" fill="none">
+  <g opacity=".17" stroke="#F4ECDA" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M72 170 570 218 1086 154"/>
+    <path d="M78 188 570 236 1080 174"/>
+    <path d="M72 390 570 462 1086 368"/>
+    <path d="M570 218v244"/>
+    <path d="M72 170v220"/>
+    <path d="M1086 154v214"/>
+    <path d="M92 152 308 172 326 192 112 172Z"/>
+    <path d="M814 120 1064 146 1086 154 840 132Z"/>
+    <path d="M112 190v76l82 8v-76Z"/>
+    <path d="M194 198v76l82 8v-76Z"/>
+    <path d="M276 206v76l84 8v-76Z"/>
+    <path d="M360 214v76l92 9v-76Z"/>
+    <path d="M452 223v76l86 8v-76Z"/>
+    <path d="M606 231v76l90-11v-76Z"/>
+    <path d="M696 220v76l90-11v-76Z"/>
+    <path d="M786 209v76l98-12v-76Z"/>
+    <path d="M884 197v76l156-19v-76Z"/>
+    <path d="M112 322 538 372v74l-426-60Z"/>
+    <path d="M606 370 1040 296v70l-434 82Z"/>
+    <path d="M112 322 570 374 1040 296"/>
+    <path d="M112 304 570 354 1040 278"/>
+    <path d="M146 326v64"/>
+    <path d="M214 334v66"/>
+    <path d="M282 342v68"/>
+    <path d="M350 350v70"/>
+    <path d="M418 358v72"/>
+    <path d="M486 366v74"/>
+    <path d="M650 362v78"/>
+    <path d="M724 350v76"/>
+    <path d="M798 337v75"/>
+    <path d="M872 324v74"/>
+    <path d="M946 312v72"/>
+    <path d="M214 334v22l68 8v-22"/>
+    <path d="M350 350v24l68 8v-24"/>
+    <path d="M724 350v24l74-13v-24"/>
+    <path d="M872 324v24l74-13v-23"/>
+    <path d="M102 386 538 446"/>
+    <path d="M606 448 1040 366"/>
+  </g>
+  <g opacity=".22" stroke="#D9B56D" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M52 296h1054"/>
+    <path d="M570 92v398"/>
+    <path d="M92 170 570 218 1086 154"/>
+    <path d="M112 304 570 354 1040 278"/>
+  </g>
+  <g opacity=".24" stroke="#F4ECDA" stroke-width="2" stroke-linecap="round">
+    <path d="M148 254l17 2"/>
+    <path d="M232 263l17 2"/>
+    <path d="M316 271l17 2"/>
+    <path d="M406 280l17 2"/>
+    <path d="M490 288l17 2"/>
+    <path d="M646 292l17-2"/>
+    <path d="M738 281l17-2"/>
+    <path d="M830 269l17-2"/>
+    <path d="M954 249l17-2"/>
+    <path d="M156 360l20 3"/>
+    <path d="M244 371l20 3"/>
+    <path d="M312 382l20 3"/>
+    <path d="M448 401l20 3"/>
+    <path d="M666 404l20-4"/>
+    <path d="M746 389l20-4"/>
+    <path d="M824 374l20-4"/>
+    <path d="M970 346l20-4"/>
+  </g>
+</svg>
