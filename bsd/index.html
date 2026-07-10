@@ -246,18 +246,29 @@
   body.menu-open .menu-toggle span::before{opacity:0;}
   body.menu-open .menu-toggle span::after{transform:translateY(-2px) rotate(-90deg);}
   .mobile-panel{
-    position:fixed;top:78px;left:18px;right:18px;z-index:250;
-    padding:18px;background:rgba(13,17,16,.96);border:1px solid var(--line);
-    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-    display:none;
+    position:fixed;inset:0;z-index:250;
+    padding:104px 28px 40px;background:rgba(13,17,16,.98);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    display:flex;flex-direction:column;
+    opacity:0;visibility:hidden;transform:translateY(-8px);
+    transition:opacity var(--tr),visibility var(--tr),transform var(--tr);
+    overflow-y:auto;
   }
   .mobile-panel a{
-    display:block;padding:13px 4px;border-bottom:1px solid var(--line);
-    font-family:'IBM Plex Mono',monospace;font-size:.78rem;letter-spacing:.1em;
-    text-transform:uppercase;color:var(--muted);
+    display:block;padding:18px 2px;border-bottom:1px solid var(--line);
+    font-family:'Anton',sans-serif;font-size:1.5rem;letter-spacing:.01em;
+    text-transform:uppercase;color:var(--parchment);
+    transition:color var(--tr),padding-left var(--tr);
   }
-  .mobile-panel a:last-child{border-bottom:0;color:var(--rust-hi);}
-  body.menu-open .mobile-panel{display:block;}
+  .mobile-panel a:active{color:var(--rust-hi);padding-left:10px;}
+  .mobile-panel a:last-child{
+    border-bottom:0;margin-top:20px;text-align:center;padding:16px;
+    border:1px solid var(--rust);color:var(--ink);
+    background:linear-gradient(180deg,var(--brass-hi),var(--brass));
+    font-size:.9rem;
+  }
+  body.menu-open{overflow:hidden;}
+  body.menu-open .mobile-panel{opacity:1;visibility:visible;transform:translateY(0);}
   @media(min-width:900px){
     .menu-toggle,.mobile-panel{display:none!important;}
   }
@@ -390,7 +401,10 @@
     font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.1em;
     text-transform:uppercase;color:rgba(244,236,218,.62);
   }
-  @media(max-width:520px){.trust-row{grid-template-columns:1fr;gap:22px;}}
+  @media(max-width:520px){
+    .trust-row{grid-template-columns:repeat(2,1fr);row-gap:32px;column-gap:16px;}
+    .trust-row b{font-size:1.3rem;}
+  }
 
   /* ── SERVICES ───────────────────────────────── */
   #services{background:rgba(10,15,14,.28);border-bottom:1px solid var(--line);overflow:hidden;}
@@ -492,12 +506,26 @@
   }
   @media(max-width:760px){
     .ow-tabs{grid-template-columns:1fr;}
-    .ow-tab-list{flex-direction:row;overflow-x:auto;border-right:none;border-bottom:1px solid var(--line);}
-    .ow-tab{flex-shrink:0;border-left:none;border-bottom:2px solid transparent;}
+    .ow-tabs{position:relative;}
+    .ow-tab-list{
+      flex-direction:row;overflow-x:auto;border-right:none;border-bottom:1px solid var(--line);
+      -webkit-overflow-scrolling:touch;scrollbar-width:none;
+    }
+    .ow-tab-list::-webkit-scrollbar{display:none;}
+    .ow-tabs::after{
+      content:'';position:absolute;top:0;right:0;width:36px;height:53px;
+      background:linear-gradient(90deg,transparent,rgba(9,13,11,.9));
+      pointer-events:none;
+    }
+    .ow-tab{flex-shrink:0;border-left:none;border-bottom:2px solid transparent;padding:16px 14px;font-size:.72rem;}
     .ow-tab.active{border-left-color:transparent;border-bottom-color:var(--rust-hi);}
     .ow-tab + .ow-tab{border-top:none;border-left:1px solid var(--line);}
     .ow-panel{padding:28px 22px;}
     .ow-list{grid-template-columns:1fr;}
+  }
+  @media(max-width:480px){
+    .ow-tab{font-size:.68rem;padding:15px 12px;gap:8px;}
+    .ow-tab-ic{flex-basis:16px;width:16px;height:16px;}
   }
 
   /* ── WORK ───────────────────────────────────── */
@@ -1236,7 +1264,7 @@
         </div>
       </div>
 
-      <div class="contact-reviews">
+      <div class="contact-reviews" id="reviews">
         <div class="contact-reviews-bar reveal">
           <span class="reviews-stars" id="reviews-avg-stars">☆☆☆☆☆</span>
           <span class="reviews-avg" id="reviews-avg-num">—</span>
