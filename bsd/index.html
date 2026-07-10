@@ -178,7 +178,20 @@
     transition:padding var(--tr);
   }
   #nav.scrolled{padding:13px 40px;}
-  .nav-logo{display:flex;align-items:center;gap:12px;min-width:92px;}
+  .nav-logo{
+    display:grid;align-items:center;gap:2px;
+    min-width:146px;padding:6px 13px 7px;
+    border:1px solid rgba(241,215,138,.52);
+    background:
+      linear-gradient(145deg,rgba(217,181,109,.18),rgba(244,240,229,.04) 48%,rgba(168,185,158,.1));
+    box-shadow:0 14px 34px rgba(0,0,0,.25),inset 0 0 0 1px rgba(244,240,229,.04);
+    transition:transform var(--tr),border-color var(--tr),box-shadow var(--tr),padding var(--tr);
+  }
+  .nav-logo:hover{
+    transform:translateY(-1px);
+    border-color:rgba(241,215,138,.82);
+    box-shadow:0 18px 42px rgba(0,0,0,.3),0 0 24px rgba(217,181,109,.12),inset 0 0 0 1px rgba(244,240,229,.06);
+  }
   .nav-logo img{
     width:86px;height:auto;display:block;
     filter:drop-shadow(0 3px 14px rgba(0,0,0,.24));
@@ -192,7 +205,15 @@
     -webkit-background-clip:text;background-clip:text;color:transparent;
     transition:font-size var(--tr);
   }
-  #nav.scrolled .wordmark{font-size:1.4rem;}
+  .nav-logo .wordmark{font-size:1.9rem;}
+  .nav-logo-sub{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:.55rem;letter-spacing:.13em;text-transform:uppercase;
+    line-height:1;color:rgba(244,240,229,.74);
+  }
+  #nav.scrolled .nav-logo{min-width:130px;padding:5px 11px 6px;}
+  #nav.scrolled .nav-logo .wordmark{font-size:1.56rem;}
+  #nav.scrolled .nav-logo-sub{font-size:.48rem;}
   .nav-links{display:flex;gap:36px;align-items:center;}
   .nav-links a{
     font-family:'IBM Plex Mono',monospace;
@@ -277,6 +298,11 @@
   @media(max-width:640px){
     #nav{padding:16px 22px;}
     #nav.scrolled{padding:12px 22px;}
+    .nav-logo{min-width:112px;padding:7px 10px 8px;}
+    .nav-logo .wordmark{font-size:1.7rem;}
+    .nav-logo-sub{font-size:.45rem;letter-spacing:.1em;}
+    #nav.scrolled .nav-logo{min-width:104px;padding:6px 9px 7px;}
+    #nav.scrolled .nav-logo .wordmark{font-size:1.52rem;}
   }
 
   /* ── HERO ────────────────────────────────────── */
@@ -316,6 +342,7 @@
   .hero-copy > *:nth-child(4){animation-delay:.92s;}
   .hero-copy > *:nth-child(5){animation-delay:1.04s;}
   .hero-copy > *:nth-child(6){animation-delay:1.16s;}
+  .hero-copy > *:nth-child(7){animation-delay:1.28s;}
   @keyframes heroRise{to{opacity:1;transform:translateY(0);}}
   @media(prefers-reduced-motion:reduce){
     .hero-photo{animation:none;opacity:1;}
@@ -341,6 +368,19 @@
     font-style:normal;color:var(--rust-hi);
     text-decoration:underline;text-decoration-style:dashed;
     text-decoration-color:rgba(211,129,76,.55);text-underline-offset:8px;
+  }
+  .hero-motto{
+    display:inline-block;
+    margin:-4px 0 24px;
+    padding:11px 16px;
+    border-left:2px solid var(--brass-hi);
+    background:linear-gradient(90deg,rgba(217,181,109,.18),rgba(217,181,109,.03));
+    font-family:'Playfair Display',serif;
+    font-size:clamp(1.25rem,2vw,1.75rem);
+    font-weight:900;
+    line-height:1;
+    color:var(--brass-hi);
+    text-shadow:0 10px 28px rgba(0,0,0,.28);
   }
   #hero p.lede{
     max-width:46ch;color:var(--muted);font-size:1.08rem;margin-bottom:38px;
@@ -932,6 +972,7 @@
 <nav id="nav">
   <a href="#hero" class="nav-logo">
     <span class="wordmark">BSD</span>
+    <span class="nav-logo-sub">Custom Cabinetry</span>
   </a>
   <div class="nav-links">
     <a href="#services">Services</a>
@@ -978,6 +1019,7 @@
       <p class="eyebrow">Custom Cabinetry, Built By Hand</p>
       <p class="company-line">Best Sundan Inc.</p>
       <h1>A kitchen that gets <em>better</em> with every year.</h1>
+      <p class="hero-motto">I love quality.</p>
       <p class="lede">BSD designs and builds solid-wood cabinetry for homeowners who'd rather wait for it done right than settle for what's in stock. No particleboard, no shortcuts — every box is joined, sanded, and finished in our own shop.</p>
       <div class="hero-actions">
         <a href="#contact" class="btn">Get an Estimation</a>
@@ -1144,7 +1186,7 @@
     <div class="gallery-grid reveal">
       <div class="gallery-item">
         <div class="gimg"><img src="images/about-kitchen.jpg" alt="Kitchen remodel with custom cabinetry and white island"></div>
-        <div class="gcap"><h4>Kitchen Remodel</h4><span>Custom Cabinetry &amp; Stone</span></div>
+        <div class="gcap"><h4>Kitchen Remodel</h4><span>Cabinetry &amp; Stone</span></div>
       </div>
       <div class="gallery-item">
         <div class="gimg"><img src="images/project-cabinetry.jpg" alt="Solid hickory custom vanity cabinets built in workshop"></div>
@@ -1156,7 +1198,7 @@
       </div>
       <div class="gallery-item">
         <div class="gimg"><img src="images/project-kitchen-2.jpg" alt="Kitchen remodel with cabinetry and butcher block island"></div>
-        <div class="gcap"><h4>Kitchen Remodel</h4><span>Custom Cabinetry &amp; Butcher Block</span></div>
+        <div class="gcap"><h4>Kitchen Remodel</h4><span>Cabinetry &amp; Butcher Block</span></div>
       </div>
     </div>
     <div class="gallery-cta">
