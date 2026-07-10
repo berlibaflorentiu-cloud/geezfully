@@ -393,7 +393,7 @@
 <body>
 
 <div id="auth-screen">
-  <div class="auth-card">
+  <div class="auth-card" id="login-card">
     <span class="wordmark">BSD</span>
     <p class="auth-sub">Cabinet Catalogue — Log In</p>
     <div class="auth-field">
@@ -407,6 +407,21 @@
     <button class="btn auth-submit" id="auth-login-btn">Log In</button>
     <p class="auth-msg" id="auth-msg"></p>
     <button type="button" class="auth-forgot" id="auth-forgot-btn">Forgot password?</button>
+  </div>
+
+  <div class="auth-card" id="set-password-card" style="display:none;">
+    <span class="wordmark">BSD</span>
+    <p class="auth-sub">Set Your Password</p>
+    <div class="auth-field">
+      <label for="new-password">New Password</label>
+      <input type="password" id="new-password" autocomplete="new-password">
+    </div>
+    <div class="auth-field">
+      <label for="new-password-confirm">Confirm Password</label>
+      <input type="password" id="new-password-confirm" autocomplete="new-password">
+    </div>
+    <button class="btn auth-submit" id="set-password-btn">Set Password &amp; Continue</button>
+    <p class="auth-msg" id="set-password-msg"></p>
   </div>
 </div>
 
@@ -910,6 +925,13 @@ const TIERS = [
 
   const authScreen = document.getElementById('auth-screen');
   const appShell = document.getElementById('app-shell');
+  const loginCard = document.getElementById('login-card');
+  const setPasswordCard = document.getElementById('set-password-card');
+
+  // Invite and password-reset emails land here with #access_token=...&type=invite
+  // (or type=recovery) in the URL hash — those users have no password yet
+  // (or are resetting it), so they need the "set password" form, not login.
+  let needsNewPassword = /type=(invite|recovery)/.test(window.location.hash);
 
   function showApp(user){
     authScreen.style.display = 'none';
@@ -919,7 +941,38 @@ const TIERS = [
   function showAuth(){
     appShell.classList.remove('ready');
     authScreen.style.display = 'flex';
+    if (needsNewPassword){
+      loginCard.style.display = 'none';
+      setPasswordCard.style.display = 'block';
+    } else {
+      loginCard.style.display = 'block';
+      setPasswordCard.style.display = 'none';
+    }
   }
+
+  document.getElementById('set-password-btn').addEventListener('click', async () => {
+    const pw = document.getElementById('new-password').value;
+    const pwConfirm = document.getElementById('new-password-confirm').value;
+    const msg = document.getElementById('set-password-msg');
+    msg.className = 'auth-msg';
+    msg.textContent = '';
+    if (pw.length < 6){ msg.className = 'auth-msg error'; msg.textContent = 'Password must be at least 6 characters.'; return; }
+    if (pw !== pwConfirm){ msg.className = 'auth-msg error'; msg.textContent = 'Passwords don\'t match.'; return; }
+    const btn = document.getElementById('set-password-btn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    const { data, error } = await db.auth.updateUser({ password: pw });
+    btn.disabled = false; btn.textContent = 'Set Password & Continue';
+    if (error){
+      msg.className = 'auth-msg error';
+      msg.textContent = error.message;
+      return;
+    }
+    needsNewPassword = false;
+    history.replaceState(null, '', window.location.pathname);
+    setPasswordCard.style.display = 'none';
+    loginCard.style.display = 'block';
+    if (data.user) showApp(data.user);
+  });
 
   document.getElementById('auth-login-btn').addEventListener('click', async () => {
     const email = document.getElementById('auth-email').value.trim();
@@ -957,7 +1010,7 @@ const TIERS = [
   });
 
   db.auth.onAuthStateChange((event, session) => {
-    if (session && session.user){
+    if (session && session.user && !needsNewPassword){
       showApp(session.user);
       loadSavedQuotes();
     } else {
