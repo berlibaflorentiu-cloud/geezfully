@@ -84,20 +84,22 @@
   /* ── browse area ── */
   .browse-head{margin-bottom:18px;}
   .browse-head p{color:var(--muted);font-size:.88rem;max-width:60ch;}
-  .sub-group{margin-bottom:30px;}
+  .sub-group{margin-bottom:34px;}
+  .sub-thumb-wrap{margin-bottom:12px;}
+  .sub-thumb{
+    display:block;width:100%;max-width:420px;height:260px;object-fit:contain;object-position:left center;
+    background:rgba(244,240,229,.06);border:1px solid var(--line);padding:14px;
+    cursor:zoom-in;transition:var(--tr);
+  }
+  .sub-thumb:hover{border-color:var(--rust-hi);}
   .sub-title{
-    display:flex;align-items:center;gap:12px;
     font-family:'IBM Plex Mono',monospace;font-size:.78rem;letter-spacing:.06em;
     color:var(--brass-hi);text-transform:uppercase;padding-bottom:10px;margin-bottom:12px;
     border-bottom:1px solid var(--line);
   }
-  .sub-thumb{
-    flex:0 0 auto;width:52px;height:52px;object-fit:contain;object-position:left center;
-    background:rgba(244,240,229,.04);border:1px solid var(--line);padding:4px;
-    cursor:zoom-in;transition:var(--tr);
+  @media(max-width:640px){
+    .sub-thumb{max-width:100%;height:200px;}
   }
-  .sub-thumb:hover{border-color:var(--rust-hi);}
-  .sub-title-text{flex:1;}
 
   /* ── image lightbox ── */
   .lightbox{
@@ -409,28 +411,42 @@ const TIERS = [
     return hay.includes(searchTerm);
   }
 
+  // description/subsection-name matches rank above SKU-only matches
+  function relevance(subName, items){
+    if (subName.toLowerCase().includes(searchTerm)) return 2;
+    if (items.some(it => it.sku.toLowerCase().includes(searchTerm))) return 1;
+    return 0;
+  }
+
   function renderBrowse(){
     const title = document.getElementById('browse-title');
     const listEl = document.getElementById('browse-list');
-    let cats = CATALOG;
+    let groups = [];
     if (!searchTerm){
-      cats = CATALOG.filter(c => c.category === activeCategory);
+      CATALOG.filter(c => c.category === activeCategory).forEach(cat => {
+        cat.subsections.forEach(sub => groups.push({cat, sub, items: sub.items, score: 0}));
+      });
       title.textContent = activeCategory;
     } else {
+      CATALOG.forEach(cat => {
+        cat.subsections.forEach(sub => {
+          const items = sub.items.filter(it => matchesSearch(sub.name, it));
+          if (!items.length) return;
+          groups.push({cat, sub, items, score: relevance(sub.name, items)});
+        });
+      });
+      groups.sort((a, b) => b.score - a.score);
       title.textContent = 'Search results for "' + searchTerm + '"';
     }
 
     let html = '';
     let any = false;
-    cats.forEach(cat => {
-      cat.subsections.forEach(sub => {
-        const items = sub.items.filter(it => matchesSearch(sub.name, it));
-        if (!items.length) return;
+    groups.forEach(({cat, sub, items}) => {
         any = true;
         const thumb = sub.image
-          ? '<img class="sub-thumb" src="images/catalog/'+sub.image+'" alt="" loading="lazy" data-role="thumb" data-name="'+escapeHtml(sub.name)+'">'
+          ? '<div class="sub-thumb-wrap"><img class="sub-thumb" src="images/catalog/'+sub.image+'" alt="" loading="lazy" data-role="thumb" data-name="'+escapeHtml(sub.name)+'"></div>'
           : '';
-        html += '<div class="sub-group"><div class="sub-title">'+thumb+'<span class="sub-title-text">'+(searchTerm ? escapeHtml(cat.category)+' — ' : '')+escapeHtml(sub.name)+'</span></div>';
+        html += '<div class="sub-group">'+thumb+'<div class="sub-title">'+(searchTerm ? escapeHtml(cat.category)+' — ' : '')+escapeHtml(sub.name)+'</div>';
         items.forEach(it => {
           const opts = styleOptions(it);
           const inCart = cart.some(l => l.sku === it.sku);
@@ -449,7 +465,6 @@ const TIERS = [
             '</div>';
         });
         html += '</div>';
-      });
     });
     listEl.innerHTML = any ? html : '<div class="no-results">No items match your search.</div>';
   }
