@@ -678,7 +678,6 @@ const TIERS = [
     const rows = cart.map(l => (
       '<tr>' +
         '<td><b>'+escapeHtml(l.sku)+'</b>'+(l.styleLabel ? '<div class="doc-sku-sub">'+escapeHtml(l.styleLabel)+'</div>' : '')+'<div class="doc-sku-sub">'+escapeHtml(l.subsection)+'</div></td>'+
-        '<td>'+escapeHtml(l.tierLabel)+'</td>'+
         '<td class="num">'+l.qty+'</td>'+
         '<td class="num">'+money(l.unitPrice)+'</td>'+
         '<td class="num">'+money(l.unitPrice * l.qty)+'</td>'+
@@ -688,7 +687,7 @@ const TIERS = [
     const body = cart.length
       ? (
         '<table class="doc-table">'+
-          '<thead><tr><th>Item</th><th>Build Tier</th><th style="text-align:right;">Qty</th><th style="text-align:right;">Unit</th><th style="text-align:right;">Total</th></tr></thead>'+
+          '<thead><tr><th>Item</th><th style="text-align:right;">Qty</th><th style="text-align:right;">Unit</th><th style="text-align:right;">Total</th></tr></thead>'+
           '<tbody>'+rows+'</tbody>'+
         '</table>'+
         '<div class="doc-total-row"><span>Estimate Total</span><b>'+money(cartTotal())+'</b></div>'
@@ -706,7 +705,7 @@ const TIERS = [
         ? '<div class="doc-client">'+(client.name ? '<b>Client:</b> '+escapeHtml(client.name)+'<br>' : '')+(client.note ? '<b>Project:</b> '+escapeHtml(client.note) : '')+'</div>'
         : '') +
       body +
-      '<div class="doc-foot">This is a preliminary estimate based on NorthPoint list pricing and BSD build tiers. Final pricing is confirmed after an in-home measure.</div>'
+      '<div class="doc-foot">This is a preliminary estimate. Final pricing is confirmed after an in-home measure.</div>'
     );
   }
 
