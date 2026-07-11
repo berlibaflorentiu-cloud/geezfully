@@ -974,20 +974,52 @@ const TIERS = [
     if (data.user) showApp(data.user);
   });
 
+  // Client-side throttling: failed logins and reset-email clicks are capped
+  // and backed off so a bad actor (or a stuck script) can't hammer Supabase's
+  // auth API from this page. This is a courtesy layer, not the real defense —
+  // Supabase enforces its own server-side rate limits regardless.
+  const LOGIN_LOCK_KEY = 'bsd_login_lockout';
+  const RESET_LOCK_KEY = 'bsd_reset_lockout';
+
+  function getLockout(key){
+    try { return JSON.parse(sessionStorage.getItem(key)) || { fails: 0, until: 0 }; }
+    catch(e){ return { fails: 0, until: 0 }; }
+  }
+  function setLockout(key, state){
+    sessionStorage.setItem(key, JSON.stringify(state));
+  }
+  function msLeft(state){
+    return Math.max(0, state.until - Date.now());
+  }
+
   document.getElementById('auth-login-btn').addEventListener('click', async () => {
     const email = document.getElementById('auth-email').value.trim();
     const password = document.getElementById('auth-password').value;
     const msg = document.getElementById('auth-msg');
     msg.className = 'auth-msg';
     msg.textContent = '';
+
+    const lock = getLockout(LOGIN_LOCK_KEY);
+    const wait = msLeft(lock);
+    if (wait > 0){
+      msg.className = 'auth-msg error';
+      msg.textContent = `Too many attempts. Try again in ${Math.ceil(wait / 1000)}s.`;
+      return;
+    }
     if (!email || !password){ msg.className = 'auth-msg error'; msg.textContent = 'Enter your email and password.'; return; }
     const btn = document.getElementById('auth-login-btn');
     btn.disabled = true; btn.textContent = 'Logging in…';
     const { error } = await db.auth.signInWithPassword({ email, password });
     btn.disabled = false; btn.textContent = 'Log In';
     if (error){
+      // exponential backoff: 0, 5s, 10s, 20s, 40s ... capped at 5min
+      const fails = lock.fails + 1;
+      const backoffMs = fails <= 1 ? 0 : Math.min(5000 * Math.pow(2, fails - 2), 5 * 60 * 1000);
+      setLockout(LOGIN_LOCK_KEY, { fails, until: Date.now() + backoffMs });
       msg.className = 'auth-msg error';
       msg.textContent = error.message === 'Invalid login credentials' ? 'Email or password is incorrect.' : error.message;
+    } else {
+      setLockout(LOGIN_LOCK_KEY, { fails: 0, until: 0 });
     }
     // on success, onAuthStateChange fires and shows the app
   });
@@ -1000,7 +1032,19 @@ const TIERS = [
     const email = document.getElementById('auth-email').value.trim();
     const msg = document.getElementById('auth-msg');
     if (!email){ msg.className = 'auth-msg error'; msg.textContent = 'Enter your email above first, then click "Forgot password?".'; return; }
+
+    const lock = getLockout(RESET_LOCK_KEY);
+    const wait = msLeft(lock);
+    if (wait > 0){
+      msg.className = 'auth-msg error';
+      msg.textContent = `Please wait ${Math.ceil(wait / 1000)}s before requesting another reset email.`;
+      return;
+    }
+    const btn = document.getElementById('auth-forgot-btn');
+    btn.disabled = true;
+    setLockout(RESET_LOCK_KEY, { fails: 0, until: Date.now() + 60000 });
     const { error } = await db.auth.resetPasswordForEmail(email);
+    btn.disabled = false;
     msg.className = error ? 'auth-msg error' : 'auth-msg success';
     msg.textContent = error ? error.message : 'Password reset email sent — check your inbox.';
   });
