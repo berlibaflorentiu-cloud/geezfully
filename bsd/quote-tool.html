@@ -12,6 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Playfair+Display:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
   :root{
@@ -49,6 +50,58 @@
   }
   .tab-btn.active{background:linear-gradient(180deg,var(--brass-hi),var(--brass));color:var(--ink);border-color:var(--rust);}
   .tab-btn:not(.active):hover{color:var(--parchment);border-color:var(--rust-hi);}
+
+  /* ── auth ── */
+  #auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .auth-card{
+    width:100%;max-width:380px;border:1px solid var(--line);background:rgba(244,240,229,.02);
+    padding:36px 32px;
+  }
+  .auth-card .wordmark{
+    display:block;text-align:center;margin-bottom:4px;
+    font-family:'Playfair Display',serif;font-weight:900;font-size:2rem;
+    background:linear-gradient(160deg,var(--brass-hi),var(--brass) 60%,#A98C4B);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .auth-sub{
+    text-align:center;font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:28px;
+  }
+  .auth-field{margin-bottom:16px;}
+  .auth-field label{
+    display:block;font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:6px;
+  }
+  .auth-field input{
+    width:100%;background:var(--ink);border:1px solid var(--line);color:var(--parchment);
+    padding:11px 12px;font-size:.9rem;
+  }
+  .auth-field input:focus{outline:none;border-color:var(--rust-hi);}
+  .auth-submit{width:100%;margin-top:6px;}
+  .auth-msg{margin-top:14px;font-size:.82rem;text-align:center;min-height:1.2em;}
+  .auth-msg.error{color:var(--danger-hi);}
+  .auth-msg.success{color:var(--brass-hi);}
+  .auth-forgot{
+    display:block;text-align:center;margin-top:18px;font-family:'IBM Plex Mono',monospace;
+    font-size:.7rem;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer;background:none;border:none;
+  }
+  .auth-forgot:hover{color:var(--rust-hi);}
+  #app-shell{display:none;}
+  #app-shell.ready{display:block;}
+  .user-chip{
+    display:flex;align-items:center;gap:10px;
+    font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--muted);
+  }
+  .user-chip b{
+    color:var(--parchment);font-weight:500;
+    max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .logout-btn{
+    background:none;border:1px solid var(--line);color:var(--muted);
+    font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;
+    padding:8px 12px;cursor:pointer;transition:var(--tr);
+  }
+  .logout-btn:hover{color:var(--danger-hi);border-color:var(--danger);}
 
   main{padding:36px 0 20px;}
   .view{display:none;}
@@ -174,10 +227,48 @@
     .summary-row{flex-direction:column;align-items:stretch;}
     .summary-actions{justify-content:stretch;}
     .summary-actions .btn,.summary-actions .btn-ghost{flex:1;text-align:center;}
+    .head-row{flex-wrap:wrap;}
+    .user-chip{width:100%;justify-content:space-between;order:3;}
+    .user-chip b{max-width:none;flex:1;}
   }
 </style>
 </head>
 <body>
+
+<div id="auth-screen">
+  <div class="auth-card" id="login-card">
+    <span class="wordmark">BSD</span>
+    <p class="auth-sub">Quote Builder — Log In</p>
+    <div class="auth-field">
+      <label for="auth-email">Email</label>
+      <input type="email" id="auth-email" autocomplete="email">
+    </div>
+    <div class="auth-field">
+      <label for="auth-password">Password</label>
+      <input type="password" id="auth-password" autocomplete="current-password">
+    </div>
+    <button class="btn auth-submit" id="auth-login-btn">Log In</button>
+    <p class="auth-msg" id="auth-msg"></p>
+    <button type="button" class="auth-forgot" id="auth-forgot-btn">Forgot password?</button>
+  </div>
+
+  <div class="auth-card" id="set-password-card" style="display:none;">
+    <span class="wordmark">BSD</span>
+    <p class="auth-sub">Set Your Password</p>
+    <div class="auth-field">
+      <label for="new-password">New Password</label>
+      <input type="password" id="new-password" autocomplete="new-password">
+    </div>
+    <div class="auth-field">
+      <label for="new-password-confirm">Confirm Password</label>
+      <input type="password" id="new-password-confirm" autocomplete="new-password">
+    </div>
+    <button class="btn auth-submit" id="set-password-btn">Set Password &amp; Continue</button>
+    <p class="auth-msg" id="set-password-msg"></p>
+  </div>
+</div>
+
+<div id="app-shell">
 
 <header>
   <div class="wrap head-row">
@@ -188,6 +279,10 @@
     <div class="tabs">
       <button class="tab-btn active" data-view="build">Build Quote</button>
       <button class="tab-btn" data-view="pricing">Manage Pricing</button>
+    </div>
+    <div class="user-chip">
+      <b id="user-email"></b>
+      <button class="logout-btn" id="logout-btn">Log Out</button>
     </div>
   </div>
 </header>
@@ -246,8 +341,153 @@
   </div>
 </div>
 
+</div><!-- /#app-shell -->
+
 <script>
 (function(){
+  /* ── auth ── */
+  const SUPABASE_URL = 'https://goxqofdcydxbsrlfobrz.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdveHFvZmRjeWR4YnNybGZvYnJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2NzQxNTksImV4cCI6MjA5OTI1MDE1OX0.8aUdU4CL5MQqFfFu9fYOxpotvIgZDdq-I4oMNYK2pxA';
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const authScreen = document.getElementById('auth-screen');
+  const appShell = document.getElementById('app-shell');
+  const loginCard = document.getElementById('login-card');
+  const setPasswordCard = document.getElementById('set-password-card');
+
+  // Invite and password-reset emails land here with #access_token=...&type=invite
+  // (or type=recovery) in the URL hash — those users have no password yet
+  // (or are resetting it), so they need the "set password" form, not login.
+  let needsNewPassword = /type=(invite|recovery)/.test(window.location.hash);
+
+  function showApp(user){
+    authScreen.style.display = 'none';
+    appShell.classList.add('ready');
+    document.getElementById('user-email').textContent = user.email;
+  }
+  function showAuth(){
+    appShell.classList.remove('ready');
+    authScreen.style.display = 'flex';
+    if (needsNewPassword){
+      loginCard.style.display = 'none';
+      setPasswordCard.style.display = 'block';
+    } else {
+      loginCard.style.display = 'block';
+      setPasswordCard.style.display = 'none';
+    }
+  }
+
+  document.getElementById('set-password-btn').addEventListener('click', async () => {
+    const pw = document.getElementById('new-password').value;
+    const pwConfirm = document.getElementById('new-password-confirm').value;
+    const msg = document.getElementById('set-password-msg');
+    msg.className = 'auth-msg';
+    msg.textContent = '';
+    if (pw.length < 6){ msg.className = 'auth-msg error'; msg.textContent = 'Password must be at least 6 characters.'; return; }
+    if (pw !== pwConfirm){ msg.className = 'auth-msg error'; msg.textContent = 'Passwords don\'t match.'; return; }
+    const btn = document.getElementById('set-password-btn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    const { data, error } = await db.auth.updateUser({ password: pw });
+    btn.disabled = false; btn.textContent = 'Set Password & Continue';
+    if (error){
+      msg.className = 'auth-msg error';
+      msg.textContent = error.message;
+      return;
+    }
+    needsNewPassword = false;
+    history.replaceState(null, '', window.location.pathname);
+    setPasswordCard.style.display = 'none';
+    loginCard.style.display = 'block';
+    if (data.user) showApp(data.user);
+  });
+
+  // Client-side throttling: failed logins and reset-email clicks are capped
+  // and backed off so a bad actor (or a stuck script) can't hammer Supabase's
+  // auth API from this page. This is a courtesy layer, not the real defense —
+  // Supabase enforces its own server-side rate limits regardless.
+  const LOGIN_LOCK_KEY = 'bsd_login_lockout';
+  const RESET_LOCK_KEY = 'bsd_reset_lockout';
+
+  function getLockout(key){
+    try { return JSON.parse(sessionStorage.getItem(key)) || { fails: 0, until: 0 }; }
+    catch(e){ return { fails: 0, until: 0 }; }
+  }
+  function setLockout(key, state){
+    sessionStorage.setItem(key, JSON.stringify(state));
+  }
+  function msLeft(state){
+    return Math.max(0, state.until - Date.now());
+  }
+
+  document.getElementById('auth-login-btn').addEventListener('click', async () => {
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+    const msg = document.getElementById('auth-msg');
+    msg.className = 'auth-msg';
+    msg.textContent = '';
+
+    const lock = getLockout(LOGIN_LOCK_KEY);
+    const wait = msLeft(lock);
+    if (wait > 0){
+      msg.className = 'auth-msg error';
+      msg.textContent = `Too many attempts. Try again in ${Math.ceil(wait / 1000)}s.`;
+      return;
+    }
+    if (!email || !password){ msg.className = 'auth-msg error'; msg.textContent = 'Enter your email and password.'; return; }
+    const btn = document.getElementById('auth-login-btn');
+    btn.disabled = true; btn.textContent = 'Logging in…';
+    const { error } = await db.auth.signInWithPassword({ email, password });
+    btn.disabled = false; btn.textContent = 'Log In';
+    if (error){
+      // exponential backoff: 0, 5s, 10s, 20s, 40s ... capped at 5min
+      const fails = lock.fails + 1;
+      const backoffMs = fails <= 1 ? 0 : Math.min(5000 * Math.pow(2, fails - 2), 5 * 60 * 1000);
+      setLockout(LOGIN_LOCK_KEY, { fails, until: Date.now() + backoffMs });
+      msg.className = 'auth-msg error';
+      msg.textContent = error.message === 'Invalid login credentials' ? 'Email or password is incorrect.' : error.message;
+    } else {
+      setLockout(LOGIN_LOCK_KEY, { fails: 0, until: 0 });
+    }
+    // on success, onAuthStateChange fires and shows the app
+  });
+
+  document.getElementById('auth-password').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('auth-login-btn').click();
+  });
+
+  document.getElementById('auth-forgot-btn').addEventListener('click', async () => {
+    const email = document.getElementById('auth-email').value.trim();
+    const msg = document.getElementById('auth-msg');
+    if (!email){ msg.className = 'auth-msg error'; msg.textContent = 'Enter your email above first, then click "Forgot password?".'; return; }
+
+    const lock = getLockout(RESET_LOCK_KEY);
+    const wait = msLeft(lock);
+    if (wait > 0){
+      msg.className = 'auth-msg error';
+      msg.textContent = `Please wait ${Math.ceil(wait / 1000)}s before requesting another reset email.`;
+      return;
+    }
+    const btn = document.getElementById('auth-forgot-btn');
+    btn.disabled = true;
+    setLockout(RESET_LOCK_KEY, { fails: 0, until: Date.now() + 60000 });
+    const { error } = await db.auth.resetPasswordForEmail(email);
+    btn.disabled = false;
+    msg.className = error ? 'auth-msg error' : 'auth-msg success';
+    msg.textContent = error ? error.message : 'Password reset email sent — check your inbox.';
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await db.auth.signOut();
+  });
+
+  db.auth.onAuthStateChange((event, session) => {
+    if (session && session.user && !needsNewPassword){
+      showApp(session.user);
+    } else {
+      showAuth();
+    }
+  });
+
   const PRICING_KEY = 'bsd-quote-tool-pricing';
   const QUOTE_KEY = 'bsd-quote-tool-current';
 
