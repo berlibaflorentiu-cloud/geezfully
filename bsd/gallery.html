@@ -145,6 +145,7 @@
   .gallery-section{padding:64px 40px 96px;max-width:1280px;margin:0 auto;}
   .masonry{columns:3;column-gap:16px;}
   .photo-card{break-inside:avoid;margin-bottom:16px;position:relative;overflow:hidden;cursor:pointer;border:1px solid var(--line);}
+  .photo-card:focus-visible{outline:2px solid var(--rust-hi);outline-offset:2px;}
   .photo-card img{transition:transform .6s cubic-bezier(.4,0,.2,1);}
   .photo-card:hover img{transform:scale(1.04);}
   .photo-cap{
@@ -154,7 +155,7 @@
     transition:opacity .3s var(--tr), transform .3s var(--tr);
   }
   .photo-card:hover .photo-cap{opacity:1;transform:translateY(0);}
-  .photo-cap h4{font-family:'IBM Plex Sans',sans-serif;font-size:.92rem;font-weight:600;text-transform:none;color:var(--parchment);}
+  .photo-cap h2{font-family:'IBM Plex Sans',sans-serif;font-size:.92rem;font-weight:600;text-transform:none;color:var(--parchment);}
   .photo-cap span{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(244,240,229,.68);}
   @media(max-width:900px){.masonry{columns:2;}}
   @media(max-width:600px){.masonry{columns:1;}.gallery-section{padding:44px 20px 64px;}.page-header{padding:120px 24px 48px;}}
@@ -262,34 +263,34 @@
 <section class="gallery-section">
   <div class="masonry" id="gallery-grid">
 
-    <div class="photo-card" data-title="Custom Fireplace Surround" data-sub="Millwork &amp; Marble Tile">
+    <div class="photo-card" data-title="Custom Fireplace Surround" data-sub="Millwork &amp; Marble Tile" tabindex="0" role="button" aria-label="View Custom Fireplace Surround photo">
       <img src="images/project-fireplace.jpg" alt="Custom fireplace surround with marble tile and millwork" loading="lazy">
-      <div class="photo-cap"><h4>Custom Fireplace Surround</h4><span>Millwork &amp; Marble Tile</span></div>
+      <div class="photo-cap"><h2>Custom Fireplace Surround</h2><span>Millwork &amp; Marble Tile</span></div>
     </div>
 
-    <div class="photo-card" data-title="Kitchen Remodel" data-sub="Custom Cabinetry &amp; Stone">
+    <div class="photo-card" data-title="Kitchen Remodel" data-sub="Custom Cabinetry &amp; Stone" tabindex="0" role="button" aria-label="View Kitchen Remodel photo">
       <img src="images/about-kitchen.jpg" alt="Kitchen remodel with custom cabinetry and white island" loading="lazy">
-      <div class="photo-cap"><h4>Kitchen Remodel</h4><span>Custom Cabinetry &amp; Stone</span></div>
+      <div class="photo-cap"><h2>Kitchen Remodel</h2><span>Custom Cabinetry &amp; Stone</span></div>
     </div>
 
-    <div class="photo-card" data-title="Hickory Vanity Cabinets" data-sub="Custom Cabinetry">
+    <div class="photo-card" data-title="Hickory Vanity Cabinets" data-sub="Custom Cabinetry" tabindex="0" role="button" aria-label="View Hickory Vanity Cabinets photo">
       <img src="images/project-cabinetry.jpg" alt="Solid hickory custom vanity cabinets built in workshop" loading="lazy">
-      <div class="photo-cap"><h4>Hickory Vanity Cabinets</h4><span>Custom Cabinetry</span></div>
+      <div class="photo-cap"><h2>Hickory Vanity Cabinets</h2><span>Custom Cabinetry</span></div>
     </div>
 
-    <div class="photo-card" data-title="Kitchen Remodel" data-sub="Custom Cabinetry &amp; Butcher Block">
+    <div class="photo-card" data-title="Kitchen Remodel" data-sub="Custom Cabinetry &amp; Butcher Block" tabindex="0" role="button" aria-label="View Kitchen Remodel photo">
       <img src="images/project-kitchen-2.jpg" alt="Kitchen remodel with cabinetry and butcher block island" loading="lazy">
-      <div class="photo-cap"><h4>Kitchen Remodel</h4><span>Custom Cabinetry &amp; Butcher Block</span></div>
+      <div class="photo-cap"><h2>Kitchen Remodel</h2><span>Custom Cabinetry &amp; Butcher Block</span></div>
     </div>
 
-    <div class="photo-card" data-title="Granite Dining Table" data-sub="Stone &amp; Countertops">
+    <div class="photo-card" data-title="Granite Dining Table" data-sub="Stone &amp; Countertops" tabindex="0" role="button" aria-label="View Granite Dining Table photo">
       <img src="images/project-countertop.jpg" alt="Custom granite dining table" loading="lazy">
-      <div class="photo-cap"><h4>Granite Dining Table</h4><span>Stone &amp; Countertops</span></div>
+      <div class="photo-cap"><h2>Granite Dining Table</h2><span>Stone &amp; Countertops</span></div>
     </div>
 
-    <div class="photo-card" data-title="Deep Green Kitchen Package" data-sub="Full Custom Build">
+    <div class="photo-card" data-title="Deep Green Kitchen Package" data-sub="Full Custom Build" tabindex="0" role="button" aria-label="View Deep Green Kitchen Package photo">
       <img src="images/GreenKitchen.JPG" alt="Deep green custom kitchen cabinetry with lit upper cabinets" loading="lazy">
-      <div class="photo-cap"><h4>Deep Green Kitchen Package</h4><span>Full Custom Build</span></div>
+      <div class="photo-cap"><h2>Deep Green Kitchen Package</h2><span>Full Custom Build</span></div>
     </div>
 
   </div>
@@ -374,6 +375,8 @@
   const lbPrev = document.getElementById('lb-prev');
   const lbNext = document.getElementById('lb-next');
   let current = 0;
+  let lbTrigger = null;
+  const lbFocusable = [lbClose, lbPrev, lbNext];
 
   function openLb(index){
     current = index;
@@ -383,15 +386,24 @@
     lbImg.alt = img.alt;
     lbCap.firstChild.nodeValue = card.dataset.title || '';
     lbSub.textContent = card.dataset.sub || '';
+    if (!lb.classList.contains('open')) lbTrigger = document.activeElement;
     lb.classList.add('open');
     document.body.style.overflow = 'hidden';
+    lbClose.focus();
   }
   function closeLb(){
     lb.classList.remove('open');
     document.body.style.overflow = '';
     lbImg.src = '';
+    if (lbTrigger && typeof lbTrigger.focus === 'function') lbTrigger.focus();
+    lbTrigger = null;
   }
-  cards.forEach((card, i) => card.addEventListener('click', () => openLb(i)));
+  cards.forEach((card, i) => {
+    card.addEventListener('click', () => openLb(i));
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openLb(i); }
+    });
+  });
   lbClose.addEventListener('click', closeLb);
   lbPrev.addEventListener('click', () => openLb((current - 1 + cards.length) % cards.length));
   lbNext.addEventListener('click', () => openLb((current + 1) % cards.length));
@@ -401,6 +413,15 @@
     if (e.key === 'Escape') closeLb();
     if (e.key === 'ArrowLeft') openLb((current - 1 + cards.length) % cards.length);
     if (e.key === 'ArrowRight') openLb((current + 1) % cards.length);
+    if (e.key === 'Tab'){
+      // trap focus inside the lightbox's controls while it's open
+      const i = lbFocusable.indexOf(document.activeElement);
+      e.preventDefault();
+      const next = e.shiftKey
+        ? lbFocusable[(i <= 0 ? lbFocusable.length : i) - 1]
+        : lbFocusable[(i + 1) % lbFocusable.length];
+      next.focus();
+    }
   });
 </script>
 </body>
