@@ -12,6 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Playfair+Display:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
   :root{
@@ -441,6 +442,37 @@
   .saved-card-actions{display:flex;gap:8px;}
   .saved-empty{color:var(--muted);text-align:center;padding:60px 0;border:1px dashed var(--line);}
   .saved-loading{color:var(--muted);text-align:center;padding:40px 0;}
+
+  /* ── site stats page ── */
+  .site-stats-wrap{max-width:1100px;margin:0 auto;padding:28px 24px 60px;}
+  .site-stats-loading,.site-stats-empty,.site-stats-error{color:var(--muted);text-align:center;padding:60px 0;}
+  .range-presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+  .preset-chip{
+    background:none;border:1px solid var(--line);color:var(--muted);cursor:pointer;min-height:44px;
+    font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;
+    padding:9px 16px;transition:var(--tr);
+  }
+  .preset-chip.active{color:var(--brass-hi);border-color:var(--rust-hi);background:rgba(217,181,109,.08);}
+  .preset-chip:hover:not(.active){color:var(--parchment);}
+  .stats-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;}
+  .stat-card{flex:1;min-width:170px;border:1px solid var(--line);background:rgba(244,240,229,.02);padding:18px 20px;}
+  .stat-label{font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .stat-value{font-family:'Anton',sans-serif;font-size:2rem;color:var(--brass-hi);}
+  .stat-sub{font-size:.76rem;color:var(--muted);margin-top:4px;}
+  .dash-charts{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .dash-chart-card{border:1px solid var(--line);background:rgba(244,240,229,.02);padding:18px 20px;}
+  .dash-chart-title{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+  .recent-visits-table{width:100%;border-collapse:collapse;font-size:.8rem;}
+  .recent-visits-table th{
+    text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);padding:8px 6px;
+  }
+  .recent-visits-table td{padding:9px 6px;border-bottom:1px solid var(--line);color:var(--parchment);}
+  .recent-visits-table td.muted{color:var(--muted);font-size:.74rem;}
+  @media(max-width:900px){
+    .dash-charts{grid-template-columns:1fr;}
+    .site-stats-wrap{padding:20px 16px 60px;}
+  }
 </style>
 </head>
 <body>
@@ -495,6 +527,7 @@
       <div class="page-nav">
         <button class="active" id="nav-catalogue-btn">Catalogue</button>
         <button id="nav-saved-btn">Saved Quotes</button>
+        <button id="nav-site-btn">Site Stats</button>
       </div>
       <div class="user-chip">
         <b id="user-email"></b>
@@ -569,6 +602,12 @@
   <div class="saved-list" id="saved-list">
     <div class="saved-loading">Loading…</div>
   </div>
+</div>
+
+<div class="site-stats-wrap" id="page-site" style="display:none;">
+  <h1 style="font-size:1.5rem;margin-bottom:6px;">Site Stats</h1>
+  <p style="color:var(--muted);font-size:.88rem;margin-bottom:20px;">Visitor activity on bestsundan.com.</p>
+  <div id="site-stats-content"><div class="site-stats-loading">Loading…</div></div>
 </div>
 
 <button id="scroll-top-btn" aria-label="Scroll to top">
@@ -1171,23 +1210,31 @@ const TIERS = [
     }
   });
 
-  /* ── page nav (Catalogue / Saved Quotes) ── */
+  /* ── page nav (Catalogue / Saved Quotes / Site Stats) ── */
   const pageCatalogue = document.getElementById('page-catalogue');
   const pageSaved = document.getElementById('page-saved');
+  const pageSite = document.getElementById('page-site');
   const navCatalogueBtn = document.getElementById('nav-catalogue-btn');
   const navSavedBtn = document.getElementById('nav-saved-btn');
+  const navSiteBtn = document.getElementById('nav-site-btn');
 
   function switchPage(page){
     const onCatalogue = page === 'catalogue';
+    const onSaved = page === 'saved';
+    const onSite = page === 'site';
     pageCatalogue.style.display = onCatalogue ? '' : 'none';
-    pageSaved.style.display = onCatalogue ? 'none' : '';
+    pageSaved.style.display = onSaved ? '' : 'none';
+    pageSite.style.display = onSite ? '' : 'none';
     navCatalogueBtn.classList.toggle('active', onCatalogue);
-    navSavedBtn.classList.toggle('active', !onCatalogue);
+    navSavedBtn.classList.toggle('active', onSaved);
+    navSiteBtn.classList.toggle('active', onSite);
     document.getElementById('cart-toggle-btn').style.display = onCatalogue ? '' : 'none';
-    if (!onCatalogue) loadSavedQuotes();
+    if (onSaved) loadSavedQuotes();
+    if (onSite) renderSiteStats();
   }
   navCatalogueBtn.addEventListener('click', () => switchPage('catalogue'));
   navSavedBtn.addEventListener('click', () => switchPage('saved'));
+  navSiteBtn.addEventListener('click', () => switchPage('site'));
 
   /* ── saved quotes ── */
   let savedQuotes = [];
@@ -1273,6 +1320,176 @@ const TIERS = [
     flash.classList.add('show');
     setTimeout(() => flash.classList.remove('show'), 2200);
   });
+
+  /* ── site stats (bestsundan.com visitor activity) ── */
+  let siteStatsDays = 30;
+
+  function setSiteStatsRange(days){
+    siteStatsDays = days;
+    renderSiteStats();
+  }
+
+  function _siteReferrerLabel(ref){
+    if (!ref) return 'Direct';
+    try { return new URL(ref).hostname.replace(/^www\./, ''); }
+    catch (e) { return 'Direct'; }
+  }
+
+  function _siteTopN(rows, key, n){
+    const counts = {};
+    rows.forEach(r => {
+      const v = r[key] || '(unknown)';
+      counts[v] = (counts[v] || 0) + 1;
+    });
+    return Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0, n);
+  }
+
+  function _rangePresetsHtml(){
+    return '<div class="range-presets">' + [7,30,90,0].map(n =>
+      '<button class="preset-chip'+(siteStatsDays===n?' active':'')+'" data-role="range" data-days="'+n+'">'+(n===0?'All time':'Last '+n+' days')+'</button>'
+    ).join('') + '</div>';
+  }
+
+  async function renderSiteStats(){
+    const el = document.getElementById('site-stats-content');
+    if (!el) return;
+    el.innerHTML = _rangePresetsHtml() + '<p class="site-stats-loading">Loading…</p>';
+
+    let query = db.from('bsd_pageviews')
+      .select('path,referrer,visitor_id,session_id,created_at')
+      .order('created_at', { ascending: false })
+      .limit(20000);
+    if (siteStatsDays > 0){
+      const since = new Date(Date.now() - siteStatsDays * 86400000).toISOString();
+      query = query.gte('created_at', since);
+    }
+    const { data, error } = await query;
+
+    // bail if the user navigated away from the Site Stats page while this was loading
+    if (pageSite.style.display === 'none') return;
+
+    if (error){
+      el.innerHTML = _rangePresetsHtml() + '<p class="site-stats-error">Couldn\'t load stats: ' + escapeHtml(error.message) + '</p>';
+      return;
+    }
+    if (!data || !data.length){
+      el.innerHTML = _rangePresetsHtml() + '<p class="site-stats-empty">No visitors recorded yet in this period.</p>';
+      return;
+    }
+
+    const totalViews = data.length;
+    const uniqueVisitors = new Set(data.map(r => r.visitor_id)).size;
+    const uniqueSessions = new Set(data.map(r => r.session_id)).size;
+
+    const byDay = {};
+    data.forEach(r => {
+      const d = r.created_at.slice(0, 10);
+      byDay[d] = (byDay[d] || 0) + 1;
+    });
+    const dayKeys = Object.keys(byDay).sort().slice(-14);
+
+    const topPages = _siteTopN(data, 'path', 8);
+    const topRefs = _siteTopN(data.map(r => ({ refLabel: _siteReferrerLabel(r.referrer) })), 'refLabel', 6);
+    const recent = data.slice(0, 12);
+
+    el.innerHTML =
+      _rangePresetsHtml() +
+      '<div class="stats-row">' +
+        '<div class="stat-card">' +
+          '<div class="stat-label">Page Views</div>' +
+          '<div class="stat-value">'+totalViews.toLocaleString('en-US')+'</div>' +
+          '<div class="stat-sub">bestsundan.com pages</div>' +
+        '</div>' +
+        '<div class="stat-card">' +
+          '<div class="stat-label">Unique Visitors</div>' +
+          '<div class="stat-value">'+uniqueVisitors.toLocaleString('en-US')+'</div>' +
+          '<div class="stat-sub">by device / browser</div>' +
+        '</div>' +
+        '<div class="stat-card">' +
+          '<div class="stat-label">Visits (Sessions)</div>' +
+          '<div class="stat-value">'+uniqueSessions.toLocaleString('en-US')+'</div>' +
+          '<div class="stat-sub">'+(totalViews/Math.max(1,uniqueSessions)).toFixed(1)+' pages / visit</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="dash-charts">' +
+        '<div class="dash-chart-card">' +
+          '<div class="dash-chart-title">Views Per Day</div>' +
+          '<canvas id="chart-site-daily" height="200"></canvas>' +
+        '</div>' +
+        '<div class="dash-chart-card">' +
+          '<div class="dash-chart-title">Pages Visited</div>' +
+          '<canvas id="chart-site-pages" height="200"></canvas>' +
+        '</div>' +
+      '</div>' +
+      '<div class="dash-charts" style="margin-top:20px">' +
+        '<div class="dash-chart-card">' +
+          '<div class="dash-chart-title">Where Visitors Come From</div>' +
+          '<canvas id="chart-site-refs" height="200"></canvas>' +
+        '</div>' +
+        '<div class="dash-chart-card">' +
+          '<div class="dash-chart-title">Recent Visitors</div>' +
+          '<table class="recent-visits-table">' +
+            '<thead><tr><th>Time</th><th>Page</th><th>From</th></tr></thead>' +
+            '<tbody>' + recent.map(r => (
+              '<tr>' +
+                '<td class="muted">'+new Date(r.created_at).toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' })+'</td>' +
+                '<td>'+escapeHtml(r.path)+'</td>' +
+                '<td class="muted">'+escapeHtml(_siteReferrerLabel(r.referrer))+'</td>' +
+              '</tr>'
+            )).join('') + '</tbody>' +
+          '</table>' +
+        '</div>' +
+      '</div>';
+
+    requestAnimationFrame(() => _initSiteCharts(dayKeys, byDay, topPages, topRefs));
+  }
+
+  document.getElementById('site-stats-content').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-role="range"]');
+    if (!btn) return;
+    setSiteStatsRange(Number(btn.dataset.days));
+  });
+
+  function _initSiteCharts(dayKeys, byDay, topPages, topRefs){
+    const GOLD = '#C8A552', GOLD_A = 'rgba(200,165,82,0.18)', MUTED = '#B9B7A8', GRID = 'rgba(216,181,109,.22)';
+    // Chart.js mutates the scale config objects it's given, so each chart
+    // needs its own fresh objects — never share/spread the same nested object.
+    const axisStyle = (extra) => ({ grid: { color: GRID }, ticks: { color: MUTED, font: { family: 'IBM Plex Mono', size: 11 }, ...extra } });
+    const legendOff = { plugins: { legend: { display: false } } };
+
+    const c1 = document.getElementById('chart-site-daily');
+    if (c1 && window.Chart){
+      new Chart(c1, {
+        type: 'bar',
+        data: { labels: dayKeys, datasets: [{ data: dayKeys.map(d => byDay[d]), backgroundColor: GOLD_A, borderColor: GOLD, borderWidth: 1, borderRadius: 3 }] },
+        options: { responsive: true, ...legendOff, scales: { x: axisStyle(), y: axisStyle({ precision: 0 }) } },
+      });
+    }
+
+    const c2 = document.getElementById('chart-site-pages');
+    if (c2 && window.Chart){
+      new Chart(c2, {
+        type: 'bar',
+        data: {
+          labels: topPages.map(([p]) => p.length > 24 ? p.slice(0,24)+'…' : p),
+          datasets: [{ data: topPages.map(([,n]) => n), backgroundColor: GOLD_A, borderColor: GOLD, borderWidth: 1, borderRadius: 3 }],
+        },
+        options: { responsive: true, indexAxis: 'y', ...legendOff, scales: { x: axisStyle({ precision: 0 }), y: axisStyle() } },
+      });
+    }
+
+    const c3 = document.getElementById('chart-site-refs');
+    if (c3 && window.Chart){
+      new Chart(c3, {
+        type: 'bar',
+        data: {
+          labels: topRefs.map(([r]) => r),
+          datasets: [{ data: topRefs.map(([,n]) => n), backgroundColor: GOLD_A, borderColor: GOLD, borderWidth: 1, borderRadius: 3 }],
+        },
+        options: { responsive: true, indexAxis: 'y', ...legendOff, scales: { x: axisStyle({ precision: 0 }), y: axisStyle() } },
+      });
+    }
+  }
 
   /* ── init ── */
   document.getElementById('client-name').value = client.name || '';
