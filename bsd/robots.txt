@@ -1,6 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /bsd/quote-tool.html
-Disallow: /bsd/catalog-tool.html
+Disallow: /bsd/pontaj.html
 
 Sitemap: https://geezfully.com/bsd/sitemap.xml
