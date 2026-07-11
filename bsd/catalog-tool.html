@@ -25,10 +25,16 @@
   body{
     background:var(--ink);color:var(--parchment);font-family:'IBM Plex Sans',sans-serif;
     font-size:15px;line-height:1.55;min-height:100vh;padding-bottom:88px;
+    overflow-x:hidden;
   }
   h1,h2,h3{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.01em;color:var(--parchment);}
   a{color:inherit;}
   button,input,select{font-family:inherit;}
+  button:focus-visible,a:focus-visible{outline:2px solid var(--rust-hi);outline-offset:2px;}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+  @media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important;}
+  }
 
   header{
     position:sticky;top:0;z-index:50;
@@ -85,7 +91,7 @@
     width:100%;background:var(--ink);border:1px solid var(--line);color:var(--parchment);
     padding:10px 12px;font-size:.86rem;
   }
-  .search-box input:focus{outline:none;border-color:var(--rust-hi);}
+  .search-box input:focus-visible{outline:none;border-color:var(--rust-hi);box-shadow:0 0 0 3px rgba(217,181,109,.35);}
   .cat-list{display:flex;flex-direction:column;max-height:calc(100vh - 200px);overflow-y:auto;}
   .cat-list button{
     text-align:left;background:none;border:none;border-bottom:1px solid var(--line);
@@ -120,9 +126,18 @@
     max-width:420px;
   }
   .sub-title::before{content:'\25B2';font-size:.62rem;flex:0 0 auto;}
+  .sub-count{font-size:.68rem;color:rgba(13,17,16,.6);font-weight:600;}
+  .sub-chevron{margin-left:auto;flex:0 0 auto;width:14px;height:14px;display:none;transition:transform var(--tr);}
   @media(max-width:640px){
     .sub-thumb{max-width:100%;height:200px;}
     .sub-title{max-width:100%;}
+  }
+  @media(max-width:1100px){
+    .sub-title{width:100%;max-width:none;border:none;cursor:pointer;}
+    .sub-chevron{display:block;}
+    .sub-group.expanded .sub-chevron{transform:rotate(180deg);}
+    .sub-items{display:none;padding-top:2px;}
+    .sub-group.expanded .sub-items{display:block;}
   }
 
   /* ── image lightbox ── */
@@ -209,7 +224,7 @@
     background:var(--ink);border:1px solid var(--line);color:var(--parchment);
     padding:7px 8px;font-size:.76rem;min-width:190px;
   }
-  .item-style:focus,.item-tier:focus{outline:none;border-color:var(--rust-hi);}
+  .item-style:focus-visible,.item-tier:focus-visible{outline:none;border-color:var(--rust-hi);box-shadow:0 0 0 3px rgba(217,181,109,.35);}
   .item-price{
     font-family:'IBM Plex Mono',monospace;font-size:.92rem;color:var(--brass-hi);
     min-width:78px;text-align:right;
@@ -244,7 +259,7 @@
     width:100%;background:var(--ink);border:1px solid var(--line);color:var(--parchment);
     padding:8px 10px;font-size:.84rem;
   }
-  .cart-head input:focus{outline:none;border-color:var(--rust-hi);}
+  .cart-head input:focus-visible{outline:none;border-color:var(--rust-hi);box-shadow:0 0 0 3px rgba(217,181,109,.35);}
   .cart-items{flex:1;overflow-y:auto;padding:10px 16px;}
   .cart-line{padding:10px 0;border-bottom:1px solid var(--line);}
   .cart-line-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline;}
@@ -305,9 +320,20 @@
   }
 
   @media(max-width:1100px){
-    .layout{grid-template-columns:1fr;}
-    .cat-nav{position:static;max-height:none;}
-    .cat-list{max-height:280px;}
+    .layout{grid-template-columns:1fr;min-width:0;}
+    .layout > *{min-width:0;}
+    .cat-nav{position:sticky;top:69px;z-index:40;max-height:none;background:var(--ink);}
+    .search-box{padding:12px 14px;}
+    .cat-list{
+      display:flex;flex-direction:row;flex-wrap:nowrap;max-height:none;
+      overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;
+      gap:8px;padding:10px 14px;
+    }
+    .cat-list button{
+      flex:0 0 auto;scroll-snap-align:start;border:1px solid var(--line);border-bottom:1px solid var(--line);
+      border-radius:999px;padding:10px 16px;min-height:44px;display:flex;align-items:center;gap:6px;
+    }
+    .cat-list button .n{display:none;}
     .cart-toggle{display:inline-flex;}
     .cart-panel{
       position:fixed;inset:0;top:0;z-index:200;max-height:none;
@@ -319,8 +345,11 @@
     .cart-head{padding-top:20px;}
     .cart-close{
       display:block;margin-left:auto;background:none;border:1px solid var(--line);color:var(--muted);
-      width:32px;height:32px;cursor:pointer;
+      width:44px;height:44px;cursor:pointer;
     }
+    .item-style,.item-tier{min-height:44px;}
+    .qty-stepper button{width:36px;height:36px;}
+    .cart-line-rm{width:36px;height:36px;}
   }
   @media(min-width:1101px){.cart-close{display:none;}}
 
@@ -330,12 +359,22 @@
     .item-id{min-width:0;}
     .item-style,.item-tier{width:100%;}
     .item-price{text-align:left;}
-    .item-add{margin-left:0;width:100%;height:38px;}
+    .item-add{margin-left:0;width:100%;height:44px;}
     .head-actions{width:100%;flex-wrap:wrap;gap:10px;}
     .user-chip{width:100%;justify-content:space-between;}
     .user-chip b{max-width:none;flex:1;}
     .cart-toggle{margin-left:auto;}
   }
+
+  /* ── scroll-to-top ── */
+  #scroll-top-btn{
+    position:fixed;right:16px;bottom:16px;z-index:60;
+    width:44px;height:44px;border-radius:50%;border:1px solid var(--rust);
+    background:linear-gradient(180deg,var(--brass-hi),var(--brass));color:var(--ink);
+    cursor:pointer;display:none;align-items:center;justify-content:center;
+    box-shadow:0 4px 14px rgba(0,0,0,.35);opacity:0;transition:opacity var(--tr);
+  }
+  #scroll-top-btn.show{display:flex;opacity:1;}
 
   /* ── auth screen ── */
   #loading-screen{
@@ -375,7 +414,7 @@
     width:100%;background:var(--ink);border:1px solid var(--line);color:var(--parchment);
     padding:11px 12px;font-size:.9rem;
   }
-  .auth-field input:focus{outline:none;border-color:var(--rust-hi);}
+  .auth-field input:focus-visible{outline:none;border-color:var(--rust-hi);box-shadow:0 0 0 3px rgba(217,181,109,.35);}
   .auth-submit{width:100%;margin-top:6px;}
   .auth-msg{margin-top:14px;font-size:.82rem;text-align:center;min-height:1.2em;}
   .auth-msg.error{color:var(--danger-hi);}
@@ -473,7 +512,8 @@
   <!-- ══ CATEGORY NAV ══ -->
   <aside class="cat-nav">
     <div class="search-box">
-      <input type="text" id="search-input" placeholder="Search SKU or name…">
+      <label for="search-input" class="sr-only">Search catalogue by SKU or name</label>
+      <input type="text" id="search-input" placeholder="Search SKU or name…" aria-label="Search catalogue by SKU or name">
     </div>
     <div class="cat-list" id="cat-list"></div>
   </aside>
@@ -481,7 +521,7 @@
   <!-- ══ BROWSE ══ -->
   <main>
     <div class="browse-head">
-      <h1 style="font-size:1.5rem;margin-bottom:6px;" id="browse-title">Catalogue</h1>
+      <h1 style="font-size:1.5rem;margin-bottom:6px;" id="browse-title" aria-live="polite">Catalogue</h1>
       <p>Prices are pulled straight from the NorthPoint price book. Pick a build tier per item — Prefabricated matches the book price, Euro-Style Customized adds 10%, Full Customized adds 70%.</p>
     </div>
     <div class="tier-legend">
@@ -530,6 +570,10 @@
     <div class="saved-loading">Loading…</div>
   </div>
 </div>
+
+<button id="scroll-top-btn" aria-label="Scroll to top">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+</button>
 
 <div class="lightbox" id="lightbox">
   <button class="lightbox-close" id="lightbox-close" aria-label="Close image">&#x2715;</button>
@@ -583,6 +627,7 @@ const TIERS = [
   let client = loadClient();
   let activeCategory = CATALOG[0].category;
   let searchTerm = '';
+  const expandedGroups = new Set();
 
   function money(n){
     return '$' + Math.round(n).toLocaleString('en-US');
@@ -609,7 +654,8 @@ const TIERS = [
     const list = document.getElementById('cat-list');
     list.innerHTML = CATALOG.map(c => {
       const count = c.subsections.reduce((s,sub) => s + sub.items.length, 0);
-      return '<button data-cat="'+escapeHtml(c.category)+'" class="'+(c.category===activeCategory && !searchTerm ? 'active' : '')+'">'+
+      const isActive = c.category===activeCategory && !searchTerm;
+      return '<button data-cat="'+escapeHtml(c.category)+'" class="'+(isActive ? 'active' : '')+'" aria-current="'+(isActive ? 'true' : 'false')+'">'+
         '<span>'+escapeHtml(c.category)+'</span><span class="n">'+count+'</span></button>';
     }).join('');
   }
@@ -661,12 +707,24 @@ const TIERS = [
 
     let html = '';
     let any = false;
+    let idx = 0;
     groups.forEach(({cat, sub, items}) => {
         any = true;
+        idx++;
+        const key = cat.category + '|' + sub.name;
+        // search results are always shown expanded so matches are never hidden behind a tap
+        const expanded = !!searchTerm || expandedGroups.has(key);
+        const panelId = 'sub-items-' + idx;
         const thumb = sub.image
           ? '<div class="sub-thumb-wrap"><img class="sub-thumb" src="images/catalog/'+sub.image+'" alt="" loading="lazy" data-role="thumb" data-name="'+escapeHtml(sub.name)+'"></div>'
           : '';
-        html += '<div class="sub-group">'+thumb+'<div class="sub-title">'+(searchTerm ? escapeHtml(cat.category)+' — ' : '')+escapeHtml(sub.name)+'</div>';
+        html += '<div class="sub-group'+(expanded ? ' expanded' : '')+'" data-key="'+escapeHtml(key)+'">'+thumb+
+          '<button class="sub-title" data-role="sub-toggle" aria-expanded="'+expanded+'" aria-controls="'+panelId+'">'+
+            '<span>'+(searchTerm ? escapeHtml(cat.category)+' — ' : '')+escapeHtml(sub.name)+'</span>'+
+            '<span class="sub-count">'+items.length+'</span>'+
+            '<svg class="sub-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'+
+          '</button>'+
+          '<div class="sub-items" id="'+panelId+'">';
         items.forEach(it => {
           const opts = styleOptions(it);
           const inCart = cart.some(l => l.sku === it.sku);
@@ -677,17 +735,28 @@ const TIERS = [
                 (it.widthHint ? '<div class="item-width">'+escapeHtml(it.widthHint)+' wide</div>' : '') +
               '</div>'+
               (opts.length > 1
-                ? '<select class="item-style" data-role="style">'+opts.map(o=>'<option value="'+o.id+'">'+escapeHtml(o.label)+'</option>').join('')+'</select>'
+                ? '<select class="item-style" data-role="style" aria-label="Style for '+escapeHtml(it.sku)+'">'+opts.map(o=>'<option value="'+o.id+'">'+escapeHtml(o.label)+'</option>').join('')+'</select>'
                 : '') +
-              '<select class="item-tier" data-role="tier">'+TIERS.map(t=>'<option value="'+t.id+'">'+escapeHtml(t.label)+'</option>').join('')+'</select>'+
+              '<select class="item-tier" data-role="tier" aria-label="Build tier for '+escapeHtml(it.sku)+'">'+TIERS.map(t=>'<option value="'+t.id+'">'+escapeHtml(t.label)+'</option>').join('')+'</select>'+
               '<div class="item-price" data-role="price">'+money(it.basePrice)+'</div>'+
-              '<button class="item-add'+(inCart ? ' added' : '')+'" data-role="add" title="Add to quote" aria-label="Add to quote">'+(inCart ? '&#10003;' : '+')+'</button>'+
+              '<button class="item-add'+(inCart ? ' added' : '')+'" data-role="add" title="Add to quote" aria-label="Add '+escapeHtml(it.sku)+' to quote">'+(inCart ? '&#10003;' : '+')+'</button>'+
             '</div>';
         });
-        html += '</div>';
+        html += '</div></div>';
     });
     listEl.innerHTML = any ? html : '<div class="no-results">No items match your search.</div>';
   }
+
+  document.getElementById('browse-list').addEventListener('click', (e) => {
+    const toggle = e.target.closest('[data-role="sub-toggle"]');
+    if (!toggle) return;
+    const group = toggle.closest('.sub-group');
+    const key = group.dataset.key;
+    const nowExpanded = !group.classList.contains('expanded');
+    group.classList.toggle('expanded', nowExpanded);
+    toggle.setAttribute('aria-expanded', String(nowExpanded));
+    if (nowExpanded) expandedGroups.add(key); else expandedGroups.delete(key);
+  });
 
   document.getElementById('search-input').addEventListener('input', (e) => {
     searchTerm = e.target.value.trim().toLowerCase();
@@ -936,6 +1005,21 @@ const TIERS = [
   document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
   lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeLightbox(); closeDocPreview(); } });
+
+  /* ── scroll-to-top ── */
+  const scrollTopBtn = document.getElementById('scroll-top-btn');
+  let scrollTicking = false;
+  window.addEventListener('scroll', () => {
+    if (scrollTicking) return;
+    scrollTicking = true;
+    requestAnimationFrame(() => {
+      scrollTopBtn.classList.toggle('show', window.scrollY > 600);
+      scrollTicking = false;
+    });
+  });
+  scrollTopBtn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 
   /* ── auth ── */
   const SUPABASE_URL = 'https://goxqofdcydxbsrlfobrz.supabase.co';
