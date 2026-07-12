@@ -195,11 +195,15 @@
   }
   #lightbox.open{display:flex;}
   #lb-img{max-width:90vw;max-height:90vh;width:auto;height:auto;object-fit:contain;}
-  #lb-close{position:absolute;top:20px;right:24px;color:var(--parchment);font-size:2rem;opacity:.7;transition:opacity .2s;}
+  #lb-close{
+    position:absolute;top:14px;right:16px;color:var(--parchment);font-size:1.7rem;opacity:.7;transition:opacity .2s;
+    display:flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;
+  }
   #lb-close:hover{opacity:1;}
   #lb-prev,#lb-next{
     position:absolute;top:50%;transform:translateY(-50%);color:var(--parchment);font-size:2.4rem;
     opacity:.6;transition:opacity .2s;padding:12px;user-select:none;
+    min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;
   }
   #lb-prev:hover,#lb-next:hover{opacity:1;}
   #lb-prev{left:16px;}
@@ -372,6 +376,7 @@
     function dismiss(value){
       localStorage.setItem('bsd-cookie-consent', value);
       banner.classList.remove('show');
+      if (value === 'accepted') window.dispatchEvent(new Event('bsd-consent-accepted'));
     }
     accept.addEventListener('click', () => dismiss('accepted'));
     decline.addEventListener('click', () => dismiss('declined'));

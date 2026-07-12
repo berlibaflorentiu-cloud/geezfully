@@ -1457,6 +1457,7 @@
     function dismiss(value){
       localStorage.setItem('bsd-cookie-consent', value);
       banner.classList.remove('show');
+      if (value === 'accepted') window.dispatchEvent(new Event('bsd-consent-accepted'));
     }
     accept.addEventListener('click', () => dismiss('accepted'));
     decline.addEventListener('click', () => dismiss('declined'));
