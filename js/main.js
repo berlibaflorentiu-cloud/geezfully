@@ -18,7 +18,7 @@ const yearEl = document.getElementById('year');
 if (yearEl) yearEl.textContent = '2026';
 
 /* ── i18n: instant in-page language switch (RO default) ── */
-const WA_NUMBER = '37300000000'; // replace with the real WhatsApp number (digits only, intl)
+const WA_NUMBER = '37379355432'; // replace with the real WhatsApp number (digits only, intl)
 /* Contact form: get a free key at web3forms.com (enter your email, it's mailed to you),
    then paste it here. Until then the form gracefully falls back to opening the email client. */
 const WEB3FORMS_KEY = '03db113e-6618-4808-825a-efe6ea59f1ba';
