@@ -406,6 +406,17 @@
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: var(--surface2); }
     .td-hours { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--gold); }
+
+    /* flag rows with an open atenție (deadline) so they read at a glance —
+       a discrete dot rather than an edge/background wash, so it stays
+       legible per-row instead of fusing into one line/block when several
+       flagged rows sit next to each other */
+    .atentie-dot {
+      display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+      background: var(--gold); margin-right: 8px; vertical-align: middle;
+      box-shadow: 0 0 0 3px rgba(200, 169, 110, 0.22);
+      flex: 0 0 auto;
+    }
     .td-date { color: var(--muted); font-size: 13px; }
     .td-money { font-size: 13px; color: var(--muted); }
     .td-del { white-space: nowrap; }
@@ -734,6 +745,14 @@
     /* The app's dashboard tables highlight hovered rows with a dark fill —
        wrong for this document, which is styled light/print-like. */
     #act-document tr:hover td { background: none; }
+    #act-document .act-services-table { table-layout: fixed; }
+    #act-document .act-lawyer-cell {
+      white-space: nowrap;
+      word-break: keep-all;
+      overflow-wrap: normal;
+      font-size: 9pt;
+      line-height: 1.15;
+    }
 
     /* ── ADMIN TABS ── */
     .admin-tabs { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:24px; overflow-x:auto; scrollbar-width:none; }
@@ -1085,6 +1104,8 @@ let _invEditId        = null;
 let allReceipts       = [];
 let allClientReports  = [];
 let _actFormState     = null;
+let allAtentii        = [];
+let allPersonalAtentii = [];
 
 function initDateRange() {
   const now = new Date();
@@ -1095,7 +1116,7 @@ function initDateRange() {
   };
 }
 const _dr = initDateRange();
-const state = { dateStart: _dr.start, dateEnd: _dr.end, filterUser: 'all', viewMode: 'admin', customGroup: [], adminTab: 'pontaj', clientiSearch: '', clientiStatus: 'all', registruSearch: '', pontajPage: 1, registruPage: 1, avocatTab: 'pontaj', activePreset: '30d' };
+const state = { dateStart: _dr.start, dateEnd: _dr.end, filterUser: 'all', viewMode: 'admin', customGroup: [], adminTab: 'pontaj', clientiSearch: '', clientiStatus: 'all', registruSearch: '', pontajPage: 1, registruPage: 1, avocatTab: 'pontaj', activePreset: '30d', siteStatsDays: 30 };
 const PAGE_SIZE = 30;
 function isAdmin(u) { return u?.role === 'admin' || u?.role === 'owner'; }
 
@@ -1223,6 +1244,8 @@ async function loadAll() {
       currentUser = JSON.parse(cached);
       allUsers    = JSON.parse(localStorage.getItem('pontaj_users_cache')  || '[]');
       allEntries  = JSON.parse(localStorage.getItem('pontaj_entries_cache') || '[]');
+      allAtentii  = JSON.parse(localStorage.getItem('pontaj_atentii_cache') || '[]');
+      allPersonalAtentii = JSON.parse(localStorage.getItem('pontaj_personal_atentii_cache') || '[]');
       showApp();
       // Refresh in background — user already sees the UI
       refreshInBackground(user.id);
@@ -1244,14 +1267,17 @@ async function fetchAndShow(userId) {
     currentUser = profile;
     localStorage.setItem('pontaj_profile', JSON.stringify(profile));
 
-    const [usersRes, entriesRes] = await dbTimeout(Promise.all([
+    const [usersRes, entriesRes, atentiiRes] = await dbTimeout(Promise.all([
       db.from('profiles').select('*').order('name'),
-      db.from('entries').select('*').order('date', { ascending: false })
+      db.from('entries').select('*').order('date', { ascending: false }),
+      db.from('atentii').select('*').order('deadline_date')
     ]));
     allUsers   = usersRes.data || [];
     allEntries = entriesRes.data || [];
+    allAtentii = atentiiRes.data || [];
     localStorage.setItem('pontaj_users_cache',   JSON.stringify(allUsers));
     localStorage.setItem('pontaj_entries_cache', JSON.stringify(allEntries));
+    localStorage.setItem('pontaj_atentii_cache', JSON.stringify(allAtentii));
 
     if (isAdmin(currentUser)) {
       try {
@@ -1268,6 +1294,13 @@ async function fetchAndShow(userId) {
         allReceipts       = rRes.data  || [];
         allClientReports  = crRes.data || [];
       } catch(e) { /* tables not yet created — graceful degradation */ }
+      // isolated from the batch above — a failure here must never block
+      // client/invoice data (which the client-name autocomplete depends on)
+      try {
+        const paRes = await dbTimeout(db.from('personal_atentii').select('*').order('deadline_date'));
+        allPersonalAtentii = paRes.data || [];
+        localStorage.setItem('pontaj_personal_atentii_cache', JSON.stringify(allPersonalAtentii));
+      } catch(e) { /* table not yet created — graceful degradation */ }
     }
 
     showApp();
@@ -1278,10 +1311,11 @@ async function fetchAndShow(userId) {
 
 async function refreshInBackground(userId) {
   try {
-    const [profileRes, usersRes, entriesRes] = await Promise.all([
+    const [profileRes, usersRes, entriesRes, atentiiRes] = await Promise.all([
       db.from('profiles').select('*').eq('id', userId).single(),
       db.from('profiles').select('*').order('name'),
-      db.from('entries').select('*').order('date', { ascending: false })
+      db.from('entries').select('*').order('date', { ascending: false }),
+      db.from('atentii').select('*').order('deadline_date')
     ]);
     if (profileRes.data) {
       const wasApproved = currentUser?.status === 'approved';
@@ -1292,8 +1326,10 @@ async function refreshInBackground(userId) {
     }
     allUsers   = usersRes.data   || [];
     allEntries = entriesRes.data || [];
+    allAtentii = atentiiRes.data || [];
     localStorage.setItem('pontaj_users_cache',   JSON.stringify(allUsers));
     localStorage.setItem('pontaj_entries_cache', JSON.stringify(allEntries));
+    localStorage.setItem('pontaj_atentii_cache', JSON.stringify(allAtentii));
 
     if (isAdmin(currentUser)) {
       try {
@@ -1310,6 +1346,13 @@ async function refreshInBackground(userId) {
         allReceipts       = rRes.data  || [];
         allClientReports  = crRes.data || [];
       } catch(e) { /* tables not yet created */ }
+      // isolated from the batch above — a failure here must never block
+      // client/invoice data (which the client-name autocomplete depends on)
+      try {
+        const paRes = await db.from('personal_atentii').select('*').order('deadline_date');
+        allPersonalAtentii = paRes.data || [];
+        localStorage.setItem('pontaj_personal_atentii_cache', JSON.stringify(allPersonalAtentii));
+      } catch(e) { /* table not yet created */ }
     }
 
     updateRequestsBadge();
@@ -1471,6 +1514,9 @@ function sumH(arr) { return arr.reduce((s, e) => s + Number(e.hours), 0); }
 
 function esc(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function escNoBreak(s) {
+  return esc(s).replace(/\s+/g, '&nbsp;');
 }
 
 // ═══════════════════════════════════════
@@ -1752,6 +1798,7 @@ function renderAvocat(user) {
   const TABS = [
     { key: 'pontaj',     label: 'Pontaj',     icon: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>' },
     { key: 'cheltuieli', label: 'Cheltuieli', icon: '<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>' },
+    { key: 'atentie',    label: 'Atenție',    icon: '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>' },
   ];
   document.getElementById('main-content').innerHTML = `
     <div class="admin-tabs" role="tablist">
@@ -1775,7 +1822,8 @@ function setAvocatTab(tab) {
 function renderAvocatTabContent(user) {
   const el = document.getElementById('avocat-tab-content');
   if (!el) return;
-  if (state.avocatTab === 'cheltuieli') renderAvocatCheltuieli(el, user);
+  if      (state.avocatTab === 'cheltuieli') renderAvocatCheltuieli(el, user);
+  else if (state.avocatTab === 'atentie')    renderAtentie(el);
   else renderAvocatPontaj(el, user);
 }
 
@@ -1855,6 +1903,7 @@ function renderAvocatPontaj(container, user) {
           <input type="hidden" id="f-fixed-price" value="">
           <input type="hidden" id="f-fixed-type" value="">
         </div>
+        ${atentieFormFieldsHtml('f')}
         <button class="btn-primary" style="padding:9px 22px;font-size:14px" onclick="addEntry()">Adaugă</button>
       </div>
     </div>
@@ -1877,11 +1926,12 @@ function renderAvocatPontaj(container, user) {
             <tbody>
               ${entries.map(e => `
                 <tr data-entry-id="${e.id}">
-                  <td class="td-date" data-label="Data">${fmtDate(e.date)}</td>
+                  <td class="td-date" data-label="Data">${hasAtentie(e.id) ? '<span class="atentie-dot" title="Are atenție activă" aria-hidden="true"></span>' : ''}${fmtDate(e.date)}</td>
                   <td class="td-client" data-label="Client / Dosar" style="color:var(--muted);font-size:13px">${esc(e.client) || '—'}</td>
                   <td class="td-desc" data-label="Descriere">${esc(e.description)}</td>
                   <td class="td-hours" data-label="Ore / Valoare">${e.fixed_price != null ? fmtMoney(e.fixed_price) : Number(e.hours).toFixed(1) + 'h'}</td>
                   <td class="td-del">
+                    ${atentieButtonHtml(e.id)}
                     <button class="btn-edit" onclick="editEntry('${e.id}')" aria-label="Editează" title="Editează"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                     <button class="btn-delete" onclick="deleteEntry('${e.id}')" aria-label="Șterge intrarea" title="Șterge">✕</button>
                   </td>
@@ -1926,6 +1976,7 @@ function renderAvocatCheltuieli(container, user) {
           <label>Descriere</label>
           <input type="text" id="c-desc" placeholder="ex. Cheltuieli transport, taxă de stat..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
         </div>
+        ${atentieFormFieldsHtml('c')}
       </div>
     </div>
 
@@ -1947,11 +1998,12 @@ function renderAvocatCheltuieli(container, user) {
             <tbody>
               ${entries.map(e => `
                 <tr data-entry-id="${e.id}">
-                  <td class="td-date" data-label="Data">${fmtDate(e.date)}</td>
+                  <td class="td-date" data-label="Data">${hasAtentie(e.id) ? '<span class="atentie-dot" title="Are atenție activă" aria-hidden="true"></span>' : ''}${fmtDate(e.date)}</td>
                   <td class="td-client" data-label="Client / Dosar" style="color:var(--muted);font-size:13px">${esc(e.client) || '—'}</td>
                   <td class="td-desc" data-label="Descriere">${esc(e.description)}</td>
                   <td class="td-hours" data-label="Sumă">${fmtMoney(Number(e.fixed_price) || 0)}</td>
                   <td class="td-del">
+                    ${atentieButtonHtml(e.id)}
                     <button class="btn-edit" onclick="editEntry('${e.id}')" aria-label="Editează" title="Editează"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                     <button class="btn-delete" onclick="deleteEntry('${e.id}')" aria-label="Șterge cheltuiala" title="Șterge">✕</button>
                   </td>
@@ -1986,6 +2038,7 @@ async function addCheltuiala() {
 
   if (error) { alert(error.message); if (btn) { btn.disabled = false; btn.textContent = 'Adaugă'; } return; }
   allEntries.unshift(data);
+  await maybeCreateAtentieFromForm('c', data.id, client, description, user);
   render();
 }
 
@@ -2128,6 +2181,7 @@ async function addEntry() {
 
   if (error) { alert(error.message); if (btn) { btn.disabled = false; btn.textContent = 'Adaugă'; } return; }
   allEntries.unshift(data);
+  await maybeCreateAtentieFromForm('f', data.id, client, description, user);
   render();
 }
 
@@ -2202,6 +2256,20 @@ async function saveEntryEdit(id) {
   const idx = allEntries.findIndex(x => x.id === id);
   if (idx !== -1) allEntries[idx] = data;
   localStorage.setItem('pontaj_entries_cache', JSON.stringify(allEntries));
+
+  // keep a linked pending atenție's client/description in sync with the entry
+  const linkedAtentie = allAtentii.find(a => a.entry_id === id && a.status === 'pending');
+  if (linkedAtentie && (linkedAtentie.client !== client || linkedAtentie.description !== description)) {
+    const { data: aData, error: aErr } = await db.from('atentii')
+      .update({ client, description })
+      .eq('id', linkedAtentie.id).select().single();
+    if (!aErr && aData) {
+      const aIdx = allAtentii.findIndex(a => a.id === aData.id);
+      if (aIdx !== -1) allAtentii[aIdx] = aData;
+      localStorage.setItem('pontaj_atentii_cache', JSON.stringify(allAtentii));
+    }
+  }
+
   _restoreEntryRow(row, data);
 }
 
@@ -2223,6 +2291,7 @@ function _restoreEntryRow(row, e) {
   row.querySelector('.td-desc').innerHTML   = esc(e.description);
   row.querySelector('.td-hours').innerHTML  = val + badge;
   row.querySelector('.td-del').innerHTML    = `
+    ${atentieButtonHtml(e.id)}
     <button class="btn-edit" onclick="editEntry('${e.id}')" aria-label="Editează" title="Editează"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
     <button class="btn-delete" onclick="deleteEntry('${e.id}')" aria-label="Șterge intrarea" title="Șterge">✕</button>
   `;
@@ -2240,6 +2309,9 @@ function renderAdmin() {
     clienti:   '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
     facturi:   '<path d="M6 2h9l4 4v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v5h5"/><line x1="8" y1="12" x2="15" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/>',
     registru:  '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+    site:      '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+    atentie:   '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+    personal:  '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
   };
   const TABS = [
     { key: 'pontaj',    label: 'Pontaj' },
@@ -2247,6 +2319,9 @@ function renderAdmin() {
     { key: 'clienti',   label: 'Clienți' },
     { key: 'facturi',   label: 'Facturi' },
     { key: 'registru',  label: 'Registru' },
+    { key: 'site',      label: 'Site' },
+    { key: 'atentie',   label: 'Atenție' },
+    { key: 'personal',  label: 'Personal' },
   ];
   document.getElementById('main-content').innerHTML = `
     <div class="admin-tabs" role="tablist">
@@ -2275,6 +2350,9 @@ function renderAdminTabContent() {
   else if (state.adminTab === 'clienti')   renderClienti(el);
   else if (state.adminTab === 'facturi')   renderFacturi(el);
   else if (state.adminTab === 'registru')  renderRegistru(el);
+  else if (state.adminTab === 'site')      renderSiteStats(el);
+  else if (state.adminTab === 'atentie')   renderAtentie(el);
+  else if (state.adminTab === 'personal')  renderPersonalAtentii(el);
 }
 
 function searchClienti(inputEl) {
@@ -2389,7 +2467,7 @@ function renderAdminPontaj(container) {
         : `<table class="entries-table">
             <thead><tr>
               <th style="width:100px">Data</th>
-              <th>Avocat</th>
+              <th style="width:130px;min-width:130px">Avocat</th>
               <th>Client / Dosar</th>
               <th>Descriere</th>
               <th style="width:110px">Ore / Valoare</th>
@@ -2402,12 +2480,13 @@ function renderAdminPontaj(container) {
                 const billedBadge = billedIds.has(e.id) ? '<span class="badge-billed">facturat</span>' : '';
                 return `
                   <tr data-entry-id="${e.id}">
-                    <td class="td-date" data-label="Data">${fmtDate(e.date)}</td>
-                    <td class="td-avocat" data-label="Avocat" style="font-weight:500;font-size:13px">${u?.name || '—'}</td>
+                    <td class="td-date" data-label="Data">${hasAtentie(e.id) ? '<span class="atentie-dot" title="Are atenție activă" aria-hidden="true"></span>' : ''}${fmtDate(e.date)}</td>
+                    <td class="td-avocat" data-label="Avocat" style="font-weight:500;font-size:13px;min-width:130px">${u?.name || '—'}</td>
                     <td class="td-client" data-label="Client / Dosar" style="color:var(--muted);font-size:13px">${esc(e.client) || '—'}</td>
                     <td class="td-desc" data-label="Descriere" style="font-size:14px">${esc(e.description)}</td>
                     <td class="td-hours" data-label="Ore / Valoare">${val}${billedBadge}</td>
                     <td class="td-del">
+                      ${atentieButtonHtml(e.id)}
                       <button class="btn-edit" onclick="editEntry('${e.id}')" aria-label="Editează" title="Editează"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                       <button class="btn-delete" onclick="deleteEntry('${e.id}')" aria-label="Șterge intrarea" title="Șterge">✕</button>
                     </td>
@@ -2544,6 +2623,503 @@ function _initCharts(months, topClients) {
         scales: { x: { ...BASE_OPTS.scales.x, ticks: { ...BASE_OPTS.scales.x.ticks, callback: v => v + 'h' } }, y: BASE_OPTS.scales.y } },
     });
   }
+}
+
+// ── Tab: Site (admin only) — bunpartener.md visitor stats ──
+function setSiteStatsRange(days) {
+  state.siteStatsDays = days;
+  const el = document.getElementById('admin-tab-content');
+  if (el) renderSiteStats(el);
+}
+
+function _siteReferrerLabel(ref) {
+  if (!ref) return 'Direct';
+  try { return new URL(ref).hostname.replace(/^www\./, ''); }
+  catch (e) { return 'Direct'; }
+}
+
+function _siteTopN(rows, key, n) {
+  const counts = {};
+  rows.forEach(r => {
+    const v = r[key] || '(necunoscut)';
+    counts[v] = (counts[v] || 0) + 1;
+  });
+  return Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0, n);
+}
+
+async function renderSiteStats(container) {
+  const days = state.siteStatsDays;
+  container.innerHTML = `
+    <div class="controls" style="margin-bottom:20px">
+      <div class="range-presets">
+        ${[7,30,90,0].map(n => `<button class="preset-chip${days===n?' active':''}" onclick="setSiteStatsRange(${n})">${n===0?'Tot':'Ultimele '+n+' zile'}</button>`).join('')}
+      </div>
+    </div>
+    <p style="font-size:13px;color:var(--muted)">Se încarcă...</p>
+  `;
+
+  let query = db.from('bunpartener_pageviews')
+    .select('path,lang,referrer,visitor_id,session_id,created_at')
+    .order('created_at', { ascending: false })
+    .limit(20000);
+  if (days > 0) {
+    const since = new Date(Date.now() - days * 86400000).toISOString();
+    query = query.gte('created_at', since);
+  }
+  const { data, error } = await query;
+
+  // bail if the admin navigated away from the tab while this was loading
+  if (state.adminTab !== 'site') return;
+
+  if (error) {
+    container.querySelector('p').textContent = 'Eroare la încărcare: ' + error.message;
+    return;
+  }
+  if (!data || !data.length) {
+    container.querySelector('p').textContent = 'Niciun vizitator înregistrat încă în această perioadă.';
+    return;
+  }
+
+  const totalViews      = data.length;
+  const uniqueVisitors  = new Set(data.map(r => r.visitor_id)).size;
+  const uniqueSessions  = new Set(data.map(r => r.session_id)).size;
+
+  const byDay = {};
+  data.forEach(r => {
+    const d = r.created_at.slice(0, 10);
+    byDay[d] = (byDay[d] || 0) + 1;
+  });
+  const dayKeys = Object.keys(byDay).sort().slice(-14);
+
+  const topPages = _siteTopN(data, 'path', 8);
+  const topRefs  = _siteTopN(data.map(r => ({ refLabel: _siteReferrerLabel(r.referrer) })), 'refLabel', 6);
+  const byLang   = _siteTopN(data, 'lang', 5);
+
+  container.innerHTML = `
+    <div class="controls" style="margin-bottom:20px">
+      <div class="range-presets">
+        ${[7,30,90,0].map(n => `<button class="preset-chip${days===n?' active':''}" onclick="setSiteStatsRange(${n})">${n===0?'Tot':'Ultimele '+n+' zile'}</button>`).join('')}
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Vizualizări</div>
+        <div class="stat-value">${totalViews.toLocaleString('ro-RO')}</div>
+        <div class="stat-sub">pagini bunpartener.md</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Vizitatori unici</div>
+        <div class="stat-value">${uniqueVisitors.toLocaleString('ro-RO')}</div>
+        <div class="stat-sub">după dispozitiv/browser</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Vizite (sesiuni)</div>
+        <div class="stat-value">${uniqueSessions.toLocaleString('ro-RO')}</div>
+        <div class="stat-sub">${(totalViews/Math.max(1,uniqueSessions)).toFixed(1)} pagini / vizită</div>
+      </div>
+    </div>
+
+    <div class="dash-charts">
+      <div class="dash-chart-card">
+        <div class="dash-chart-title">Vizualizări pe zi</div>
+        <canvas id="chart-site-daily" height="200"></canvas>
+      </div>
+      <div class="dash-chart-card">
+        <div class="dash-chart-title">Pagini vizitate</div>
+        <canvas id="chart-site-pages" height="200"></canvas>
+      </div>
+    </div>
+
+    <div class="dash-charts" style="margin-top:20px">
+      <div class="dash-chart-card">
+        <div class="dash-chart-title">De unde vin vizitatorii</div>
+        <canvas id="chart-site-refs" height="200"></canvas>
+      </div>
+      <div class="dash-chart-card">
+        <div class="dash-chart-title">Limbă</div>
+        <table style="width:100%;font-size:13px;border-collapse:collapse">
+          <thead>
+            <tr style="color:var(--muted);text-transform:uppercase;font-size:11px;letter-spacing:.08em">
+              <th style="text-align:left;padding:6px 0;border-bottom:1px solid var(--border)">Limbă</th>
+              <th style="text-align:right;padding:6px 0;border-bottom:1px solid var(--border)">Vizualizări</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${byLang.map(([lang, n]) => `<tr><td style="padding:8px 0;border-bottom:1px solid var(--border)">${esc(lang.toUpperCase())}</td><td style="text-align:right;padding:8px 0;border-bottom:1px solid var(--border);color:var(--gold)">${n}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  requestAnimationFrame(() => _initSiteCharts(dayKeys, byDay, topPages, topRefs));
+}
+
+function _initSiteCharts(dayKeys, byDay, topPages, topRefs) {
+  const GOLD   = '#C8A96E';
+  const GOLD_A = 'rgba(200,169,110,0.15)';
+  const MUTED  = '#8B949E';
+  const GRID   = 'rgba(48,54,61,0.8)';
+  // Chart.js mutates the scale config objects it's given (adding a resolved
+  // `type`), so each chart needs its own fresh objects — never share/spread
+  // the same nested scale object across multiple Chart instances.
+  const axisStyle = (extra) => ({ grid: { color: GRID }, ticks: { color: MUTED, font: { family: 'DM Sans', size: 12 }, ...extra } });
+  const legendOff = { plugins: { legend: { display: false } } };
+
+  const c1 = document.getElementById('chart-site-daily');
+  if (c1 && window.Chart) {
+    new Chart(c1, {
+      type: 'bar',
+      data: { labels: dayKeys, datasets: [{ data: dayKeys.map(d => byDay[d]), backgroundColor: GOLD_A, borderColor: GOLD, borderWidth: 1, borderRadius: 4 }] },
+      options: { responsive: true, ...legendOff, scales: { x: axisStyle(), y: axisStyle({ precision: 0 }) } },
+    });
+  }
+
+  const c2 = document.getElementById('chart-site-pages');
+  if (c2 && window.Chart) {
+    new Chart(c2, {
+      type: 'bar',
+      data: {
+        labels: topPages.map(([p]) => p.length > 24 ? p.slice(0,24)+'…' : p),
+        datasets: [{ data: topPages.map(([,n]) => n), backgroundColor: GOLD_A, borderColor: GOLD, borderWidth: 1, borderRadius: 4 }],
+      },
+      options: { responsive: true, indexAxis: 'y', ...legendOff, scales: { x: axisStyle({ precision: 0 }), y: axisStyle() } },
+    });
+  }
+
+  const c3 = document.getElementById('chart-site-refs');
+  if (c3 && window.Chart) {
+    new Chart(c3, {
+      type: 'bar',
+      data: {
+        labels: topRefs.map(([r]) => r),
+        datasets: [{ data: topRefs.map(([,n]) => n), backgroundColor: GOLD_A, borderColor: GOLD, borderWidth: 1, borderRadius: 4 }],
+      },
+      options: { responsive: true, indexAxis: 'y', ...legendOff, scales: { x: axisStyle({ precision: 0 }), y: axisStyle() } },
+    });
+  }
+}
+
+// ── Tab: Atenție — deadline tracker (shared by admin + avocat) ──
+// Everyone sees every deadline firm-wide; anyone can create one from a
+// timesheet entry (new or already logged) and mark it resolved.
+
+function hasAtentie(entryId) {
+  return allAtentii.some(a => a.entry_id === entryId && a.status === 'pending');
+}
+
+function atentieButtonHtml(entryId) {
+  const existing = allAtentii.find(a => a.entry_id === entryId && a.status === 'pending');
+  const style = existing ? 'color:var(--red);border-color:rgba(248,81,73,0.4);background:rgba(248,81,73,0.1)' : '';
+  return `<button class="btn-edit" style="${style}" onclick="openAtentieModal('${entryId}')" aria-label="Atenție" title="${existing ? 'Atenție setată — click pentru a edita' : 'Creați atenție'}"><svg width="13" height="13" viewBox="0 0 24 24" fill="${existing?'currentColor':'none'}" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>`;
+}
+
+function atentieFormFieldsHtml(prefix) {
+  return `
+    <div class="field" style="grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-top:2px">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:0;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text)">
+        <input type="checkbox" id="${prefix}-atentie-toggle" onchange="toggleAtentieFields('${prefix}')" style="width:15px;height:15px;accent-color:var(--gold);cursor:pointer">
+        Creați atenție (termen limită)
+      </label>
+    </div>
+    <div class="field" id="${prefix}-atentie-date-field" style="display:none">
+      <label>Termen atenție</label>
+      <input type="date" id="${prefix}-atentie-date" min="${todayStr()}">
+    </div>
+    <div class="field" id="${prefix}-atentie-note-field" style="display:none;grid-column:1/-1">
+      <label>Notă atenție (opțional)</label>
+      <input type="text" id="${prefix}-atentie-note" placeholder="ex. depune apel, termen instanță..." autocomplete="off">
+    </div>
+  `;
+}
+
+function toggleAtentieFields(prefix) {
+  const on = document.getElementById(prefix + '-atentie-toggle').checked;
+  document.getElementById(prefix + '-atentie-date-field').style.display = on ? '' : 'none';
+  document.getElementById(prefix + '-atentie-note-field').style.display = on ? '' : 'none';
+}
+
+async function maybeCreateAtentieFromForm(prefix, entryId, client, description, user) {
+  const toggle = document.getElementById(prefix + '-atentie-toggle');
+  if (!toggle || !toggle.checked) return;
+  const dateVal = document.getElementById(prefix + '-atentie-date').value;
+  if (!dateVal) return;
+  const noteVal = document.getElementById(prefix + '-atentie-note').value.trim();
+  const { data, error } = await db.from('atentii').insert({
+    entry_id: entryId, created_by: user.id, created_by_name: user.name,
+    client, description, note: noteVal || null, deadline_date: dateVal, status: 'pending',
+  }).select().single();
+  if (!error && data) allAtentii.unshift(data);
+}
+
+function openAtentieModal(entryId) {
+  const entry = allEntries.find(e => e.id === entryId);
+  if (!entry) return;
+  const existing = allAtentii.find(a => a.entry_id === entryId && a.status === 'pending');
+  document.getElementById('modal-title').textContent = existing ? 'Atenție existentă' : 'Creați atenție';
+  document.getElementById('modal-actions').innerHTML = `<button class="btn-ghost" onclick="closeModal()">✕</button>`;
+  document.getElementById('modal-body').innerHTML = `
+    <div style="padding:4px 0 20px">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:2px">${esc(entry.client) || '—'}</div>
+      <div style="font-size:15px;font-weight:500">${esc(entry.description)}</div>
+    </div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:14px">
+      <div class="field">
+        <label>Termen</label>
+        <input type="date" id="modal-at-date" value="${existing ? existing.deadline_date : ''}" ${existing ? '' : `min="${todayStr()}"`}>
+      </div>
+      <div class="field" style="grid-column:1/-1">
+        <label>Notă (opțional)</label>
+        <input type="text" id="modal-at-note" value="${existing ? esc(existing.note || '') : ''}" placeholder="ex. depune apel, termen instanță..." autocomplete="off">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end;flex-wrap:wrap">
+      ${existing ? `<button class="btn-ghost" style="border-color:#e05c5c;color:#e05c5c" onclick="resolveAtentie('${existing.id}')">✓ Marchează rezolvat</button>` : ''}
+      <button class="btn-primary" onclick="${existing ? `saveAtentieEdit('${existing.id}')` : `createAtentieFromModal('${entryId}')`}">Salvează</button>
+    </div>
+  `;
+  document.getElementById('modal-overlay').style.display = 'flex';
+}
+
+async function createAtentieFromModal(entryId) {
+  const entry = allEntries.find(e => e.id === entryId);
+  const user  = getCurrentUser();
+  const dateVal = document.getElementById('modal-at-date').value;
+  if (!dateVal) { alert('Alege un termen.'); return; }
+  const noteVal = document.getElementById('modal-at-note').value.trim();
+  const { data, error } = await db.from('atentii').insert({
+    entry_id: entryId, created_by: user.id, created_by_name: user.name,
+    client: entry.client, description: entry.description,
+    note: noteVal || null, deadline_date: dateVal, status: 'pending',
+  }).select().single();
+  if (error) { alert(error.message); return; }
+  allAtentii.unshift(data);
+  closeModal();
+  render();
+}
+
+async function saveAtentieEdit(id) {
+  const dateVal = document.getElementById('modal-at-date').value;
+  if (!dateVal) { alert('Alege un termen.'); return; }
+  const noteVal = document.getElementById('modal-at-note').value.trim();
+  const { data, error } = await db.from('atentii').update({ deadline_date: dateVal, note: noteVal || null }).eq('id', id).select().single();
+  if (error) { alert(error.message); return; }
+  const idx = allAtentii.findIndex(a => a.id === id);
+  if (idx !== -1) allAtentii[idx] = data;
+  closeModal();
+  render();
+}
+
+async function resolveAtentie(id) {
+  const user = getCurrentUser();
+  const { data, error } = await db.from('atentii').update({
+    status: 'resolved', resolved_at: new Date().toISOString(), resolved_by_name: user.name,
+  }).eq('id', id).select().single();
+  if (error) { alert(error.message); return; }
+  const idx = allAtentii.findIndex(a => a.id === id);
+  if (idx !== -1) allAtentii[idx] = data;
+  closeModal();
+  render();
+}
+
+async function deleteAtentie(id) {
+  if (!isAdmin(getCurrentUser())) return;
+  if (!confirm('Ștergi această atenție?')) return;
+  const { data, error } = await db.from('atentii').delete().eq('id', id).select();
+  if (error) { alert(error.message); return; }
+  if (!data || !data.length) { alert('Ștergerea nu a fost permisă.'); return; }
+  allAtentii = allAtentii.filter(a => a.id !== id);
+  render();
+}
+
+function renderAtentie(container) {
+  const today = todayStr();
+  const pending  = allAtentii.filter(a => a.status === 'pending').slice().sort((a,b) => a.deadline_date.localeCompare(b.deadline_date));
+  const resolved = allAtentii.filter(a => a.status === 'resolved').slice().sort((a,b) => (b.resolved_at||'').localeCompare(a.resolved_at||'')).slice(0, 30);
+
+  function daysBadge(dateStr) {
+    const diff = Math.round((new Date(dateStr+'T00:00:00') - new Date(today+'T00:00:00')) / 86400000);
+    let label, color, bg, border;
+    if      (diff < 0)  { label = `restant ${Math.abs(diff)} zi${Math.abs(diff)===1?'':'le'}`; color = 'var(--red)';  bg = 'rgba(248,81,73,0.16)';  border = 'rgba(248,81,73,0.45)'; }
+    else if (diff === 0) { label = 'azi';                                                       color = 'var(--red)';  bg = 'rgba(248,81,73,0.16)';  border = 'rgba(248,81,73,0.45)'; }
+    else if (diff === 1) { label = 'mâine';                                                      color = 'var(--red)';  bg = 'rgba(248,81,73,0.16)';  border = 'rgba(248,81,73,0.45)'; }
+    else if (diff <= 3)  { label = `peste ${diff} zile`;                                         color = 'var(--red)';  bg = 'rgba(248,81,73,0.16)';  border = 'rgba(248,81,73,0.45)'; }
+    else if (diff <= 7)  { label = `peste ${diff} zile`;                                         color = '#f0b93f';     bg = 'rgba(240,185,63,0.16)'; border = 'rgba(240,185,63,0.45)'; }
+    else                 { label = `peste ${diff} zile`;                                         color = 'var(--muted)'; bg = 'rgba(139,148,158,0.12)'; border = 'rgba(139,148,158,0.3)'; }
+    return `<span style="display:inline-flex;align-items:center;font-size:12.5px;font-weight:700;letter-spacing:.01em;padding:4px 11px;border-radius:20px;background:${bg};color:${color};border:1px solid ${border}">${label}</span>`;
+  }
+
+  const canDeleteAtentie = isAdmin(getCurrentUser());
+
+  function itemRow(a, isResolved) {
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;gap:16px;flex-wrap:wrap;${isResolved?'opacity:0.6':''}">
+        <div style="flex:1;min-width:220px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap">
+            <span style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--gold)">${fmtDate(a.deadline_date)}</span>
+            ${isResolved ? `<span style="font-size:12px;color:var(--muted)">rezolvat${a.resolved_by_name?(' de '+esc(a.resolved_by_name)):''}</span>` : daysBadge(a.deadline_date)}
+          </div>
+          <div style="font-size:13px;color:var(--muted)">${esc(a.client) || '—'}</div>
+          <div style="font-size:14px;margin-top:2px">${esc(a.description)}</div>
+          ${a.note ? `<div style="font-size:13px;color:var(--text);margin-top:4px;font-style:italic">"${esc(a.note)}"</div>` : ''}
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">creat de ${esc(a.created_by_name)}</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0">
+          ${isResolved
+            ? (canDeleteAtentie ? `<button class="btn-delete" onclick="deleteAtentie('${a.id}')" aria-label="Șterge" title="Șterge">✕</button>` : '')
+            : `<button class="btn-primary" style="font-size:13px;padding:7px 16px" onclick="resolveAtentie('${a.id}')">✓ Rezolvat</button>`
+          }
+        </div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = `
+    <div class="table-header" style="margin-bottom:16px">
+      <span class="table-title">Atenție — termene active</span>
+      ${pending.length ? `<span style="font-size:13px;color:var(--muted)">${pending.length} active</span>` : ''}
+    </div>
+    ${pending.length === 0
+      ? `<div class="empty-state"><p>Nicio atenție activă.</p></div>`
+      : `<div style="display:flex;flex-direction:column;gap:12px;margin-bottom:32px">${pending.map(a => itemRow(a, false)).join('')}</div>`
+    }
+    ${resolved.length ? `
+      <div class="table-header" style="margin-bottom:16px">
+        <span class="table-title">Rezolvate recent</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">${resolved.map(a => itemRow(a, true)).join('')}</div>
+    ` : ''}
+  `;
+}
+
+// ── Tab: Personal (admin only) — private deadline journal, not tied to
+// timesheet entries; client link is a free-text field, entirely optional ──
+function renderPersonalAtentii(container) {
+  const today = todayStr();
+  const pending  = allPersonalAtentii.filter(a => a.status === 'pending').slice().sort((a,b) => a.deadline_date.localeCompare(b.deadline_date));
+  const resolved = allPersonalAtentii.filter(a => a.status === 'resolved').slice().sort((a,b) => (b.resolved_at||'').localeCompare(a.resolved_at||'')).slice(0, 30);
+
+  function daysBadge(dateStr) {
+    const diff = Math.round((new Date(dateStr+'T00:00:00') - new Date(today+'T00:00:00')) / 86400000);
+    let label, color, bg, border;
+    if      (diff < 0)  { label = `restant ${Math.abs(diff)} zi${Math.abs(diff)===1?'':'le'}`; color = 'var(--red)';  bg = 'rgba(248,81,73,0.16)';  border = 'rgba(248,81,73,0.45)'; }
+    else if (diff === 0) { label = 'azi';                                                       color = 'var(--red)';  bg = 'rgba(248,81,73,0.16)';  border = 'rgba(248,81,73,0.45)'; }
+    else if (diff === 1) { label = 'mâine';                                                      color = 'var(--red)';  bg = 'rgba(248,81,73,0.16)';  border = 'rgba(248,81,73,0.45)'; }
+    else if (diff <= 3)  { label = `peste ${diff} zile`;                                         color = 'var(--red)';  bg = 'rgba(248,81,73,0.16)';  border = 'rgba(248,81,73,0.45)'; }
+    else if (diff <= 7)  { label = `peste ${diff} zile`;                                         color = '#f0b93f';     bg = 'rgba(240,185,63,0.16)'; border = 'rgba(240,185,63,0.45)'; }
+    else                 { label = `peste ${diff} zile`;                                         color = 'var(--muted)'; bg = 'rgba(139,148,158,0.12)'; border = 'rgba(139,148,158,0.3)'; }
+    return `<span style="display:inline-flex;align-items:center;font-size:12.5px;font-weight:700;letter-spacing:.01em;padding:4px 11px;border-radius:20px;background:${bg};color:${color};border:1px solid ${border}">${label}</span>`;
+  }
+
+  function itemRow(a, isResolved) {
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;gap:16px;flex-wrap:wrap;${isResolved?'opacity:0.6':''}">
+        <div style="flex:1;min-width:220px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap">
+            <span style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--gold)">${fmtDate(a.deadline_date)}</span>
+            ${isResolved ? `<span style="font-size:12px;color:var(--muted)">rezolvat</span>` : daysBadge(a.deadline_date)}
+          </div>
+          ${a.client ? `<div style="font-size:13px;color:var(--muted)">${esc(a.client)}</div>` : ''}
+          <div style="font-size:14px;margin-top:2px">${esc(a.description)}</div>
+          ${a.note ? `<div style="font-size:13px;color:var(--text);margin-top:4px;font-style:italic">"${esc(a.note)}"</div>` : ''}
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0">
+          ${isResolved
+            ? `<button class="btn-delete" onclick="deletePersonalAtentie('${a.id}')" aria-label="Șterge" title="Șterge">✕</button>`
+            : `<button class="btn-primary" style="font-size:13px;padding:7px 16px" onclick="resolvePersonalAtentie('${a.id}')">✓ Rezolvat</button>`
+          }
+        </div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = `
+    <div class="add-form" style="margin-bottom:28px">
+      <div class="form-title">Atenție personală nouă</div>
+      <div class="client-add-grid">
+        <div class="field" style="grid-column:1/-1">
+          <label>Ce trebuie ținut minte</label>
+          <input type="text" id="pa-desc" placeholder="ex. Reînnoire contract chirie birou" onkeydown="if(event.key==='Enter')addPersonalAtentie()">
+        </div>
+        <div class="field">
+          <label>Termen</label>
+          <input type="date" id="pa-date" min="${today}" onkeydown="if(event.key==='Enter')addPersonalAtentie()">
+        </div>
+        <div class="field">
+          <label>Client (opțional)</label>
+          <input type="text" id="pa-client" list="pa-client-list" placeholder="dacă e cazul" autocomplete="off" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter')addPersonalAtentie()">
+          <datalist id="pa-client-list">${allClients.map(c => `<option value="${esc(c.name)}">`).join('')}</datalist>
+        </div>
+        <div class="field" style="grid-column:1/-1">
+          <label>Notă (opțional)</label>
+          <input type="text" id="pa-note" placeholder="detalii suplimentare" onkeydown="if(event.key==='Enter')addPersonalAtentie()">
+        </div>
+        <button class="btn-primary" id="btn-add-personal-atentie" onclick="addPersonalAtentie()" style="padding:9px 22px">Adaugă</button>
+      </div>
+    </div>
+
+    <div class="table-header" style="margin-bottom:16px">
+      <span class="table-title">Atenții personale active</span>
+      ${pending.length ? `<span style="font-size:13px;color:var(--muted)">${pending.length} active</span>` : ''}
+    </div>
+    ${pending.length === 0
+      ? `<div class="empty-state"><p>Nicio atenție personală activă.</p></div>`
+      : `<div style="display:flex;flex-direction:column;gap:12px;margin-bottom:32px">${pending.map(a => itemRow(a, false)).join('')}</div>`
+    }
+    ${resolved.length ? `
+      <div class="table-header" style="margin-bottom:16px">
+        <span class="table-title">Rezolvate recent</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">${resolved.map(a => itemRow(a, true)).join('')}</div>
+    ` : ''}
+  `;
+}
+
+async function addPersonalAtentie() {
+  const descEl = document.getElementById('pa-desc');
+  const description = descEl?.value.trim();
+  if (!description) { descEl?.focus(); return; }
+  const dateVal = document.getElementById('pa-date')?.value;
+  if (!dateVal) { document.getElementById('pa-date')?.focus(); return; }
+  const client = document.getElementById('pa-client')?.value.trim() || null;
+  const note   = document.getElementById('pa-note')?.value.trim() || null;
+  const user = getCurrentUser();
+
+  const btn = document.getElementById('btn-add-personal-atentie');
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+
+  const { data, error } = await db.from('personal_atentii').insert({
+    created_by: user.id, created_by_name: user.name,
+    client, description, note, deadline_date: dateVal, status: 'pending',
+  }).select().single();
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Adaugă'; }
+  if (error) { alert(error.message); return; }
+  allPersonalAtentii.unshift(data);
+  localStorage.setItem('pontaj_personal_atentii_cache', JSON.stringify(allPersonalAtentii));
+  renderAdminTabContent();
+}
+
+async function resolvePersonalAtentie(id) {
+  const { data, error } = await db.from('personal_atentii').update({
+    status: 'resolved', resolved_at: new Date().toISOString(),
+  }).eq('id', id).select().single();
+  if (error) { alert(error.message); return; }
+  const idx = allPersonalAtentii.findIndex(a => a.id === id);
+  if (idx !== -1) allPersonalAtentii[idx] = data;
+  localStorage.setItem('pontaj_personal_atentii_cache', JSON.stringify(allPersonalAtentii));
+  renderAdminTabContent();
+}
+
+async function deletePersonalAtentie(id) {
+  if (!confirm('Ștergi această atenție personală?')) return;
+  const { data, error } = await db.from('personal_atentii').delete().eq('id', id).select();
+  if (error) { alert(error.message); return; }
+  if (!data || !data.length) { alert('Ștergerea nu a fost permisă.'); return; }
+  allPersonalAtentii = allPersonalAtentii.filter(a => a.id !== id);
+  localStorage.setItem('pontaj_personal_atentii_cache', JSON.stringify(allPersonalAtentii));
+  renderAdminTabContent();
 }
 
 // ── Tab: Clienți (admin only) ─────────────────────────────
@@ -4068,16 +4644,25 @@ async function generateAct() {
 
       <p style="margin-bottom:10px;"><strong>1. EXECUTORUL</strong> a acordat, în perioada de referință, servicii de consultanță și asistență juridică CLIENTULUI, după cum urmează:</p>
 
-      <table style="width:100%; border-collapse:collapse; font-size:10pt; margin-bottom:18px;">
+      <table class="act-services-table" style="width:100%; border-collapse:collapse; table-layout:fixed; font-size:10pt; margin-bottom:18px;">
+        <colgroup>
+          <col style="width:5%;">
+          <col style="width:22%;">
+          <col style="width:20%;">
+          <col style="width:11%;">
+          <col style="width:11%;">
+          <col style="width:17%;">
+          <col style="width:14%;">
+        </colgroup>
         <thead>
           <tr style="background:#f0f0f0;">
-            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:30px;">Nr.</th>
+            <th style="border:1px solid #000;padding:5px 6px;text-align:center;">Nr.</th>
             <th style="border:1px solid #000;padding:5px 6px;text-align:left;">Activitatea realizată</th>
-            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:110px;">Avocatul</th>
-            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:70px;">Nr. ore</th>
-            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:70px;">Tarif EUR/h</th>
-            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:90px;">Suma onorariului</th>
-            <th style="border:1px solid #000;padding:5px 6px;text-align:center;width:80px;">Cheltuieli</th>
+            <th style="border:1px solid #000;padding:5px 6px;text-align:center;">Avocatul</th>
+            <th style="border:1px solid #000;padding:5px 6px;text-align:center;">Nr. ore</th>
+            <th style="border:1px solid #000;padding:5px 6px;text-align:center;">Tarif EUR/h</th>
+            <th style="border:1px solid #000;padding:5px 6px;text-align:center;">Suma onorariului</th>
+            <th style="border:1px solid #000;padding:5px 6px;text-align:center;">Cheltuieli</th>
           </tr>
         </thead>
         <tbody>
@@ -4110,7 +4695,7 @@ async function generateAct() {
               <tr>
                 <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${i + 1}.</td>
                 <td style="border:1px solid #000;padding:5px 6px;">${esc(e.description)}${e.client ? ' <em>(' + esc(e.client) + ')</em>' : ''}</td>
-                <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${u?.name || '—'}</td>
+                <td class="act-lawyer-cell" style="border:1px solid #000;padding:5px 4px;text-align:center;white-space:nowrap;word-break:keep-all;overflow-wrap:normal;font-size:9pt;line-height:1.15;">${u?.name ? escNoBreak(u.name) : '—'}</td>
                 <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${hoursDisplay}</td>
                 <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${rateDisplay}</td>
                 <td style="border:1px solid #000;padding:5px 6px;text-align:center;">${sumaDisplay}</td>
@@ -4187,7 +4772,7 @@ async function generateAct() {
             ${coordinator ? `Nume, prenume: <strong>${coordinator}</strong><br>Poziția: avocat coordonator` : ''}
           </td>
           <td style="width:50%;vertical-align:top;padding-left:20px;">
-            ${clientDet ? `<strong>${clientDisplay}</strong><br>${clientDet.replace(/,\s*/g, ',<br>')}` : `<strong>${clientDisplay}</strong>`}
+            ${clientDet ? `<strong>${clientDisplay}</strong><br>${clientDet}` : `<strong>${clientDisplay}</strong>`}
             <br><br>
             __________________________________________<br>
             <span style="font-size:9pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(semnătura)</span><br>
@@ -4283,8 +4868,10 @@ async function downloadDocx() {
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
     body { font-family: 'Times New Roman', serif; font-size: 11pt; line-height: 1.5; margin: 0; }
     table { border-collapse: collapse; width: 100%; }
+    .act-services-table { table-layout: fixed; }
     td, th { border: 1px solid #000; padding: 4px 6px; font-size: 10pt; }
     th { text-align: center; font-size: 9pt; text-transform: uppercase; }
+    .act-lawyer-cell { white-space: nowrap; word-break: keep-all; font-size: 9pt; line-height: 1.15; }
   </style></head><body>${clone.outerHTML}</body></html>`;
 
   const docBlob = new Blob(['﻿', html], { type: 'application/msword' });
