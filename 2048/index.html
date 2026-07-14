@@ -69,11 +69,25 @@
 
   .stats{ display:flex; gap:10px; align-items:stretch; }
   .stat{
+    position:relative;
     background:rgba(237,224,200,.06); border:1px solid var(--line); border-radius:10px;
     padding:8px 16px; text-align:center; min-width:74px;
   }
-  .stat .n{ font-family:'Fraunces',serif; font-weight:700; font-size:22px; color:var(--gold-hi); font-variant-numeric:tabular-nums; }
+  .stat .n{ display:inline-block; font-family:'Fraunces',serif; font-weight:700; font-size:22px; color:var(--gold-hi); font-variant-numeric:tabular-nums; }
+  .stat .n.bump{ animation: bump .2s ease; }
+  @keyframes bump{ 0%{ transform:scale(1) } 45%{ transform:scale(1.22) } 100%{ transform:scale(1) } }
   .stat .l{ font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:#B9A88C; margin-top:2px; }
+  .gain{
+    position:absolute; left:0; right:0; top:0; text-align:center; pointer-events:none;
+    font-family:'Fraunces',serif; font-weight:700; font-size:15px; color:var(--gold-hi);
+    opacity:0; text-shadow:0 1px 3px rgba(0,0,0,.5);
+  }
+  .gain.show{ animation: rise .72s ease-out; }
+  @keyframes rise{
+    0%{ opacity:0; transform:translateY(4px); }
+    22%{ opacity:1; }
+    100%{ opacity:0; transform:translateY(-20px); }
+  }
 
   .board-frame{
     background:linear-gradient(180deg, #3A2718, #241609);
@@ -84,6 +98,7 @@
     position:relative; width:100%; aspect-ratio:1/1;
     background:var(--walnut-2);
     border-radius:10px; overflow:hidden;
+    touch-action:none; -webkit-user-select:none; user-select:none;
   }
   .cell, .tile{ position:absolute; width:25%; height:25%; padding:var(--gap); box-sizing:border-box; }
   .cell{ left:calc(var(--c)*25%); top:calc(var(--r)*25%); }
@@ -94,8 +109,9 @@
 
   .tile{
     left:0; top:0;
-    transform: translate(calc(var(--c) * 100%), calc(var(--r) * 100%));
-    transition: transform .12s cubic-bezier(.2,.9,.3,1);
+    transform: translate3d(calc(var(--c) * 100%), calc(var(--r) * 100%), 0);
+    transition: transform .1s cubic-bezier(.25,.85,.35,1);
+    will-change: transform;
     z-index:2;
   }
   .tile.spawning .tile-face{ animation: pop .18s ease-out; }
@@ -117,7 +133,6 @@
     content:''; position:absolute; inset:0; opacity:var(--motif-o, 0);
     background-image: repeating-conic-gradient(from 45deg, currentColor 0 25%, transparent 0 50%);
     background-size: 13px 13px;
-    mix-blend-mode: overlay;
   }
   .tile-face .num{ position:relative; }
 
@@ -167,9 +182,11 @@
   footer{ text-align:center; padding-top:20px; font-size:11px; color:#6B5A45; letter-spacing:.03em; }
 
   @media (prefers-reduced-motion: reduce){
-    .tile{ transition:none; }
+    .tile{ transition:none; will-change:auto; }
     .tile.spawning .tile-face, .tile.merged .tile-face{ animation:none; }
     .tile[data-v="2048"] .tile-face{ animation:none; }
+    .stat .n.bump{ animation:none; }
+    .gain.show{ animation:none; }
   }
   @media (max-width:380px){
     .controls{ flex-direction:column; align-items:stretch; }
@@ -187,7 +204,7 @@
         <p class="tagline">Îmbină motivele lânii. Urcă din alb crud spre bourul de aur.</p>
       </div>
       <div class="stats">
-        <div class="stat"><div class="n" id="score">0</div><div class="l">Scor</div></div>
+        <div class="stat"><div class="n" id="score">0</div><div class="l">Scor</div><div class="gain" id="gain" aria-hidden="true"></div></div>
         <div class="stat"><div class="n" id="best">0</div><div class="l">Record</div></div>
       </div>
     </header>
@@ -228,15 +245,15 @@
 
   const TIERS = {
     2:    { bg:'var(--cream)',     fg:'var(--ink)',     mo:0    },
-    4:    { bg:'#E4CE9C',          fg:'var(--ink)',     mo:.05  },
-    8:    { bg:'var(--gold)',      fg:'var(--ink)',     mo:.10  },
-    16:   { bg:'var(--terracotta)',fg:'var(--cream-hi)',mo:.14  },
-    32:   { bg:'var(--madder)',    fg:'var(--cream-hi)',mo:.18  },
-    64:   { bg:'#7C1B2C',          fg:'var(--gold-hi)', mo:.22  },
-    128:  { bg:'var(--indigo)',    fg:'var(--gold-hi)', mo:.26, fs:'clamp(16px,5vw,22px)' },
-    256:  { bg:'#1F3A61',          fg:'var(--gold-hi)', mo:.30, fs:'clamp(16px,5vw,22px)' },
-    512:  { bg:'var(--walnut)',    fg:'var(--gold)',    mo:.36, fs:'clamp(15px,4.6vw,20px)' },
-    1024: { bg:'#171016',          fg:'var(--gold-hi)', mo:.42, fs:'clamp(13px,4vw,18px)' },
+    4:    { bg:'#E4CE9C',          fg:'var(--ink)',     mo:.06  },
+    8:    { bg:'var(--gold)',      fg:'var(--ink)',     mo:.12  },
+    16:   { bg:'var(--terracotta)',fg:'var(--cream-hi)',mo:.16  },
+    32:   { bg:'var(--madder)',    fg:'var(--cream-hi)',mo:.20  },
+    64:   { bg:'#7C1B2C',          fg:'var(--gold-hi)', mo:.24  },
+    128:  { bg:'var(--indigo)',    fg:'var(--gold-hi)', mo:.28, fs:'clamp(16px,5vw,22px)' },
+    256:  { bg:'#1F3A61',          fg:'var(--gold-hi)', mo:.32, fs:'clamp(16px,5vw,22px)' },
+    512:  { bg:'var(--walnut)',    fg:'var(--gold)',    mo:.38, fs:'clamp(15px,4.6vw,20px)' },
+    1024: { bg:'#171016',          fg:'var(--gold-hi)', mo:.44, fs:'clamp(13px,4vw,18px)' },
     2048: { bg:'linear-gradient(155deg, var(--gold-hi), var(--gold) 60%, var(--terracotta))', fg:'var(--walnut)', mo:0, fs:'0' },
   };
 
@@ -249,12 +266,16 @@
     + '<path d="M44 74 Q50 79 56 74" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>'
     + '</svg>';
 
+  const SLIDE = 100;   // ms — kept in lockstep with the .tile transition
+  const gainEl = document.getElementById('gain');
+
   let tiles = [];      // {id, r, c, v}
   let tileEls = new Map();
   let nextId = 1;
   let score = 0;
   let best = Number(localStorage.getItem('md2048_best') || 0);
   let won = false, keepGoing = false, over = false, busy = false;
+  let pendingDir = null;   // buffers one input so fast play never feels dropped
   bestEl.textContent = best;
 
   function emptyCells(){
@@ -287,6 +308,7 @@
 
   function newGame(){
     tiles = []; nextId = 1; score = 0; won = false; keepGoing = false; over = false;
+    busy = false; pendingDir = null;
     for (const [id, el] of tileEls) el.remove();
     tileEls.clear();
     spawnTile(); spawnTile();
@@ -310,7 +332,10 @@
   }
 
   function move(dir){
-    if (busy || over) return;
+    if (over) return;
+    if (overlayEl.classList.contains('show')) return;   // win pause — wait for a choice
+    if (busy) { pendingDir = dir; return; }             // buffer the latest input, fire it when the slide settles
+    const scoreBefore = score;
     const g = grid();
     let moved = false;
     tiles.forEach(t => { t.merged = false; t.spawning = false; });
@@ -342,6 +367,9 @@
 
     if (!moved) { tiles.forEach(t => { delete t._used; delete t._removed; }); return; }
 
+    const gained = score - scoreBefore;
+    if (gained > 0) showGain(gained);
+
     // let merged-away tiles slide onto their target cell first (visual overlap), then drop them
     render(false);
     busy = true;
@@ -351,15 +379,34 @@
       const spawned = spawnTile();
       render(false);
       busy = false;
+      if (spawned) spawned.spawning = false;
       if (!won && tiles.some(t => t.v >= 2048)) {
         won = true;
         showOverlay('win');
       } else if (!canMove()) {
         over = true;
         showOverlay('over');
+      } else if (pendingDir) {
+        const next = pendingDir; pendingDir = null;
+        move(next);
       }
-      if (spawned) spawned.spawning = false;
-    }, 120);
+    }, SLIDE);
+  }
+
+  let gainTimer = null;
+  function showGain(n){
+    gainEl.textContent = '+' + n;
+    gainEl.classList.remove('show');
+    void gainEl.offsetWidth;          // restart the animation on rapid merges
+    gainEl.classList.add('show');
+    scoreEl.classList.remove('bump');
+    void scoreEl.offsetWidth;
+    scoreEl.classList.add('bump');
+    clearTimeout(gainTimer);
+    gainTimer = window.setTimeout(() => {
+      gainEl.classList.remove('show');
+      scoreEl.classList.remove('bump');
+    }, 760);
   }
 
   function canMove(){
@@ -389,6 +436,7 @@
       text.textContent = 'Nu mai sunt mutări. Covorul s-a împlinit așa cum e.';
       contBtn.style.display = 'none';
     }
+    pendingDir = null;
     overlayEl.classList.add('show');
   }
 
