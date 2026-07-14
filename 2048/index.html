@@ -118,10 +118,10 @@
     will-change: transform;
     z-index:2;
   }
-  .tile.spawning .tile-face{ animation: pop .18s ease-out; }
-  .tile.merged .tile-face{ animation: pop-merge .16s ease-out; }
-  @keyframes pop{ from{ transform:scale(.35); opacity:0 } to{ transform:scale(1); opacity:1 } }
-  @keyframes pop-merge{ 0%{ transform:scale(1) } 45%{ transform:scale(1.14) } 100%{ transform:scale(1) } }
+  .tile.spawning .tile-face{ animation: pop .2s cubic-bezier(.34,1.56,.64,1); }
+  .tile.merged .tile-face{ animation: pop-merge .2s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes pop{ 0%{ transform:scale(.3); opacity:0 } 60%{ opacity:1 } 100%{ transform:scale(1); opacity:1 } }
+  @keyframes pop-merge{ 0%{ transform:scale(1) } 40%{ transform:scale(1.18) } 100%{ transform:scale(1) } }
 
   .tile-face{
     position:relative; width:100%; height:100%; border-radius:8px;
@@ -339,7 +339,6 @@
     if (over) return;
     if (overlayEl.classList.contains('show')) return;   // win pause — wait for a choice
     if (busy) { pendingDir = dir; return; }             // buffer the latest input, fire it when the slide settles
-    const scoreBefore = score;
     const g = grid();
     let moved = false;
     tiles.forEach(t => { t.merged = false; t.spawning = false; });
@@ -351,9 +350,12 @@
         const cur = cells[k];
         const prev = result[result.length-1];
         if (prev && prev.v === cur.v && !prev._used) {
-          prev.v *= 2; prev._used = true; prev.merged = true;
-          score += prev.v;
+          // record the merge but keep the doubled value hidden until the tiles
+          // actually meet — both slide first, then the survivor pops to 2×
+          prev._used = true;
+          prev._newV = prev.v * 2;
           cur._removed = true;
+          cur._mergeInto = prev;
         } else {
           result.push(cur);
         }
@@ -366,22 +368,30 @@
       });
     }
 
+    // send each absorbed tile sliding onto its survivor's final cell
+    tiles.forEach(t => {
+      if (t._removed && t._mergeInto) { t.r = t._mergeInto.r; t.c = t._mergeInto.c; }
+    });
+
     const removedIds = new Set(tiles.filter(t => t._removed).map(t => t.id));
     if (removedIds.size) moved = true;
 
-    if (!moved) { tiles.forEach(t => { delete t._used; delete t._removed; }); return; }
+    if (!moved) { tiles.forEach(t => { delete t._used; delete t._removed; delete t._mergeInto; delete t._newV; }); return; }
 
-    const gained = score - scoreBefore;
-    if (gained > 0) showGain(gained);
-
-    // let merged-away tiles slide onto their target cell first (visual overlap), then drop them
+    // first paint: everything (including absorbed tiles) slides, values unchanged
     render(false);
     busy = true;
     window.setTimeout(() => {
+      let gained = 0;
+      tiles.forEach(t => {
+        if (t._newV != null) { t.v = t._newV; t.merged = true; gained += t.v; delete t._newV; }
+      });
+      score += gained;
       tiles = tiles.filter(t => !t._removed);
-      tiles.forEach(t => { delete t._used; delete t._removed; });
+      tiles.forEach(t => { delete t._used; delete t._removed; delete t._mergeInto; });
       const spawned = spawnTile();
-      render(false);
+      render(false);                 // survivors pop to their new value; the spawn pops in
+      if (gained > 0) showGain(gained);
       busy = false;
       if (spawned) spawned.spawning = false;
       if (!won && tiles.some(t => t.v >= 2048)) {
@@ -457,9 +467,11 @@
     tiles.forEach(t => {
       seen.add(t.id);
       let el = tileEls.get(t.id);
+      let justCreated = false;
       if (!el) {
+        justCreated = true;
         el = document.createElement('div');
-        el.className = 'tile' + (isNewGame || t.spawning ? ' spawning' : '');
+        el.className = 'tile';
         el.innerHTML = '<div class="tile-face"><span class="num"></span></div>';
         // seat a brand-new tile at its cell before first paint so it pops in
         // place rather than sliding from the corner
@@ -471,6 +483,7 @@
       }
       el.style.setProperty('--x', t.c);
       el.style.setProperty('--y', t.r);
+      el.style.zIndex = t._removed ? '1' : '';   // absorbed tile slides beneath its survivor
       el.dataset.v = t.v;
       const face = el.querySelector('.tile-face');
       const tier = tierFor(t.v);
@@ -494,9 +507,14 @@
       }
       if (t.merged) {
         el.classList.add('merged');
-        window.setTimeout(() => el.classList.remove('merged'), 200);
+        window.setTimeout(() => el.classList.remove('merged'), 220);
       }
-      el.classList.remove('spawning');
+      // trigger the pop-in on a freshly created tile (after its first style is
+      // flushed, so the keyframe actually runs instead of being cancelled)
+      if (justCreated && (isNewGame || t.spawning)) {
+        el.classList.add('spawning');
+        window.setTimeout(() => el.classList.remove('spawning'), 240);
+      }
     });
     for (const [id, el] of tileEls) {
       if (!seen.has(id)) { el.remove(); tileEls.delete(id); }
