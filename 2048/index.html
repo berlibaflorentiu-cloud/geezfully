@@ -219,10 +219,18 @@
       radial-gradient(circle at 50% 50%, currentColor 0 2px, transparent 3px);
     background-size: 13px 13px, 34px 34px;
   }
-  .tile-face::after{
-    content:var(--tile-symbol, ''); position:absolute; right:8px; top:6px;
-    font-family:'Fraunces',serif; font-size:clamp(13px,3.5vw,18px); line-height:1;
-    color:currentColor; opacity:.42; text-shadow:0 1px 0 rgba(255,255,255,.08);
+  /* Tier mark: a small stamped medallion in the tile's corner, not just a
+     faint character — its own scooped-out disc gives it contrast against
+     every tile color, light or dark, instead of leaning on currentColor
+     opacity alone (which vanished completely on the darker tiers). */
+  .tile-face .mark{
+    position:absolute; right:6px; top:6px; width:22px; height:22px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(0,0,0,.16); box-shadow:inset 0 0 0 1px rgba(255,255,255,.22), 0 1px 0 rgba(255,255,255,.1);
+  }
+  .tile-face .mark::before{
+    content:var(--tile-symbol, ''); color:currentColor; font-family:'Fraunces',serif;
+    font-size:clamp(11px,3vw,13px); line-height:1;
   }
   .tile-face .num{ position:relative; }
 
@@ -661,6 +669,14 @@
         num.textContent = t.v;
         const existingBour = face.querySelector('.bour');
         if (existingBour) existingBour.remove();
+      }
+      // the corner tier-mark medallion — the 2048 tile already carries the
+      // full Bour icon, so it skips the small stamp entirely
+      let mark = face.querySelector('.mark');
+      if (tier.sym) {
+        if (!mark) { mark = document.createElement('div'); mark.className = 'mark'; face.appendChild(mark); }
+      } else if (mark) {
+        mark.remove();
       }
       if (t.merged) {
         el.classList.add('merged');
