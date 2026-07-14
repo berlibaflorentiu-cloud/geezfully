@@ -265,7 +265,7 @@ html.menu-open, html.menu-open body{ overflow:hidden; }
 }
 .case-app .frame-view{ aspect-ratio:3/5; border-radius:20px; }
 .frame-view iframe{ position:absolute; top:0; left:0; border:0; transform-origin:top left; pointer-events:none; }
-.frame-poster{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--surface-2),var(--surface)); transition:opacity .5s ease; }
+.frame-poster{ position:absolute; inset:0; background-color:var(--surface-2); background-size:cover; background-position:top center; transition:opacity .6s ease; }
 .frame-poster span{ font-family:'Space Grotesk',monospace; font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--t3); }
 .frame-view.loaded .frame-poster{ opacity:0; }
 .case-meta{ padding:22px 4px 0; }

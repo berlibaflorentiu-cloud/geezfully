@@ -42,11 +42,11 @@ const I18N = {
     'work.title': `Proiecte reale. <span class="grad">Live, nu mockup-uri.</span>`,
     'work.lead': `Fiecare site de mai jos e construit de la zero și funcționează chiar acum. Treci cu mouse-ul pentru preview, dă click ca să-l deschizi.`,
     'loading': `Se încarcă…`,
-    'tag.construction': `Construcții`, 'tag.usa': `SUA`, 'tag.webapp': `Aplicație web`, 'tag.platform': `Platformă`, 'tag.featured': `Recomandat`, 'tag.fun': `Divertisment`, 'tag.interactive': `Interactiv`,
+    'tag.construction': `Construcții`, 'tag.usa': `SUA`, 'tag.webapp': `Aplicație web`, 'tag.platform': `Platformă`, 'tag.featured': `Recomandat`, 'tag.fun': `Divertisment`, 'tag.interactive': `Interactiv`, 'tag.cabinetry': `Mobilă la comandă`,
     'case.viewlive': `Vezi live`,
     'alda.desc': `Un site de prezentare bold, axat pe imagini, pentru o firmă de tâmplărie și gresie din Sacramento — galerie, servicii și formular de contact.`,
     'pontaj.desc': `Un tracker curat pentru ore facturabile — interfață de produs concentrată, interacțiuni rapide și un dashboard direct la obiect.`,
-    'berliba.desc': `O platformă de abonament cinematică pentru prelegeri video de drept — hero animat, storytelling la scroll și o zonă de membru completă. Găzduită chiar pe acest domeniu.`,
+    'bsd.desc': `Un site de prezentare pentru un atelier de mobilă la comandă — turul 3D al bucătăriei la scroll, galerie de proiecte și un instrument intern de oferte legat de Supabase.`,
     'yesno.desc': `Un oracol de decizii cu patru fețe complet diferite — un aparat de forță de carnaval, un radar cosmic, un plinko de gameshow și o ruletă de cazino — fiecare cu animații și sunete proprii, sintetizate din zero.`,
     'services.eyebrow': `Ce facem`,
     'services.title': `Tot ce are nevoie site-ul tău, <span class="grad">într-un singur loc.</span>`,
@@ -127,11 +127,11 @@ const I18N = {
     'work.title': `Real projects. <span class="grad">Live, not mockups.</span>`,
     'work.lead': `Every site below is built from scratch and running right now. Hover to preview, click to open the real thing.`,
     'loading': `Loading preview…`,
-    'tag.construction': `Construction`, 'tag.usa': `USA`, 'tag.webapp': `Web app`, 'tag.platform': `Platform`, 'tag.featured': `Featured`, 'tag.fun': `Fun`, 'tag.interactive': `Interactive`,
+    'tag.construction': `Construction`, 'tag.usa': `USA`, 'tag.webapp': `Web app`, 'tag.platform': `Platform`, 'tag.featured': `Featured`, 'tag.fun': `Fun`, 'tag.interactive': `Interactive`, 'tag.cabinetry': `Custom cabinetry`,
     'case.viewlive': `View live`,
     'alda.desc': `A bold, image‑led marketing site for a Sacramento carpentry &amp; tile firm — gallery, services and lead capture.`,
     'pontaj.desc': `A clean billable‑hours tracker — focused product UI, fast interactions and a no‑nonsense dashboard.`,
-    'berliba.desc': `A cinematic subscription platform for law‑lecture videos — animated hero, scroll storytelling and a full member area. Hosted right here on this domain.`,
+    'bsd.desc': `A marketing site for a custom cabinetry workshop — a scroll‑driven 3D kitchen tour, project gallery, and an internal Supabase‑backed quoting tool.`,
     'yesno.desc': `A decision oracle with four completely different personalities — a carnival strongman machine, a cosmic radar, a gameshow plinko board and a casino roulette wheel — each with its own animations and sounds, synthesized from scratch.`,
     'services.eyebrow': `What we do`,
     'services.title': `Everything your site needs, <span class="grad">under one roof.</span>`,
@@ -476,13 +476,28 @@ function sizeEmbed(view, iframe) {
 function mountAllEmbeds() {
   document.querySelectorAll('.frame-view[data-embed]').forEach(mountEmbed);
 }
+/* Each card ships a real screenshot as its poster (see .frame-poster
+   background-image in the HTML), so nothing needs to load automatically —
+   the previous behavior mounted all 5 live sites the moment this section
+   scrolled near the viewport, which is what made getting to this panel feel
+   laggy. Now the live iframe only mounts on actual hover/touch/keyboard-focus
+   intent — matching the section's own copy ("Hover to preview") — so
+   scrolling past costs nothing, and only a card someone actually engages
+   with pays for a real live embed. */
 function initEmbeds() {
   const views = document.querySelectorAll('.frame-view[data-embed]');
-  if (!('IntersectionObserver' in window)) { mountAllEmbeds(); return; }
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach((en) => { if (en.isIntersecting) { mountEmbed(en.target); io.unobserve(en.target); } });
-  }, { rootMargin: '100px 0px' });
-  views.forEach((v) => io.observe(v));
+  views.forEach((v) => {
+    const target = v.closest('.case-frame') || v;
+    const onIntent = () => {
+      mountEmbed(v);
+      target.removeEventListener('mouseenter', onIntent);
+      target.removeEventListener('touchstart', onIntent);
+      target.removeEventListener('focusin', onIntent);
+    };
+    target.addEventListener('mouseenter', onIntent, { passive: true });
+    target.addEventListener('touchstart', onIntent, { passive: true });
+    target.addEventListener('focusin', onIntent);
+  });
   let raf;
   window.addEventListener('resize', () => {
     cancelAnimationFrame(raf);
