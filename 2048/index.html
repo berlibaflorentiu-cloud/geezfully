@@ -71,6 +71,30 @@
   .wrap::before{ left:-108px; top:108px; }
   .wrap::after{ right:-108px; bottom:96px; transform:rotate(22deg); }
 
+  /* ── Side trim: the kilim border's tricolor stitch, turned vertical, so the
+     carpet is framed on all four sides instead of just top and bottom. Each
+     column pauses once for a small guard medallion — tinted with the same
+     blue-left / red-right split already used on the board-frame's side bars,
+     so the whole page reads as one woven object, not two unrelated pieces. ── */
+  .side-trim{
+    display:none; position:absolute; top:26px; bottom:26px; width:2px; pointer-events:none; z-index:0;
+    background:repeating-linear-gradient(0deg,
+      var(--flag-blue) 0 10px, var(--flag-yellow) 10px 15px, var(--flag-red) 15px 20px, transparent 20px 25px);
+    opacity:.5;
+  }
+  .side-trim.left{ left:-46px; }
+  .side-trim.right{ right:-46px; }
+  .side-trim .medallion{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:rgba(27,18,12,.6); color:var(--gold-hi);
+    box-shadow:0 14px 28px rgba(0,0,0,.32), inset 0 0 0 3px rgba(245,208,3,.05);
+  }
+  .side-trim.left .medallion{ border:1px solid rgba(29,69,147,.4); }
+  .side-trim.right .medallion{ border:1px solid rgba(203,32,39,.4); }
+  .side-trim .medallion svg{ width:52%; height:52%; }
+  @media (min-width:900px){ .side-trim{ display:block; } }
+
   /* ── Kilim border band: tricolor threads woven like a Moldovan carpet edge ── */
   .kilim{
     height:14px; border-radius:999px; overflow:hidden;
@@ -271,6 +295,7 @@
   }
   .tier-chip .bour{ width:60%; height:60%; }
   footer{ text-align:center; padding-top:14px; font-size:11px; color:#7D6B52; letter-spacing:.03em; }
+  footer::before{ content:'✦'; display:block; margin:0 0 8px; color:rgba(241,215,138,.5); font-size:11px; }
 
   .crest-chip{
     display:flex; align-items:center; justify-content:center; width:42px; height:42px; border-radius:50%;
@@ -305,6 +330,8 @@
 </head>
 <body>
   <div class="wrap">
+    <div class="side-trim left" aria-hidden="true"><span class="medallion"><svg viewBox="0 0 100 100" fill="currentColor" aria-hidden="true"><path d="M50 10 L54 20 L50 30 L46 20 Z"/><path d="M36 44 Q14 36 8 8 Q22 22 40 34 Q39 39 36 44 Z"/><path d="M64 44 Q86 36 92 8 Q78 22 60 34 Q61 39 64 44 Z"/><path d="M28 58 Q28 90 50 92 Q72 90 72 58 Q72 40 50 38 Q28 40 28 58 Z"/><circle cx="40" cy="58" r="3.4"/><circle cx="60" cy="58" r="3.4"/></svg></span></div>
+    <div class="side-trim right" aria-hidden="true"><span class="medallion"><svg viewBox="0 0 100 100" fill="currentColor" aria-hidden="true"><path d="M50 10 L54 20 L50 30 L46 20 Z"/><path d="M36 44 Q14 36 8 8 Q22 22 40 34 Q39 39 36 44 Z"/><path d="M64 44 Q86 36 92 8 Q78 22 60 34 Q61 39 64 44 Z"/><path d="M28 58 Q28 90 50 92 Q72 90 72 58 Q72 40 50 38 Q28 40 28 58 Z"/><circle cx="40" cy="58" r="3.4"/><circle cx="60" cy="58" r="3.4"/></svg></span></div>
     <div class="kilim" aria-hidden="true"></div>
     <header>
       <div>
