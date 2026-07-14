@@ -40,7 +40,7 @@ const I18N = {
     'signature.body': `Nu umplem site-uri cu tot ce se poate — găsim ideea centrală și construim totul în jurul ei. Restul e doar zgomot.`,
     'work.eyebrow': `Proiecte selectate`,
     'work.title': `Proiecte reale. <span class="grad">Live, nu mockup-uri.</span>`,
-    'work.lead': `Fiecare site de mai jos e construit de la zero și funcționează chiar acum. Treci cu mouse-ul pentru preview, dă click ca să-l deschizi.`,
+    'work.lead': `Fiecare site de mai jos e construit de la zero și funcționează chiar acum. Dă click pe oricare ca să-l deschizi.`,
     'loading': `Se încarcă…`,
     'tag.construction': `Construcții`, 'tag.usa': `SUA`, 'tag.webapp': `Aplicație web`, 'tag.platform': `Platformă`, 'tag.featured': `Recomandat`, 'tag.fun': `Divertisment`, 'tag.interactive': `Interactiv`, 'tag.cabinetry': `Mobilă la comandă`,
     'case.viewlive': `Vezi live`,
@@ -125,7 +125,7 @@ const I18N = {
     'signature.body': `We don't cram in everything a site could have — we find the one idea worth building around. Everything else is just noise.`,
     'work.eyebrow': `Selected work`,
     'work.title': `Real projects. <span class="grad">Live, not mockups.</span>`,
-    'work.lead': `Every site below is built from scratch and running right now. Hover to preview, click to open the real thing.`,
+    'work.lead': `Every site below is built from scratch and running right now. Click any of them to open the real thing.`,
     'loading': `Loading preview…`,
     'tag.construction': `Construction`, 'tag.usa': `USA`, 'tag.webapp': `Web app`, 'tag.platform': `Platform`, 'tag.featured': `Featured`, 'tag.fun': `Fun`, 'tag.interactive': `Interactive`, 'tag.cabinetry': `Custom cabinetry`,
     'case.viewlive': `View live`,
@@ -302,7 +302,6 @@ if (!gsap || !ScrollTrigger) {
   docEl.classList.remove('js');
   const pl = document.getElementById('preloader');
   if (pl) pl.remove();
-  mountAllEmbeds();
   initContactForm();
 } else {
   gsap.registerPlugin(ScrollTrigger);
@@ -449,63 +448,11 @@ function initAnchors() {
   });
 }
 
-/* ── Live portfolio embeds (lazy) ──────────────────────── */
-const VIEW_W = 1280;
-function mountEmbed(view) {
-  if (view.dataset.mounted) return;
-  view.dataset.mounted = '1';
-  const iframe = document.createElement('iframe');
-  iframe.src = view.dataset.embed;
-  iframe.loading = 'lazy';
-  iframe.setAttribute('scrolling', 'no');
-  iframe.setAttribute('tabindex', '-1');
-  iframe.setAttribute('aria-hidden', 'true');
-  iframe.title = '';
-  sizeEmbed(view, iframe);
-  iframe.addEventListener('load', () => view.classList.add('loaded'));
-  view.appendChild(iframe);
-}
-function sizeEmbed(view, iframe) {
-  const viewW = Number(view.dataset.embedW) || VIEW_W;
-  const w = view.clientWidth || 1;
-  const scale = w / viewW;
-  iframe.style.width = viewW + 'px';
-  iframe.style.height = (view.clientHeight / scale) + 'px';
-  iframe.style.transform = 'scale(' + scale + ')';
-}
-function mountAllEmbeds() {
-  document.querySelectorAll('.frame-view[data-embed]').forEach(mountEmbed);
-}
-/* Each card ships a real screenshot as its poster (see .frame-poster
-   background-image in the HTML), so nothing needs to load automatically —
-   the previous behavior mounted all 5 live sites the moment this section
-   scrolled near the viewport, which is what made getting to this panel feel
-   laggy. Now the live iframe only mounts on actual hover/touch/keyboard-focus
-   intent — matching the section's own copy ("Hover to preview") — so
-   scrolling past costs nothing, and only a card someone actually engages
-   with pays for a real live embed. */
-function initEmbeds() {
-  const views = document.querySelectorAll('.frame-view[data-embed]');
-  views.forEach((v) => {
-    const target = v.closest('.case-frame') || v;
-    const onIntent = () => {
-      mountEmbed(v);
-      target.removeEventListener('mouseenter', onIntent);
-      target.removeEventListener('touchstart', onIntent);
-      target.removeEventListener('focusin', onIntent);
-    };
-    target.addEventListener('mouseenter', onIntent, { passive: true });
-    target.addEventListener('touchstart', onIntent, { passive: true });
-    target.addEventListener('focusin', onIntent);
-  });
-  let raf;
-  window.addEventListener('resize', () => {
-    cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(() => {
-      views.forEach((v) => { const f = v.querySelector('iframe'); if (f) sizeEmbed(v, f); });
-    });
-  });
-}
+/* ── Portfolio previews ────────────────────────────────── */
+/* Static screenshots only (.frame-poster background-image in the HTML) —
+   no live iframes at all. An earlier version mounted a real iframe on
+   hover, but even one live site loading in noticeably dragged the main
+   page down, so it's not worth it for what was just a nice-to-have. */
 
 /* ── Ambient triangle motif — carries the signature shape into every panel ── */
 function initTriBg() {
@@ -597,7 +544,6 @@ function boot() {
   initTilt();
   initCursor();
   initAnchors();
-  initEmbeds();
   initContactForm();
   initTriBg();
   ScrollTrigger.refresh();
