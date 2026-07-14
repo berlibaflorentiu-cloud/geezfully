@@ -107,10 +107,14 @@
     box-shadow: inset 0 0 0 1px rgba(237,224,200,.05);
   }
 
+  /* Typed positions so the browser can actually interpolate them — an unregistered
+     custom property inside calc() would make the tile teleport instead of slide. */
+  @property --x{ syntax:'<number>'; inherits:false; initial-value:0; }
+  @property --y{ syntax:'<number>'; inherits:false; initial-value:0; }
   .tile{
     left:0; top:0;
-    transform: translate3d(calc(var(--c) * 100%), calc(var(--r) * 100%), 0);
-    transition: transform .1s cubic-bezier(.25,.85,.35,1);
+    transform: translate3d(calc(var(--x) * 100%), calc(var(--y) * 100%), 0);
+    transition: --x .16s cubic-bezier(.22,.68,.24,.99), --y .16s cubic-bezier(.22,.68,.24,.99);
     will-change: transform;
     z-index:2;
   }
@@ -266,7 +270,7 @@
     + '<path d="M44 74 Q50 79 56 74" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>'
     + '</svg>';
 
-  const SLIDE = 100;   // ms — kept in lockstep with the .tile transition
+  const SLIDE = 160;   // ms — kept in lockstep with the .tile transition
   const gainEl = document.getElementById('gain');
 
   let tiles = [];      // {id, r, c, v}
@@ -457,11 +461,16 @@
         el = document.createElement('div');
         el.className = 'tile' + (isNewGame || t.spawning ? ' spawning' : '');
         el.innerHTML = '<div class="tile-face"><span class="num"></span></div>';
+        // seat a brand-new tile at its cell before first paint so it pops in
+        // place rather than sliding from the corner
+        el.style.setProperty('--x', t.c);
+        el.style.setProperty('--y', t.r);
         boardEl.appendChild(el);
+        el.getBoundingClientRect();   // flush first style → later moves transition
         tileEls.set(t.id, el);
       }
-      el.style.setProperty('--r', t.r);
-      el.style.setProperty('--c', t.c);
+      el.style.setProperty('--x', t.c);
+      el.style.setProperty('--y', t.r);
       el.dataset.v = t.v;
       const face = el.querySelector('.tile-face');
       const tier = tierFor(t.v);
