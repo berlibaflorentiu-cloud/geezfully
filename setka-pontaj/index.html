@@ -1289,6 +1289,8 @@
         input.value = entry[key] || 0;
         input.disabled = periodLocked;
         input.dataset.refId = ref.id; input.dataset.key = key;
+        input.addEventListener('focus', () => input.select());
+        input.addEventListener('click', () => input.select());
         input.addEventListener('input', onCellInput);
         input.addEventListener('blur', onCellBlur);
         input.addEventListener('keydown', event => {
