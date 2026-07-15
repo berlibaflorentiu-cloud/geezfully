@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   /* Shared "Pontaj" product palette/type system — kept in sync with the
      BunPartener pontaj app so every client instance reads as one product. */
@@ -255,44 +257,132 @@
   .bonus-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px solid var(--line-2); }
   .bonus-row:last-child{ border-bottom:0; }
   .bonus-row label{ font-size:12.5px; color:var(--muted); }
+  #downloadDetailBtn{ display:inline-flex; align-items:center; gap:6px; }
+  #downloadDetailBtn svg{ width:14px; height:14px; }
+  .detail-pdf-report{
+    position:fixed; left:-10000px; top:0; width:760px; padding:34px 38px;
+    background:#fff; color:#1b1f24; font-family:'DM Sans',Arial,sans-serif;
+  }
+  .detail-pdf-report h1{ margin:0; font-size:25px; line-height:1.2; }
+  .detail-pdf-subtitle{ margin:6px 0 24px; color:#66707b; font-size:13px; }
+  .detail-pdf-section{ margin-top:22px; }
+  .detail-pdf-section h2{ margin:0 0 9px; font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:#735a2a; }
+  .detail-pdf-table{ width:100%; border-collapse:collapse; table-layout:fixed; }
+  .detail-pdf-table th, .detail-pdf-table td{ border:1px solid #d8dde3; padding:8px 10px; font-size:12px; text-align:left; }
+  .detail-pdf-table th{ background:#f4f1eb; color:#4d5660; font-weight:600; }
+  .detail-pdf-table td.value{ text-align:right; font-variant-numeric:tabular-nums; font-weight:600; }
+  .detail-pdf-note{ min-height:44px; padding:10px 12px; border:1px solid #d8dde3; border-radius:5px; background:#fafbfc; font-size:12px; }
   .bonus-row input{ width:100px; padding:6px 8px; border:1px solid var(--border); border-radius:6px; text-align:right; background:var(--bg); color:var(--text); }
   .recon-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
   select#rCategory{ padding:10px 12px; border:1px solid var(--border); border-radius:7px; background:var(--bg); color:var(--text); width:100%; }
 
   /* ── Act de prestare (print doc) ── */
-  #actModal .modal{ max-width:680px; }
-  .act-doc{ padding:8px 4px; font-size:13px; color:var(--text); }
-  .act-doc h3{ text-align:center; font-size:15px; letter-spacing:.02em; margin:0 0 18px; font-family:'Cormorant Garamond',serif; font-weight:600; }
-  .act-doc table{ width:100%; margin:14px 0; min-width:0; }
-  .act-doc th, .act-doc td{ border:1px solid var(--border); padding:6px 8px; font-size:12.5px; }
-  .act-doc th{ background:var(--surface2); text-transform:none; letter-spacing:0; font-size:11.5px; color:var(--muted); }
-  .act-doc td.r{ text-align:right; }
+  #actModal .modal{ max-width:900px; }
+  #actModal .modal-body{ padding:20px; background:#dfe2e6; }
+  .act-doc{
+    box-sizing:border-box; width:100%; max-width:760px; margin:0 auto; padding:27px 38px 32px;
+    border:1px solid #c8cdd3; background:#fff; color:#111; font:13px/1.28 Arial,Helvetica,sans-serif;
+    box-shadow:0 5px 24px rgba(0,0,0,.16);
+  }
+  .act-title{ display:grid; grid-template-columns:90px 1fr 90px; align-items:center; gap:14px; margin:0 0 24px; }
+  .act-doc > h3{ text-align:center; font-size:15px; margin:0 0 18px; font-weight:700; }
+  .act-title-line{ height:1px; background:#999; }
+  .act-title h3{ margin:0; text-align:center; font:700 14px/1.15 Arial,Helvetica,sans-serif; }
+  .act-title-sub{ display:flex; justify-content:center; gap:18px; margin-top:3px; font-size:12px; }
+  .act-title-blank{ display:inline-block; min-width:72px; border-bottom:1px solid #777; }
+  .act-section{ display:grid; grid-template-columns:20px 1fr; gap:10px; margin:0 0 18px; }
+  .act-section-no{ font-weight:700; }
+  .act-section-body{ min-width:0; }
+  .act-contract-grid{ display:grid; grid-template-columns:1fr auto 1fr auto 1.55fr; gap:8px; align-items:end; margin-top:4px; text-align:center; }
+  .act-doc-value{ color:#f10b0b; font-weight:700; }
+  .act-period-text{ margin:0 0 22px; }
+  .act-period-grid{ display:grid; grid-template-columns:184px 244px; justify-content:space-between; gap:20px; }
+  .act-value-box{ border:1px solid #cfd3d8; padding:3px 10px; text-align:center; }
+  .act-detail-label{ margin:0 0 12px; font-weight:700; }
+  .act-doc table{ width:100%; min-width:0; margin:0; border-collapse:collapse; table-layout:fixed; }
+  .act-doc th, .act-doc td{ border:1px solid #c8cdd3; padding:3px 4px; font-size:11.5px; line-height:1.15; color:#111; }
+  .act-doc th{ background:#fff; text-transform:none; letter-spacing:0; font-weight:700; text-align:center; }
+  .act-doc th:first-child{ text-align:left; }
+  .act-doc td.r{ text-align:center; }
+  .act-services th:nth-child(1){ width:48%; }
+  .act-services th:nth-child(2){ width:17%; }
+  .act-services th:nth-child(3){ width:17%; }
+  .act-services th:nth-child(4){ width:18%; }
+  .act-service-row td:nth-child(2){ color:#8994a2; font-weight:700; }
+  .act-service-row:nth-child(even) td:nth-child(2){ background:#d9dde1; }
+  .act-service-row td:nth-child(3), .act-service-row td:nth-child(4){ color:#f10b0b; font-weight:700; }
+  .act-blank-row td{ height:18px; }
   .act-total-row td{ font-weight:700; }
-  .act-meta{ color:var(--muted); font-size:12.5px; margin:2px 0; }
+  .act-total-row td:first-child, .act-tax-row td:first-child{ text-align:right; }
+  .act-total-row td:last-child, .act-tax-row td:last-child{ text-align:center; }
+  .act-tax-row td{ color:#f10b0b; font-style:italic; }
+  .act-tax-row td:last-child{ font-weight:700; }
+  .act-payment-note{ margin:0; }
+  .act-parties{ display:grid; grid-template-columns:1fr 1fr; gap:54px; align-items:start; }
+  .act-party{ position:relative; min-height:128px; border:1px solid #cfd3d8; padding:4px; font-size:11.5px; line-height:1.38; }
+  .act-party-title{ font-style:italic; }
+  .act-party b{ font-weight:700; }
+  .act-beneficiary{ min-height:160px; }
+  .act-beneficiary-mark{ display:block; width:285px; max-width:100%; margin:-2px 0 -7px 5px; mix-blend-mode:multiply; }
+  .act-provider-row{ display:grid; grid-template-columns:64px 1fr; min-height:22px; align-items:center; border-bottom:1px solid #aaa; }
+  .act-provider-row:last-of-type{ border-bottom:0; }
+  .act-provider-name{ display:grid; grid-template-columns:1fr 1fr; gap:8px; text-align:center; font-weight:700; padding-top:5px; }
+  .act-provider-name span:last-child{ font-weight:400; }
+  .act-provider-value{ overflow-wrap:anywhere; }
+  .act-provider-value.act-doc-value{ font-weight:400; }
+  .act-export-doc .act-edit-btn, .act-doc.is-readonly .act-edit-btn{ display:none; }
+  .act-export-doc .act-value-wrap, .act-doc.is-readonly .act-value-wrap{ display:block; }
+  /* Compatibility for acts saved before the redesigned form. */
+  .act-meta{ color:#333; font-size:12.5px; margin:2px 0; }
   .act-sign{ display:flex; justify-content:space-between; margin-top:26px; gap:20px; }
-  .act-sign div{ flex:1; font-size:12px; color:var(--muted); }
-  .act-sign b{ display:block; color:var(--text); margin-bottom:2px; }
-  .act-edit-hint{ margin:0 0 12px; padding:8px 10px; border-radius:7px; background:var(--gold-dim); color:var(--gold-hi); font-size:12px; }
-  .act-value-wrap{ display:flex; align-items:center; justify-content:flex-end; gap:6px; }
+  .act-sign div{ flex:1; font-size:12px; color:#333; }
+  .act-sign b{ display:block; color:#000; margin-bottom:2px; }
+  .act-edit-hint{
+    margin:0 0 12px; padding:8px 10px; border-radius:7px;
+    background:#f5ead7; border:1px solid #ddc590; color:#6b501f;
+    font-size:12px; font-weight:500;
+  }
+  .act-value-wrap{ display:flex; align-items:center; justify-content:center; gap:5px; }
   .act-value{ min-width:34px; border-radius:3px; }
   .act-value:focus{ outline:1px solid var(--gold); background:var(--gold-dim); }
   .act-edit-btn{ width:20px; height:20px; padding:0; border:0; border-radius:4px; background:var(--gold-dim); color:var(--gold-hi); cursor:pointer; font-size:12px; line-height:20px; }
   .act-edit-btn:hover{ background:rgba(200,169,110,.25); }
+  .btn-save-act{ display:inline-flex; align-items:center; gap:6px; }
+  .btn-save-act svg, #downloadActBtn svg{ width:14px; height:14px; }
+  #actModal .modal-foot #downloadActBtn,
+  #actModal .modal-foot #saveActBtn{ flex:0 1 245px; width:245px; min-width:0; }
+  .btn-save-act.is-saved{ background:var(--green-dim); border-color:rgba(63,185,80,.5); color:var(--green); cursor:default; opacity:1; }
+  .archived-banner{ display:flex; align-items:center; gap:8px; margin:0 0 12px; padding:8px 10px; border-radius:7px; background:var(--green-dim); color:var(--green); font-size:12px; }
+  .archived-banner svg{ width:15px; height:15px; flex:0 0 auto; }
+
+  /* ── Arhivă acte ── */
+  #archiveModal .modal{ max-width:920px; }
+  .archive-toolbar{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .archive-toolbar .filter-select{ padding:7px 28px 7px 10px; font-size:12.5px; }
+  .archive-count{ margin-left:auto; font-size:12px; color:var(--muted); }
+  table.archive-table{ width:100%; min-width:0; border-collapse:collapse; }
+  table.archive-table th{
+    text-align:left; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--muted); padding:8px; border-bottom:1px solid var(--border); white-space:nowrap;
+  }
+  table.archive-table td{ padding:8px; border-bottom:1px solid var(--line-2); font-size:13px; vertical-align:middle; }
+  table.archive-table td.r{ text-align:right; white-space:nowrap; }
+  table.archive-table tr:hover td{ background:var(--surface2); }
+  .archive-actions{ display:flex; gap:6px; justify-content:flex-end; }
 
   @media print{
+    @page{ size:A4 portrait; margin:9mm; }
     body{ background:#fff; }
     body *{ visibility:hidden; }
     #actModal, #actModal *{ visibility:visible; }
     #actModal{ position:absolute; inset:0; background:#fff; padding:0; }
     #actModal .modal{ box-shadow:none; max-width:none; background:#fff; border:0; }
     #actModal .modal-head, #actModal .modal-foot{ display:none; }
-    .act-doc{ color:#000; }
-    .act-doc th, .act-doc td{ border-color:#999; }
-    .act-doc th{ background:#f0f0f0; color:#333; }
-    .act-meta, .act-sign div{ color:#333; }
-    .act-sign b{ color:#000; }
-    .act-edit-hint{ display:none; }
+    #actModal .modal-body{ padding:0; background:#fff; overflow:visible; }
+    .act-edit-hint, .archived-banner{ display:none; }
+    .act-doc{ width:190mm; max-width:none; margin:0 auto; padding:8mm 10mm; border:1px solid #c8cdd3; box-shadow:none; color:#000; }
     .act-edit-btn{ display:none; }
+    .act-value-wrap{ display:block; }
     .act-value:focus{ outline:0; background:transparent; }
   }
 
@@ -349,6 +439,7 @@
         <button type="button" id="nextMonth" aria-label="Luna următoare">›</button>
       </div>
       <button class="btn btn-ghost btn-sm" id="manageRefereesBtn">Participanți</button>
+      <button class="btn btn-ghost btn-sm" id="openArchiveBtn">Arhivă acte</button>
       <span class="user-chip" id="userChip"></span>
       <button class="btn btn-ghost btn-sm" id="logoutBtn">Ieși</button>
     </header>
@@ -451,7 +542,7 @@
           </section>
         </div>
 
-        <p class="section-label">Bonusuri internaționale (opțional)</p>
+        <p class="section-label">Scoruri manuale (opțional)</p>
         <div class="bonus-groups" id="bonusList">
           <section class="bonus-group"><h3>Mexico</h3><div id="bonusMexico"></div></section>
           <section class="bonus-group"><h3>Rio</h3><div id="bonusRio"></div></section>
@@ -462,6 +553,10 @@
       </div>
       <div class="modal-foot">
         <button class="btn btn-ghost" id="cancelDetail">Anulează</button>
+        <button class="btn btn-ghost" id="downloadDetailBtn">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v9M6.5 9.5 10 13l3.5-3.5"/><path d="M4 15v2h12v-2"/></svg>
+          Descarcă detalii
+        </button>
         <button class="btn btn-primary" id="saveDetail">Salvează</button>
       </div>
     </div>
@@ -527,12 +622,49 @@
         <button class="icon-btn" id="closeAct" aria-label="Închide">✕</button>
       </div>
       <div class="modal-body">
-        <p class="act-edit-hint">Folosește butonul ✎ pentru a modifica regimul de calcul sau volumul. Schimbările se aplică doar acestui act.</p>
+        <div class="archived-banner" id="archivedBanner" style="display:none">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10" cy="10" r="8"/><path d="M6.5 10.2l2.4 2.4L14 7.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Acest act e salvat în arhivă — se afișează varianta salvată.
+        </div>
+        <p class="act-edit-hint" id="actEditHint">Folosește butonul ✎ pentru a modifica regimul de calcul sau volumul. Schimbările se aplică doar acestui act.</p>
         <div class="act-doc" id="actDoc"></div>
       </div>
       <div class="modal-foot">
         <button class="btn btn-ghost" id="closeActBtn">Închide</button>
-        <button class="btn btn-primary" id="printActBtn">Printează</button>
+        <button class="btn btn-ghost" id="printActBtn">Printează</button>
+        <button class="btn btn-primary" id="downloadActBtn">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v9M6.5 9.5 10 13l3.5-3.5"/><path d="M4 15v2h12v-2"/></svg>
+          Descarcă PDF
+        </button>
+        <button class="btn btn-primary btn-save-act" id="saveActBtn">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h9l3 3v9H4z"/><path d="M7 4v4h6V4M7 12h6"/></svg>
+          Salvează în arhivă
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Arhivă acte ══ -->
+  <div class="modal-backdrop" id="archiveModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>Arhivă acte</h2>
+        <button class="icon-btn" id="closeArchive" aria-label="Închide">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="archive-toolbar">
+          <select class="filter-select" id="archiveRefFilter" aria-label="Filtrează după participant">
+            <option value="">Toți participanții</option>
+          </select>
+          <span class="archive-count" id="archiveCount"></span>
+        </div>
+        <table class="archive-table">
+          <thead>
+            <tr><th>Participant</th><th>Categorie</th><th>Perioadă</th><th>Salvat la</th><th class="r">Total (mdl)</th><th></th></tr>
+          </thead>
+          <tbody id="archiveBody"></tbody>
+        </table>
+        <div class="empty-state" id="archiveEmpty" style="display:none">Niciun act salvat momentan. Actele apar aici după ce apeși „Salvează în arhivă“ pe un act deschis.</div>
       </div>
     </div>
   </div>
@@ -563,6 +695,26 @@
   ];
   const MONTH_NAMES = ['ianuarie','februarie','martie','aprilie','mai','iunie','iulie','august','septembrie','octombrie','noiembrie','decembrie'];
 
+  function localizeRomanianDate(value){
+    let text = String(value || '').trim();
+    const months = [
+      [/\b(?:january|ianuarie|jan|ian)\b/gi, 'ianuarie'],
+      [/\b(?:february|februarie|feb)\b/gi, 'februarie'],
+      [/\b(?:march|martie|mart|mar)\b/gi, 'martie'],
+      [/\b(?:april|aprilie|apr)\b/gi, 'aprilie'],
+      [/\b(?:may|mai)\b/gi, 'mai'],
+      [/\b(?:june|iunie|iun)\b/gi, 'iunie'],
+      [/\b(?:july|iulie|iul)\b/gi, 'iulie'],
+      [/\b(?:august|aug)\b/gi, 'august'],
+      [/\b(?:september|septembrie|sept|sep)\b/gi, 'septembrie'],
+      [/\b(?:october|octombrie|oct)\b/gi, 'octombrie'],
+      [/\b(?:november|noiembrie|nov)\b/gi, 'noiembrie'],
+      [/\b(?:december|decembrie|dec)\b/gi, 'decembrie'],
+    ];
+    months.forEach(([pattern, month]) => { text = text.replace(pattern, month); });
+    return text;
+  }
+
   let session = null;
   let referees = [];         // full roster
   let rateCategories = {};   // category -> rates
@@ -576,6 +728,10 @@
   let sortMode = 'name-asc';
   let saveTimers = {};
   let periodLoadId = 0;
+  let _actState = null;
+  let savedActs = [];
+  let archiveLoaded = false;
+  let archiveRefFilter = '';
 
   function firstOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
   function isCurrentMonth(d){
@@ -740,7 +896,7 @@
         return [
           periodKey(currentPeriod).slice(0, 7), ref.last_name, ref.first_name, ref.category,
           ref.active === false ? 'Ascuns' : 'Vizibil', hasActivity(entry) ? 'Da' : 'Nu',
-          ref.fiscal_code || '', ref.iban || '', ref.bank_name || '', ref.contract_number || '', ref.contract_date || '',
+          ref.fiscal_code || '', ref.iban || '', ref.bank_name || '', ref.contract_number || '', localizeRomanianDate(ref.contract_date || ''),
           entry.tournament_day || 0, entry.tournament_night || 0, entry.matches_day || 0, entry.matches_night || 0,
           entry.place1_day || 0, entry.place1_night || 0, entry.place3_day || 0, entry.place3_night || 0,
           entry.arbitraj_day || 0, entry.arbitraj_night || 0, exportNumber(entry.taxi || 0), entry.region || '', exportNumber(entry.km || 0),
@@ -874,6 +1030,11 @@
         input.dataset.refId = ref.id; input.dataset.key = key;
         input.addEventListener('input', onCellInput);
         input.addEventListener('blur', onCellBlur);
+        input.addEventListener('keydown', event => {
+          if (event.key !== 'Enter') return;
+          event.preventDefault();
+          input.blur();
+        });
         td.appendChild(input);
         tr.appendChild(td);
       });
@@ -988,6 +1149,8 @@
 
     const bonusMexico = document.getElementById('bonusMexico');
     const bonusRio = document.getElementById('bonusRio');
+    const downloadDetailBtn = document.getElementById('downloadDetailBtn');
+    downloadDetailBtn.disabled = true;
     bonusMexico.innerHTML = '';
     bonusRio.innerHTML = '';
     db.from('international_bonuses').select('*').eq('referee_id', refId).eq('period', periodKey(currentPeriod))
@@ -1000,7 +1163,9 @@
           row.innerHTML = `<label>${label}</label><input type="number" step="0.01" data-bonus="${label}" value="${byLabel[label]||0}">`;
           (label.includes('RIO') ? bonusRio : bonusMexico).appendChild(row);
         });
-      });
+      })
+      .catch(error => console.error('Nu s-au putut încărca scorurile manuale', error))
+      .finally(() => { downloadDetailBtn.disabled = false; });
 
     document.getElementById('dPaid').oninput = updateRest;
     document.getElementById('dConform').oninput = updateRest;
@@ -1072,7 +1237,7 @@
     document.getElementById('rFiscal').value = ref.fiscal_code || '';
     document.getElementById('rIban').value = ref.iban || '';
     document.getElementById('rContractNo').value = ref.contract_number || '';
-    document.getElementById('rContractDate').value = ref.contract_date || '';
+    document.getElementById('rContractDate').value = localizeRomanianDate(ref.contract_date || '');
     document.getElementById('rHidden').checked = ref.active === false;
     document.getElementById('deleteRefBtn').style.display = refId ? '' : 'none';
     listModal.classList.remove('show');   // drill-down from the roster list — don't stack modals
@@ -1094,7 +1259,7 @@
       fiscal_code: document.getElementById('rFiscal').value.trim() || null,
       iban: document.getElementById('rIban').value.trim() || null,
       contract_number: document.getElementById('rContractNo').value.trim() || null,
-      contract_date: document.getElementById('rContractDate').value.trim() || null,
+      contract_date: localizeRomanianDate(document.getElementById('rContractDate').value) || null,
       active: !document.getElementById('rHidden').checked,
     };
     if (!payload.last_name || !payload.first_name) { alert('Nume și prenume sunt obligatorii.'); return; }
@@ -1132,16 +1297,29 @@
     if (key.startsWith('arbitraj')) return key.endsWith('day') ? globalRates.arbitraj_day : globalRates.arbitraj_night;
     return (rateCategories[ref.category] || {})[key] || 0;
   }
+  function bicForParticipant(ref){
+    const bank = String(ref.bank_name || '').trim();
+    const normalized = bank.toLowerCase();
+    const ibanBankCode = String(ref.iban || '').replace(/\s/g, '').slice(4, 6).toUpperCase();
+    if (normalized.includes('maib') || normalized.includes('agroindbank') || ibanBankCode === 'AG') return 'AGRNMD2X';
+    if (normalized.includes('moldindconbank') || ibanBankCode === 'ML') return 'MOLDMD2X';
+    if (normalized.includes('victoriabank') || ibanBankCode === 'VI') return 'VICBMD2X';
+    if (normalized.includes('fincombank') || ibanBankCode === 'FT') return 'FTMDMD2X';
+    if (/^[A-Z0-9]{8}([A-Z0-9]{3})?$/.test(bank.toUpperCase())) return bank.toUpperCase();
+    return bank || '—';
+  }
   function openAct(refId){
     const ref = referees.find(r => r.id === refId);
     const entry = entries[refId] || emptyEntry(refId);
+    _actState = { refId, ref, period: currentPeriod, total: 0, tax: 0, viewOnly: false };
+    setActEditable(true);
     let total = 0;
     const rows = ITEM_ROWS.map(([key,label], index) => {
       const rate = rateFor(ref, key);
       const vol = entry[key] || 0;
       const fee = rate * vol;
       total += fee;
-      return `<tr data-act-row="${index}">
+      return `<tr class="act-service-row" data-act-row="${index}">
         <td>${label}</td>
         <td class="r"><span class="act-value-wrap"><button type="button" class="act-edit-btn" aria-label="Editează regimul de calcul" data-edit-act-value>✎</button><span class="act-value" contenteditable="false" inputmode="decimal" data-act-rate>${fmtMoney(rate)}</span></span></td>
         <td class="r"><span class="act-value-wrap"><button type="button" class="act-edit-btn" aria-label="Editează volumul serviciilor" data-edit-act-value>✎</button><span class="act-value" contenteditable="false" inputmode="decimal" data-act-volume>${vol}</span></span></td>
@@ -1149,21 +1327,93 @@
       </tr>`;
     }).join('');
     const tax = total * globalRates.tax_rate;
+    const monthLabel = `${MONTH_NAMES[currentPeriod.getMonth()]} ${currentPeriod.getFullYear()}`;
+    const taxPercent = fmtMoney(globalRates.tax_rate * 100);
+    const participantBic = bicForParticipant(ref);
     document.getElementById('actDoc').innerHTML = `
-      <h3>ACT DE PRESTARE A SERVICIILOR SPORTIVE</h3>
-      <p class="act-meta">Perioada: <b>${MONTH_NAMES[currentPeriod.getMonth()]} ${currentPeriod.getFullYear()}</b>, categorie <b>${ref.category}</b></p>
-      <p class="act-meta">Contract nr. ${escapeHtml(ref.contract_number||'—')}${ref.contract_date ? ', din ' + escapeHtml(ref.contract_date) : ''}</p>
-      <table>
-        <thead><tr><th>Categoria calcul</th><th>Regim calcul (mdl)</th><th>Volum servicii</th><th>Onorariu (mdl)</th></tr></thead>
-        <tbody>
-          ${rows}
-          <tr class="act-total-row"><td colspan="3">TOTAL SPRE PLATĂ</td><td class="r" id="actTotal">${fmtMoney(total)}</td></tr>
-          <tr><td colspan="3">inclusiv impozit ${fmtMoney(globalRates.tax_rate * 100)}%</td><td class="r" id="actTax">${fmtMoney(tax)}</td></tr>
-        </tbody>
-      </table>
-      <div class="act-sign">
-        <div><b>Beneficiar</b>SRL SETKA-PRO<br>cod fiscal 1022600014457</div>
-        <div style="text-align:right"><b>Prestator</b>${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}<br>cod fiscal ${escapeHtml(ref.fiscal_code||'—')}<br>IBAN ${escapeHtml(ref.iban||'—')}</div>
+      <div class="act-title">
+        <span class="act-title-line"></span>
+        <div>
+          <h3>ACT DE PRESTARE A SERVICIILOR SPORTIVE</h3>
+          <div class="act-title-sub"><b>Nr. <span class="act-title-blank">&nbsp;</span></b><span>din data de</span><span class="act-title-blank">&nbsp;</span></div>
+        </div>
+        <span class="act-title-line"></span>
+      </div>
+
+      <section class="act-section">
+        <div class="act-section-no">1</div>
+        <div class="act-section-body">
+          <div>1. Prezentul act este întocmit în temeiul Contractului de prestări servicii sportive nr.</div>
+          <div class="act-contract-grid">
+            <span class="act-doc-value">${escapeHtml(ref.contract_number||'—')}</span>
+            <span>din</span>
+            <span class="act-doc-value">${escapeHtml(localizeRomanianDate(ref.contract_date)||'—')}</span>
+            <span>și</span>
+            <b>Anexei nr. 1 la contract</b>
+          </div>
+        </div>
+      </section>
+
+      <section class="act-section">
+        <div class="act-section-no">2</div>
+        <div class="act-section-body">
+          <p class="act-period-text">Prestatorul a prestat servicii sportive în cadrul turneelor organizate de Beneficiar în perioada:</p>
+          <div class="act-period-grid">
+            <div class="act-value-box act-doc-value">${escapeHtml(monthLabel)}</div>
+            <div class="act-value-box act-doc-value">${escapeHtml(ref.category||'—')}</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="act-section">
+        <div class="act-section-no">3</div>
+        <div class="act-section-body">
+          <p class="act-detail-label">Detaliere:</p>
+          <table class="act-services">
+            <thead><tr><th>Categoria calcul</th><th>Regim calcul<br>(mdl)</th><th>Volum servicii</th><th>Onorariu (mdl)</th></tr></thead>
+            <tbody>
+              ${rows}
+              <tr class="act-blank-row"><td colspan="3"></td><td></td></tr>
+              <tr class="act-blank-row"><td colspan="3"></td><td></td></tr>
+              <tr class="act-blank-row"><td colspan="3"></td><td></td></tr>
+              <tr class="act-total-row"><td colspan="3">TOTAL SPRE PLATĂ</td><td class="r" id="actTotal">${fmtMoney(total)}</td></tr>
+              <tr class="act-tax-row"><td colspan="3">inclusiv impozit ${taxPercent}%</td><td class="r" id="actTax">${fmtMoney(tax)}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="act-section">
+        <div class="act-section-no">4</div>
+        <div class="act-section-body">
+          <p class="act-payment-note">Prezentul act constituie document justificativ pentru efectuarea plății prin transfer bancar la contul Prestatorului</p>
+        </div>
+      </section>
+
+      <div class="act-parties">
+        <section class="act-section">
+          <div class="act-section-no">5</div>
+          <div class="act-section-body act-party act-beneficiary">
+            <div class="act-party-title">Beneficiar:</div>
+            <b>SRL SETKA-PRO</b><br>
+            cod fiscal 1022600014457<br>
+            BIC: MOLDMD2X317<br>
+            IBAN: MD02ML0000000022518171022<br>
+            <b>Vladimir ZASTAVNITCHI</b>
+            <img class="act-beneficiary-mark" src="" alt="Semnătura și ștampila SETKA-PRO">
+          </div>
+        </section>
+        <section class="act-section">
+          <div class="act-section-no">6</div>
+          <div class="act-section-body act-party">
+            <div class="act-party-title">Prestator:</div>
+            <div class="act-provider-row"><span></span><b>Antreprenor individual</b></div>
+            <div class="act-provider-row"><span>cod fiscal</span><span class="act-provider-value act-doc-value">${escapeHtml(ref.fiscal_code||'—')}</span></div>
+            <div class="act-provider-row"><span>BIC:</span><span class="act-provider-value">${escapeHtml(participantBic)}</span></div>
+            <div class="act-provider-row"><span>IBAN:</span><span class="act-provider-value act-doc-value">${escapeHtml(ref.iban||'—')}</span></div>
+            <div class="act-provider-name"><span>${escapeHtml(ref.last_name||'—')}</span><span>${escapeHtml(ref.first_name||'—')}</span></div>
+          </div>
+        </section>
       </div>`;
     document.getElementById('actDoc').oninput = recalculateAct;
     document.getElementById('actDoc').onclick = (event) => {
@@ -1172,6 +1422,11 @@
       const value = button.parentElement.querySelector('.act-value');
       value.contentEditable = 'true';
       value.onblur = () => { value.contentEditable = 'false'; };
+      value.onkeydown = event => {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        value.blur();
+      };
       value.focus();
       const selection = window.getSelection();
       const range = document.createRange();
@@ -1179,7 +1434,22 @@
       selection.removeAllRanges();
       selection.addRange(range);
     };
+    _actState.total = total;
+    _actState.tax = tax;
     actModal.classList.add('show');
+  }
+  function setActEditable(editable){
+    document.getElementById('actDoc').classList.toggle('is-readonly', !editable);
+    document.getElementById('archivedBanner').style.display = editable ? 'none' : 'flex';
+    document.getElementById('actEditHint').style.display = editable ? '' : 'none';
+    document.getElementById('saveActBtn').style.display = editable ? '' : 'none';
+    resetSaveActBtn();
+  }
+  function resetSaveActBtn(){
+    const btn = document.getElementById('saveActBtn');
+    btn.disabled = false;
+    btn.classList.remove('is-saved');
+    btn.innerHTML = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h9l3 3v9H4z"/><path d="M7 4v4h6V4M7 12h6"/></svg> Salvează în arhivă`;
   }
   function editableNumber(el){
     const normalized = el.textContent.replace(/\s/g, '').replace(',', '.');
@@ -1193,15 +1463,298 @@
       row.querySelector('[data-act-fee]').textContent = fmtMoney(fee);
       total += fee;
     });
+    const tax = total * globalRates.tax_rate;
     document.getElementById('actTotal').textContent = fmtMoney(total);
-    document.getElementById('actTax').textContent = fmtMoney(total * globalRates.tax_rate);
+    document.getElementById('actTax').textContent = fmtMoney(tax);
+    if (_actState) {
+      _actState.total = total;
+      _actState.tax = tax;
+      if (!_actState.viewOnly) resetSaveActBtn();  // rates/volumes changed — the previous save no longer matches
+    }
   }
   document.getElementById('closeAct').addEventListener('click', () => actModal.classList.remove('show'));
   document.getElementById('closeActBtn').addEventListener('click', () => actModal.classList.remove('show'));
   document.getElementById('printActBtn').addEventListener('click', () => window.print());
 
+  function buildPrintableActClone(html){
+    const wrap = document.createElement('div');
+    wrap.className = 'act-doc act-export-doc';
+    wrap.style.cssText = 'position:absolute; left:0; top:0; z-index:0; pointer-events:none; width:190mm; max-width:none; margin:0; padding:8mm 10mm; box-shadow:none; background:#fff;';
+    wrap.innerHTML = html;
+    document.body.appendChild(wrap);
+    return wrap;
+  }
+  function waitForActImages(root){
+    return Promise.all(Array.from(root.querySelectorAll('img')).map(img => {
+      if (img.complete) return Promise.resolve();
+      return new Promise(resolve => {
+        img.addEventListener('load', resolve, { once:true });
+        img.addEventListener('error', resolve, { once:true });
+      });
+    }));
+  }
+  async function saveActElementAsPdf(element, filename){
+    if (typeof window.html2canvas !== 'function' || !window.jspdf || !window.jspdf.jsPDF) {
+      throw new Error('Librăriile PDF nu s-au încărcat.');
+    }
+    const canvas = await window.html2canvas(element, {
+      // About 135 DPI on A4: crisp for text/printing without a heavy, laggy PDF.
+      scale: 1.4,
+      useCORS: false,
+      allowTaint: false,
+      backgroundColor: '#ffffff',
+      logging: false,
+      scrollX: 0,
+      scrollY: 0,
+    });
+    if (!canvas.width || !canvas.height) throw new Error('Documentul nu a putut fi randat.');
+
+    const pdf = new window.jspdf.jsPDF({ unit:'mm', format:'a4', orientation:'portrait', compress:true });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 7;
+    const maxWidth = pageWidth - margin * 2;
+    const maxHeight = pageHeight - margin * 2;
+    let imageWidth = maxWidth;
+    let imageHeight = canvas.height * imageWidth / canvas.width;
+    if (imageHeight > maxHeight) {
+      imageHeight = maxHeight;
+      imageWidth = canvas.width * imageHeight / canvas.height;
+    }
+    const x = (pageWidth - imageWidth) / 2;
+    const imageData = canvas.toDataURL('image/jpeg', 0.86);
+    pdf.addImage(imageData, 'JPEG', x, margin, imageWidth, imageHeight, undefined, 'FAST');
+    pdf.save(filename);
+  }
+  function detailRowsForPdf(containerId){
+    return Array.from(document.querySelectorAll(`#${containerId} .bonus-row`)).map(row => {
+      const label = row.querySelector('label')?.textContent?.trim() || '—';
+      const value = Number(row.querySelector('[data-bonus]')?.value) || 0;
+      return `<tr><td>${escapeHtml(label)}</td><td class="value">${escapeHtml(fmtMoney(value))}</td></tr>`;
+    }).join('');
+  }
+  async function downloadDetailPdf(){
+    const ref = referees.find(r => r.id === detailRefId);
+    if (!ref) return;
+    const btn = document.getElementById('downloadDetailBtn');
+    const monthLabel = `${MONTH_NAMES[currentPeriod.getMonth()]} ${currentPeriod.getFullYear()}`;
+    const taxi = Number(document.getElementById('dTaxi').value) || 0;
+    const region = document.getElementById('dRegion').value.trim() || '—';
+    const km = Number(document.getElementById('dKm').value) || 0;
+    const paid = Number(document.getElementById('dPaid').value) || 0;
+    const conformRaw = document.getElementById('dConform').value;
+    const conform = conformRaw === '' ? null : Number(conformRaw) || 0;
+    const rest = conform === null ? '—' : `${fmtMoney(paid - conform)} MDL`;
+    const notes = document.getElementById('dNotes').value.trim() || 'Nicio notă.';
+    const report = document.createElement('section');
+    report.className = 'detail-pdf-report';
+    report.innerHTML = `
+      <h1>Detalii participant</h1>
+      <p class="detail-pdf-subtitle"><strong>${escapeHtml(`${ref.last_name} ${ref.first_name}`)}</strong> · ${escapeHtml(ref.category || '—')} · ${escapeHtml(monthLabel)}</p>
+
+      <div class="detail-pdf-section">
+        <h2>Deplasare și decontare</h2>
+        <table class="detail-pdf-table">
+          <thead><tr><th>Regiune</th><th>Taxi</th><th>Distanță</th><th>Achitat</th><th>Conform calculului</th><th>Rest</th></tr></thead>
+          <tbody><tr>
+            <td>${escapeHtml(region)}</td>
+            <td class="value">${escapeHtml(fmtMoney(taxi))} MDL</td>
+            <td class="value">${escapeHtml(fmtMoney(km))} km</td>
+            <td class="value">${escapeHtml(fmtMoney(paid))} MDL</td>
+            <td class="value">${conform === null ? '—' : `${escapeHtml(fmtMoney(conform))} MDL`}</td>
+            <td class="value">${escapeHtml(rest)}</td>
+          </tr></tbody>
+        </table>
+      </div>
+
+      <div class="detail-pdf-section">
+        <h2>Scoruri manuale</h2>
+        <table class="detail-pdf-table">
+          <thead><tr><th>Mexico</th><th style="width:22%">Valoare</th></tr></thead>
+          <tbody>${detailRowsForPdf('bonusMexico') || '<tr><td colspan="2">Nu sunt date.</td></tr>'}</tbody>
+        </table>
+        <table class="detail-pdf-table" style="margin-top:10px">
+          <thead><tr><th>Rio</th><th style="width:22%">Valoare</th></tr></thead>
+          <tbody>${detailRowsForPdf('bonusRio') || '<tr><td colspan="2">Nu sunt date.</td></tr>'}</tbody>
+        </table>
+      </div>
+
+      <div class="detail-pdf-section">
+        <h2>Notă</h2>
+        <div class="detail-pdf-note">${escapeHtml(notes)}</div>
+      </div>`;
+    document.body.appendChild(report);
+
+    const slug = `${ref.last_name}-${ref.first_name}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+    const dateSlug = `${currentPeriod.getFullYear()}-${String(currentPeriod.getMonth()+1).padStart(2,'0')}`;
+    btn.disabled = true;
+    try {
+      await saveActElementAsPdf(report, `detalii-${slug || 'participant'}-${dateSlug}.pdf`);
+    } catch (error) {
+      console.error('Detail PDF export failed', error);
+      alert('PDF-ul cu detalii nu a putut fi generat. Reîncarcă pagina și încearcă din nou.');
+    } finally {
+      if (report.isConnected) document.body.removeChild(report);
+      btn.disabled = false;
+    }
+  }
+  document.getElementById('downloadDetailBtn').addEventListener('click', downloadDetailPdf);
+  async function downloadActPdf(){
+    const html = document.getElementById('actDoc').innerHTML;
+    const ref = _actState ? _actState.ref : null;
+    const slug = ref ? `${ref.last_name}-${ref.first_name}`.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'') : 'act';
+    const period = _actState ? _actState.period : currentPeriod;
+    const dateSlug = `${period.getFullYear()}-${String(period.getMonth()+1).padStart(2,'0')}`;
+    const btn = document.getElementById('downloadActBtn');
+    btn.disabled = true;
+    const clone = buildPrintableActClone(html);
+    try {
+      await waitForActImages(clone);
+      await saveActElementAsPdf(clone, `act-${slug}-${dateSlug}.pdf`);
+    } catch (error) {
+      console.error('PDF export failed', error);
+      alert('PDF-ul nu a putut fi generat. Reîncarcă pagina și încearcă din nou.');
+    } finally {
+      if (clone.isConnected) document.body.removeChild(clone);
+      btn.disabled = false;
+    }
+  }
+  document.getElementById('downloadActBtn').addEventListener('click', downloadActPdf);
+
+  async function saveActToArchive(){
+    if (!_actState || _actState.viewOnly) return;
+    const btn = document.getElementById('saveActBtn');
+    btn.disabled = true;
+    btn.innerHTML = 'Se salvează…';
+    const { refId, ref, period, total, tax } = _actState;
+    const { data, error } = await db.from('saved_acts').insert([{
+      referee_id: refId,
+      referee_name: `${ref.last_name} ${ref.first_name}`,
+      category: ref.category,
+      period: periodKey(period),
+      contract_number: ref.contract_number || null,
+      contract_date: localizeRomanianDate(ref.contract_date) || null,
+      total, tax,
+      document_html: document.getElementById('actDoc').innerHTML,
+      created_by: session.user.id,
+    }]).select().single();
+    if (error) {
+      resetSaveActBtn();
+      alert('Nu s-a putut salva actul în arhivă: ' + error.message);
+      return;
+    }
+    savedActs.unshift(data);
+    archiveLoaded = true;
+    btn.disabled = true;
+    btn.classList.add('is-saved');
+    btn.innerHTML = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10l4 4 8-8" stroke-linecap="round" stroke-linejoin="round"/></svg> Salvat în arhivă`;
+  }
+  document.getElementById('saveActBtn').addEventListener('click', saveActToArchive);
+
+  // ══ ARHIVĂ ACTE ══
+  const archiveModal = document.getElementById('archiveModal');
+  function fmtArchiveDate(iso){
+    const d = new Date(iso);
+    return d.toLocaleDateString('ro-RO', { day:'2-digit', month:'2-digit', year:'numeric' }) + ' ' +
+           d.toLocaleTimeString('ro-RO', { hour:'2-digit', minute:'2-digit' });
+  }
+  function fmtArchivePeriod(iso){
+    const d = new Date(iso + 'T00:00:00');
+    return `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
+  }
+  async function loadArchive(){
+    const { data, error } = await db.from('saved_acts').select('*').order('created_at', { ascending:false });
+    if (!error) savedActs = data || [];
+    archiveLoaded = true;
+  }
+  function renderArchive(){
+    const refFilterEl = document.getElementById('archiveRefFilter');
+    const knownIds = new Set(Array.from(refFilterEl.options).map(o => o.value));
+    Array.from(new Map(savedActs.map(a => [a.referee_id, a.referee_name])).entries())
+      .filter(([id]) => id && !knownIds.has(id))
+      .sort((a,b) => a[1].localeCompare(b[1], 'ro'))
+      .forEach(([id, name]) => {
+        const opt = document.createElement('option');
+        opt.value = id; opt.textContent = name;
+        refFilterEl.appendChild(opt);
+      });
+
+    const list = archiveRefFilter ? savedActs.filter(a => a.referee_id === archiveRefFilter) : savedActs;
+    const body = document.getElementById('archiveBody');
+    body.innerHTML = '';
+    document.getElementById('archiveEmpty').style.display = list.length ? 'none' : 'block';
+    document.getElementById('archiveCount').textContent = list.length ? `${list.length} act(e)` : '';
+    list.forEach(act => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapeHtml(act.referee_name)}</td>
+        <td><span class="cat-badge cat-${act.category}">${escapeHtml(act.category||'—')}</span></td>
+        <td style="text-transform:capitalize">${fmtArchivePeriod(act.period)}</td>
+        <td>${fmtArchiveDate(act.created_at)}</td>
+        <td class="r num">${fmtMoney(act.total)}</td>
+        <td>
+          <div class="archive-actions">
+            <button class="icon-btn" data-view-act="${act.id}" aria-label="Vizualizează actul lui ${escapeHtml(act.referee_name)}" title="Vizualizează">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 10s3-5.5 8-5.5 8 5.5 8 5.5-3 5.5-8 5.5-8-5.5-8-5.5Z"/><circle cx="10" cy="10" r="2.2"/></svg>
+            </button>
+            <button class="icon-btn" data-download-act="${act.id}" aria-label="Descarcă PDF pentru ${escapeHtml(act.referee_name)}" title="Descarcă PDF">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v9m0 0l-3.2-3.2M10 12l3.2-3.2"/><path d="M3.5 14.5v1.2a1.3 1.3 0 0 0 1.3 1.3h10.4a1.3 1.3 0 0 0 1.3-1.3v-1.2"/></svg>
+            </button>
+            <button class="icon-btn" data-delete-act="${act.id}" aria-label="Șterge actul lui ${escapeHtml(act.referee_name)} din arhivă" title="Șterge din arhivă">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h12M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5.5 5.5l.6 10a1.3 1.3 0 0 0 1.3 1.2h5.2a1.3 1.3 0 0 0 1.3-1.2l.6-10"/></svg>
+            </button>
+          </div>
+        </td>`;
+      body.appendChild(tr);
+    });
+    body.querySelectorAll('[data-view-act]').forEach(b => b.addEventListener('click', () => viewArchivedAct(b.dataset.viewAct)));
+    body.querySelectorAll('[data-download-act]').forEach(b => b.addEventListener('click', () => downloadArchivedActPdf(b.dataset.downloadAct)));
+    body.querySelectorAll('[data-delete-act]').forEach(b => b.addEventListener('click', () => deleteArchivedAct(b.dataset.deleteAct)));
+  }
+  function viewArchivedAct(actId){
+    const act = savedActs.find(a => a.id === actId);
+    if (!act) return;
+    _actState = { refId: act.referee_id, ref: { last_name: act.referee_name.split(' ')[0]||'', first_name: act.referee_name.split(' ').slice(1).join(' ') }, period: new Date(act.period+'T00:00:00'), total: act.total, tax: act.tax, viewOnly: true, savedId: act.id };
+    document.getElementById('actDoc').innerHTML = act.document_html;
+    document.getElementById('actDoc').oninput = null;
+    document.getElementById('actDoc').onclick = null;
+    setActEditable(false);
+    archiveModal.classList.remove('show');
+    actModal.classList.add('show');
+  }
+  async function downloadArchivedActPdf(actId){
+    const act = savedActs.find(a => a.id === actId);
+    if (!act) return;
+    const slug = act.referee_name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+    const clone = buildPrintableActClone(act.document_html);
+    try {
+      await waitForActImages(clone);
+      await saveActElementAsPdf(clone, `act-${slug}-${act.period}.pdf`);
+    } finally {
+      document.body.removeChild(clone);
+    }
+  }
+  async function deleteArchivedAct(actId){
+    if (!confirm('Ștergi definitiv acest act din arhivă?')) return;
+    const { error } = await db.from('saved_acts').delete().eq('id', actId);
+    if (error) { alert('Nu s-a putut șterge actul: ' + error.message); return; }
+    savedActs = savedActs.filter(a => a.id !== actId);
+    renderArchive();
+  }
+  document.getElementById('openArchiveBtn').addEventListener('click', async () => {
+    if (!archiveLoaded) await loadArchive();
+    renderArchive();
+    archiveModal.classList.add('show');
+  });
+  document.getElementById('closeArchive').addEventListener('click', () => archiveModal.classList.remove('show'));
+  document.getElementById('archiveRefFilter').addEventListener('change', (e) => { archiveRefFilter = e.target.value; renderArchive(); });
+
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
+    if (archiveModal.classList.contains('show')) {
+      archiveModal.classList.remove('show');
+      return;
+    }
     if (actModal.classList.contains('show')) {
       actModal.classList.remove('show');
       return;
