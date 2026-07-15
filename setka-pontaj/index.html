@@ -262,6 +262,30 @@
   .detail-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .detail-card{ background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:16px; }
   .detail-card-title{ margin:0 0 14px; color:var(--text); font-size:15px; font-weight:700; }
+
+  /* ── Participant stats ── */
+  #statsModal .modal{ max-width:720px; }
+  .stats-kpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:8px; }
+  .stats-kpi{ background:var(--bg); border:1px solid var(--border); border-radius:9px; padding:12px 14px; }
+  .stats-kpi .stats-kpi-label{ font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-bottom:5px; }
+  .stats-kpi .stats-kpi-value{ font-size:18px; font-weight:700; color:var(--text); }
+  .stats-kpi.gold .stats-kpi-value{ color:var(--gold-hi); }
+  .stats-chart-wrap{ background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:14px 10px 6px; margin-bottom:8px; }
+  .stats-chart-wrap svg{ display:block; width:100%; height:auto; overflow:visible; }
+  .stats-bar{ fill:var(--gold); transition:fill .12s ease; }
+  .stats-bar:hover{ fill:var(--gold-hi); }
+  .stats-chart-empty{ text-align:center; color:var(--muted); font-size:12.5px; font-style:italic; padding:20px 0; }
+  .stats-breakdown-row{ display:flex; align-items:center; gap:10px; margin-bottom:9px; font-size:12.5px; }
+  .stats-breakdown-row:last-child{ margin-bottom:0; }
+  .stats-breakdown-swatch{ width:9px; height:9px; border-radius:2px; flex:0 0 auto; }
+  .stats-breakdown-label{ width:78px; flex:0 0 auto; color:var(--muted); }
+  .stats-breakdown-track{ flex:1; height:9px; border-radius:5px; background:var(--bg); border:1px solid var(--border); overflow:hidden; }
+  .stats-breakdown-fill{ height:100%; }
+  .stats-breakdown-value{ width:76px; flex:0 0 auto; text-align:right; color:var(--text); font-weight:600; }
+  .stats-act-row{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line-2); font-size:12.5px; }
+  .stats-act-row:last-child{ border-bottom:0; }
+  .stats-act-row .muted{ color:var(--muted); }
+  .stats-empty{ color:var(--muted); font-size:12.5px; font-style:italic; padding:4px 0 8px; }
   .detail-card .field:last-child{ margin-bottom:0; }
   .bonus-groups{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .bonus-group{ background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:6px 14px 10px; }
@@ -412,6 +436,9 @@
     .user-chip{ order:4; flex-basis:100%; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     main{ padding:12px 12px 70px; }
     .detail-grid, .bonus-groups{ grid-template-columns:1fr; }
+    .stats-kpis{ grid-template-columns:1fr 1fr; }
+    .stats-breakdown-label{ width:60px; font-size:11.5px; }
+    .stats-breakdown-value{ width:64px; font-size:11.5px; }
 
     /* Touch targets — bump undersized controls to the ~40-44px minimum */
     .btn{ min-height:40px; }
@@ -714,6 +741,31 @@
           Descarcă detalii
         </button>
         <button class="btn btn-primary" id="saveDetail">Salvează</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Participant stats ══ -->
+  <div class="modal-backdrop" id="statsModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="statsTitle">Statistici participant</h2>
+        <button class="icon-btn" id="closeStats" aria-label="Închide">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="stats-kpis" id="statsKpis"></div>
+
+        <p class="section-label">Onorarii lunare (ultimele 12 luni)</p>
+        <div class="stats-chart-wrap" id="statsChart"></div>
+
+        <p class="section-label">Repartizare pe tip de activitate (anul curent)</p>
+        <div id="statsBreakdown"></div>
+
+        <p class="section-label">Acte generate recent</p>
+        <div id="statsActs"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" id="closeStatsBtn">Închide</button>
       </div>
     </div>
   </div>
@@ -1224,7 +1276,7 @@
 
       const nameTd = document.createElement('td');
       nameTd.className = 'name-cell';
-      nameTd.innerHTML = `<div class="name-line"><div class="full">${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}</div><button type="button" class="quick-edit-btn" data-quick-edit-ref="${ref.id}" title="Informații participant" aria-label="Informații despre ${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7.5"/><path d="M10 13v-4M10 7h.01" stroke-linecap="round"/></svg></button></div>
+      nameTd.innerHTML = `<div class="name-line"><div class="full">${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}</div><button type="button" class="quick-edit-btn" data-quick-edit-ref="${ref.id}" title="Informații participant" aria-label="Informații despre ${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7.5"/><path d="M10 13v-4M10 7h.01" stroke-linecap="round"/></svg></button><button type="button" class="quick-edit-btn" data-stats-ref="${ref.id}" title="Statistici participant" aria-label="Statistici pentru ${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 15V9M10 15V5M15 15v-3"/></svg></button></div>
         <span class="cat-badge cat-${ref.category}">${ref.category}</span>${ref.active === false ? ' <span class="detail-chip">Ascuns</span>' : ''}${missingProfilePreview(ref)}`;
       tr.appendChild(nameTd);
 
@@ -1279,6 +1331,7 @@
     document.querySelectorAll('[data-detail]').forEach(b => b.addEventListener('click', () => openDetail(b.dataset.detail)));
     document.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => openAct(b.dataset.act)));
     document.querySelectorAll('[data-quick-edit-ref]').forEach(b => b.addEventListener('click', () => openRefModal(b.dataset.quickEditRef, false)));
+    document.querySelectorAll('[data-stats-ref]').forEach(b => b.addEventListener('click', () => openStats(b.dataset.statsRef)));
 
     document.getElementById('sumActive').textContent = activeCount;
     document.getElementById('sumFee').textContent = fmtMoney(sumFee);
@@ -1342,6 +1395,8 @@
   // ══ DETAIL MODAL (bonuses + travel/reconciliation) ══
   const detailModal = document.getElementById('detailModal');
   let detailRefId = null;
+  const statsModal = document.getElementById('statsModal');
+  let statsRefId = null;
 
   function openDetail(refId){
     detailRefId = refId;
@@ -1401,6 +1456,117 @@
       })
       .catch(error => console.error('Nu s-a putut încărca totalul anual', error));
   }
+
+  // ══ PARTICIPANT STATS ══
+  const STATS_ACTIVITY_GROUPS = [
+    { key:'Turneu', day:'tournament_day', night:'tournament_night', color:'#AD8620' },
+    { key:'Meciuri', day:'matches_day', night:'matches_night', color:'#2EA043' },
+    { key:'Locul I', day:'place1_day', night:'place1_night', color:'#A371F7' },
+    { key:'Locul III', day:'place3_day', night:'place3_night', color:'#F85149' },
+    { key:'Arbitraj', day:'arbitraj_day', night:'arbitraj_night', color:'#388BFD', useGlobal:true },
+  ];
+  async function openStats(refId){
+    const ref = referees.find(r => r.id === refId);
+    if (!ref) return;
+    statsRefId = refId;
+    document.getElementById('statsTitle').textContent = `${ref.last_name} ${ref.first_name} — statistici`;
+    document.getElementById('statsKpis').innerHTML = '';
+    document.getElementById('statsChart').innerHTML = '<p class="stats-chart-empty">Se încarcă…</p>';
+    document.getElementById('statsBreakdown').innerHTML = '';
+    document.getElementById('statsActs').innerHTML = '';
+    statsModal.classList.add('show');
+
+    const year = currentPeriod.getFullYear();
+    const anchor = firstOfMonth(currentPeriod);
+
+    const [totalsRes, entriesRes, actsRes, actsCountRes] = await Promise.all([
+      db.from('entry_totals').select('period, total_fee, bonus_total').eq('referee_id', refId),
+      db.from('monthly_entries').select('period, tournament_day, tournament_night, matches_day, matches_night, place1_day, place1_night, place3_day, place3_night, arbitraj_day, arbitraj_night')
+        .eq('referee_id', refId).gte('period', `${year}-01-01`).lte('period', `${year}-12-31`),
+      db.from('saved_acts').select('id, period, total, created_at').eq('referee_id', refId).order('created_at', { ascending:false }).limit(5),
+      db.from('saved_acts').select('id', { count:'exact', head:true }).eq('referee_id', refId),
+    ]);
+    if (refId !== statsRefId) return; // participant changed while this was in flight
+
+    const totals = totalsRes.data || [];
+    const rowTotal = row => Number(row.total_fee||0) + Number(row.bonus_total||0);
+    const allTimeTotal = totals.reduce((s, r) => s + rowTotal(r), 0);
+    const ytdRows = totals.filter(r => r.period.startsWith(String(year)));
+    const ytdTotal = ytdRows.reduce((s, r) => s + rowTotal(r), 0);
+    const activeMonthsYtd = ytdRows.filter(r => rowTotal(r) > 0).length;
+    const avgMonthly = activeMonthsYtd ? ytdTotal / activeMonthsYtd : 0;
+    const actsTotal = actsCountRes.count || 0;
+
+    document.getElementById('statsKpis').innerHTML = `
+      <div class="stats-kpi gold"><div class="stats-kpi-label">Total ${year}</div><div class="stats-kpi-value">${fmtMoney(ytdTotal)} MDL</div></div>
+      <div class="stats-kpi"><div class="stats-kpi-label">Total tot timpul</div><div class="stats-kpi-value">${fmtMoney(allTimeTotal)} MDL</div></div>
+      <div class="stats-kpi"><div class="stats-kpi-label">Medie lunară ${year}</div><div class="stats-kpi-value">${fmtMoney(avgMonthly)} MDL</div></div>
+      <div class="stats-kpi"><div class="stats-kpi-label">Acte generate</div><div class="stats-kpi-value">${actsTotal}</div></div>
+    `;
+
+    const monthMap = {};
+    totals.forEach(r => { monthMap[r.period] = rowTotal(r); });
+    const months = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(anchor.getFullYear(), anchor.getMonth() - i, 1);
+      months.push({
+        label: MONTH_NAMES[d.getMonth()].slice(0, 3),
+        full: `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`,
+        value: monthMap[periodKey(d)] || 0,
+      });
+    }
+    renderStatsChart(months);
+
+    const entries = entriesRes.data || [];
+    const rc = rateCategories[ref.category] || {};
+    const breakdown = STATS_ACTIVITY_GROUPS.map(g => {
+      const rateDay = g.useGlobal ? Number(globalRates.arbitraj_day || 0) : Number(rc[g.day] || 0);
+      const rateNight = g.useGlobal ? Number(globalRates.arbitraj_night || 0) : Number(rc[g.night] || 0);
+      const total = entries.reduce((s, e) => s + Number(e[g.day] || 0) * rateDay + Number(e[g.night] || 0) * rateNight, 0);
+      return { ...g, total };
+    });
+    renderStatsBreakdown(breakdown);
+
+    const acts = actsRes.data || [];
+    document.getElementById('statsActs').innerHTML = acts.length
+      ? acts.map(a => `<div class="stats-act-row"><span class="muted" style="text-transform:capitalize">${fmtArchivePeriod(a.period)}</span><span>${fmtMoney(a.total)} MDL</span></div>`).join('')
+      : '<p class="stats-empty">Niciun act salvat în arhivă.</p>';
+  }
+  function renderStatsChart(months){
+    const wrap = document.getElementById('statsChart');
+    if (months.every(m => m.value === 0)) {
+      wrap.innerHTML = '<p class="stats-chart-empty">Nicio activitate în ultimele 12 luni.</p>';
+      return;
+    }
+    const max = Math.max(...months.map(m => m.value), 1);
+    const W = 640, H = 160, padBottom = 20, padTop = 8, gap = 6;
+    const barW = (W - gap * (months.length - 1)) / months.length;
+    const bars = months.map((m, i) => {
+      const h = m.value > 0 ? Math.max((m.value / max) * (H - padBottom - padTop), 2) : 0;
+      const x = i * (barW + gap);
+      const y = H - padBottom - h;
+      return `<g><title>${m.full}: ${fmtMoney(m.value)} MDL</title>
+        <rect class="stats-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="3"/>
+        <text x="${(x + barW / 2).toFixed(1)}" y="${H - 4}" text-anchor="middle" font-size="9" fill="var(--muted)">${m.label}</text>
+      </g>`;
+    }).join('');
+    wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}">${bars}</svg>`;
+  }
+  function renderStatsBreakdown(groups){
+    const el = document.getElementById('statsBreakdown');
+    const max = Math.max(...groups.map(g => g.total), 0);
+    if (max <= 0) { el.innerHTML = '<p class="stats-empty">Nicio activitate plătită în acest an.</p>'; return; }
+    el.innerHTML = groups.map(g => `
+      <div class="stats-breakdown-row">
+        <span class="stats-breakdown-swatch" style="background:${g.color}"></span>
+        <span class="stats-breakdown-label">${g.key}</span>
+        <span class="stats-breakdown-track"><span class="stats-breakdown-fill" style="width:${(g.total / max * 100).toFixed(1)}%;background:${g.color}"></span></span>
+        <span class="stats-breakdown-value">${fmtMoney(g.total)} MDL</span>
+      </div>`).join('');
+  }
+  document.getElementById('closeStats').addEventListener('click', () => statsModal.classList.remove('show'));
+  document.getElementById('closeStatsBtn').addEventListener('click', () => statsModal.classList.remove('show'));
+
   function updateRest(){
     const paid = Number(document.getElementById('dPaid').value)||0;
     const conform = document.getElementById('dConform').value === '' ? null : Number(document.getElementById('dConform').value);
@@ -1990,6 +2156,10 @@
     }
     if (archiveModal.classList.contains('show')) {
       archiveModal.classList.remove('show');
+      return;
+    }
+    if (statsModal.classList.contains('show')) {
+      statsModal.classList.remove('show');
       return;
     }
     if (actModal.classList.contains('show')) {
