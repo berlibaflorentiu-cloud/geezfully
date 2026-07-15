@@ -99,6 +99,7 @@
     color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center;
   }
   .month-nav button:hover{ background:var(--surface2); color:var(--text); }
+  .month-nav button:disabled{ opacity:.35; cursor:not-allowed; background:var(--bg); color:var(--muted); }
   .month-label{
     font-weight:700; min-width:132px; text-align:center; text-transform:capitalize; font-size:13.5px;
   }
@@ -112,8 +113,28 @@
     width:100%; padding:8px 10px 8px 32px; border:1px solid var(--border); border-radius:7px; background:var(--surface); color:var(--text);
   }
   #search:focus{ outline:2px solid var(--gold); outline-offset:1px; }
+  .filter-select{
+    padding:8px 30px 8px 10px; border:1px solid var(--border); border-radius:7px;
+    background:var(--surface); color:var(--text); cursor:pointer;
+  }
+  .filter-select:focus{ outline:2px solid var(--gold); outline-offset:1px; }
+  .btn-export{ border-color:rgba(200,169,110,.55); background:var(--gold-dim); color:var(--gold-hi); white-space:nowrap; }
+  .btn-export:hover{ border-color:var(--gold); background:rgba(200,169,110,.2); }
+  .btn-export svg{ width:14px; height:14px; }
   .toggle{ display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--muted); cursor:pointer; user-select:none; }
   .toggle input{ accent-color:var(--gold); }
+  .field label.visibility-setting{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:13px 14px; border:1px solid var(--border); border-radius:9px; background:var(--bg); cursor:pointer; transition:border-color .15s ease, background .15s ease; }
+  .field label.visibility-setting:hover{ border-color:rgba(200,169,110,.5); background:rgba(200,169,110,.04); }
+  .visibility-copy{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .visibility-copy strong{ color:var(--text); font-size:13px; }
+  .visibility-copy small{ color:var(--muted); font-size:11.5px; font-weight:400; }
+  .switch{ position:relative; display:block; width:42px; height:24px; flex:0 0 42px; }
+  .field .switch input{ position:absolute; width:1px; height:1px; padding:0; border:0; opacity:0; pointer-events:none; }
+  .switch-track{ position:absolute; inset:0; border-radius:20px; background:var(--surface2); border:1px solid rgba(200,169,110,.3); box-shadow:inset 0 1px 2px rgba(0,0,0,.25); transition:.15s ease; }
+  .switch-track::after{ content:''; position:absolute; width:18px; height:18px; left:2px; top:2px; border-radius:50%; background:#B1BAC4; box-shadow:0 1px 3px rgba(0,0,0,.45); transition:.15s ease; }
+  .switch input:checked + .switch-track{ background:var(--gold-dim); border-color:var(--gold); }
+  .switch input:checked + .switch-track::after{ transform:translateX(18px); background:var(--gold-hi); }
+  .switch input:focus-visible + .switch-track{ outline:2px solid var(--gold); outline-offset:2px; }
   .summary-chip{
     margin-left:auto; display:flex; gap:14px; font-size:12.5px; color:var(--muted);
     background:var(--surface); border:1px solid var(--border); border-radius:7px; padding:7px 14px;
@@ -131,21 +152,38 @@
     text-align:left; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
     color:var(--muted); padding:9px 8px; border-bottom:1px solid var(--border); white-space:nowrap;
   }
-  thead th.grp{ text-align:center; background:var(--surface2); }
+  thead th.grp{ text-align:center; background:var(--surface2); border-left:1px solid var(--border); }
+  thead th.grp:nth-child(2){ border-left:none; }
+  thead th.grp:nth-child(3), thead th.grp:nth-child(5){ background:rgba(200,169,110,.08); color:var(--gold-hi); }
+  thead tr:last-child th{ border-left:1px solid transparent; }
+  thead tr:last-child th:nth-child(3), thead tr:last-child th:nth-child(5),
+  thead tr:last-child th:nth-child(7), thead tr:last-child th:nth-child(9){ border-left-color:var(--border); }
+  thead tr:last-child th:nth-child(3), thead tr:last-child th:nth-child(4),
+  thead tr:last-child th:nth-child(7), thead tr:last-child th:nth-child(8){ background:rgba(200,169,110,.05); }
+  thead th[rowspan]:not(:first-child){ border-left:1px solid var(--border); }
   tbody td{ padding:5px 6px; border-bottom:1px solid var(--line-2); vertical-align:middle; }
+  tbody td.num-cell:nth-child(4), tbody td.num-cell:nth-child(6),
+  tbody td.num-cell:nth-child(8), tbody td.num-cell:nth-child(10),
+  tbody td.fee-cell{ border-left:1px solid var(--line-2); }
   tbody tr:hover{ background:var(--surface2); }
-  tbody tr.inactive-row{ opacity:.5; }
+  tbody tr.inactive-row td:not(.name-cell):not(.actions-cell){ opacity:.5; }
+  .actions-head, td.actions-cell{ padding-left:28px; }
   .name-cell{ min-width:170px; }
   .name-cell .full{ font-weight:600; white-space:nowrap; color:var(--text); }
+  .name-line{ display:flex; align-items:center; gap:6px; }
+  .quick-edit-btn{ width:25px; height:25px; flex:0 0 auto; padding:0; border:1px solid rgba(88,166,255,.25); border-radius:50%; background:rgba(88,166,255,.05); color:#8FA7BE; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:.15s ease; }
+  .quick-edit-btn svg{ width:15px; height:15px; }
+  .quick-edit-btn:hover{ border-color:rgba(88,166,255,.55); background:rgba(88,166,255,.12); color:var(--blue); }
+  .profile-missing{ margin-top:4px; max-width:175px; color:var(--warn); font-size:10px; line-height:1.3; }
   .cat-badge{
-    display:inline-block; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px;
-    margin-top:2px; letter-spacing:.05em; border:1px solid transparent;
+    display:inline-block; font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px;
+    margin-top:3px; letter-spacing:.05em; border:1px solid transparent;
   }
-  .cat-TOP{ background:var(--gold-dim); color:var(--gold-hi); border-color:rgba(200,169,110,.35); }
-  .cat-I{ background:var(--blue-dim); color:var(--blue); border-color:rgba(88,166,255,.3); }
-  .cat-II{ background:var(--purple-dim); color:var(--purple); border-color:rgba(163,113,247,.3); }
-  .cat-III{ background:rgba(139,148,158,.1); color:var(--muted); border-color:var(--border); }
-  .cat-Referee{ background:var(--green-dim); color:var(--green); border-color:rgba(63,185,80,.3); }
+  .cat-TOP{ background:rgba(200,169,110,.24); color:#E8CC98; border-color:rgba(218,191,140,.65); }
+  .cat-I{ background:rgba(88,166,255,.22); color:#79B8FF; border-color:rgba(88,166,255,.6); }
+  .cat-II{ background:rgba(163,113,247,.22); color:#BC8CFF; border-color:rgba(163,113,247,.6); }
+  .cat-III{ background:rgba(139,148,158,.2); color:#B1BAC4; border-color:rgba(139,148,158,.55); }
+  .cat-Referee{ background:rgba(63,185,80,.22); color:#56D364; border-color:rgba(63,185,80,.6); }
   td.num-cell input{
     width:52px; padding:5px 4px; text-align:center; border:1px solid transparent; border-radius:6px;
     background:transparent; color:var(--text);
@@ -154,7 +192,17 @@
   td.num-cell input:focus{ outline:2px solid var(--gold); outline-offset:0; border-color:var(--gold); background:var(--bg); }
   td.num-cell input.dirty{ background:var(--gold-dim); }
   .fee-cell{ font-weight:700; text-align:right; padding-right:10px; white-space:nowrap; color:var(--text); }
-  .row-actions{ display:flex; gap:4px; }
+  .row-actions{ display:flex; flex-direction:column; gap:5px; min-width:225px; padding:2px 0; }
+  .row-action-buttons{ display:flex; gap:5px; }
+  .row-btn{ display:inline-flex; align-items:center; justify-content:center; gap:5px; min-height:28px; padding:4px 8px; border-radius:6px; cursor:pointer; font-weight:600; font-size:11.5px; white-space:nowrap; }
+  .row-btn svg{ width:13px; height:13px; }
+  .row-btn-detail{ border:1px solid var(--border); background:var(--bg); color:var(--muted); }
+  .row-btn-detail:hover{ background:var(--surface2); color:var(--text); }
+  .row-btn-print{ border:1px solid rgba(200,169,110,.55); background:var(--gold-dim); color:var(--gold-hi); }
+  .row-btn-print:hover{ background:rgba(200,169,110,.2); border-color:var(--gold); }
+  .detail-preview{ display:flex; flex-wrap:wrap; gap:3px; max-width:225px; }
+  .detail-chip{ display:inline-block; padding:1px 5px; border-radius:4px; background:rgba(139,148,158,.08); color:var(--muted); font-size:10px; border:1px solid rgba(139,148,158,.2); }
+  .detail-empty{ color:var(--muted); font-size:10.5px; font-style:italic; }
   .icon-btn{
     width:26px; height:26px; border-radius:6px; border:1px solid var(--border); background:var(--bg);
     color:var(--muted); cursor:pointer; display:flex; align-items:center; justify-content:center;
@@ -196,7 +244,16 @@
     margin:18px 0 8px;
   }
   .section-label:first-child{ margin-top:0; }
+  #detailModal .modal{ max-width:760px; }
+  .detail-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .detail-card{ background:var(--bg); border:1px solid var(--border); border-radius:9px; padding:14px; }
+  .detail-card-title{ margin:0 0 12px; color:var(--text); font-size:12px; font-weight:700; }
+  .detail-card .field:last-child{ margin-bottom:0; }
+  .bonus-groups{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .bonus-group{ background:var(--bg); border:1px solid var(--border); border-radius:9px; padding:4px 12px 8px; }
+  .bonus-group h3{ margin:8px 0 4px; color:var(--text); font-size:12px; }
   .bonus-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px solid var(--line-2); }
+  .bonus-row:last-child{ border-bottom:0; }
   .bonus-row label{ font-size:12.5px; color:var(--muted); }
   .bonus-row input{ width:100px; padding:6px 8px; border:1px solid var(--border); border-radius:6px; text-align:right; background:var(--bg); color:var(--text); }
   .recon-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
@@ -215,6 +272,12 @@
   .act-sign{ display:flex; justify-content:space-between; margin-top:26px; gap:20px; }
   .act-sign div{ flex:1; font-size:12px; color:var(--muted); }
   .act-sign b{ display:block; color:var(--text); margin-bottom:2px; }
+  .act-edit-hint{ margin:0 0 12px; padding:8px 10px; border-radius:7px; background:var(--gold-dim); color:var(--gold-hi); font-size:12px; }
+  .act-value-wrap{ display:flex; align-items:center; justify-content:flex-end; gap:6px; }
+  .act-value{ min-width:34px; border-radius:3px; }
+  .act-value:focus{ outline:1px solid var(--gold); background:var(--gold-dim); }
+  .act-edit-btn{ width:20px; height:20px; padding:0; border:0; border-radius:4px; background:var(--gold-dim); color:var(--gold-hi); cursor:pointer; font-size:12px; line-height:20px; }
+  .act-edit-btn:hover{ background:rgba(200,169,110,.25); }
 
   @media print{
     body{ background:#fff; }
@@ -228,6 +291,9 @@
     .act-doc th{ background:#f0f0f0; color:#333; }
     .act-meta, .act-sign div{ color:#333; }
     .act-sign b{ color:#000; }
+    .act-edit-hint{ display:none; }
+    .act-edit-btn{ display:none; }
+    .act-value:focus{ outline:0; background:transparent; }
   }
 
   @media (max-width:760px){
@@ -235,6 +301,7 @@
     .recon-grid{ grid-template-columns:1fr 1fr; }
     header.topbar{ padding:10px 14px; }
     main{ padding:14px 14px 50px; }
+    .detail-grid, .bonus-groups{ grid-template-columns:1fr; }
   }
 </style>
 </head>
@@ -277,11 +344,11 @@
     <header class="topbar">
       <div class="brand"><span class="wordmark">PONTAJ</span> <small>SETKA-PRO · arbitri</small></div>
       <div class="month-nav">
-        <button id="prevMonth" aria-label="Luna precedentă">‹</button>
+        <button type="button" id="prevMonth" aria-label="Luna precedentă">‹</button>
         <span class="month-label num" id="monthLabel">—</span>
-        <button id="nextMonth" aria-label="Luna următoare">›</button>
+        <button type="button" id="nextMonth" aria-label="Luna următoare">›</button>
       </div>
-      <button class="btn btn-ghost btn-sm" id="manageRefereesBtn">Arbitri</button>
+      <button class="btn btn-ghost btn-sm" id="manageRefereesBtn">Participanți</button>
       <span class="user-chip" id="userChip"></span>
       <button class="btn btn-ghost btn-sm" id="logoutBtn">Ieși</button>
     </header>
@@ -290,9 +357,37 @@
       <div class="toolbar">
         <div class="search-wrap">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="9" r="6"/><path d="M17 17l-4-4" stroke-linecap="round"/></svg>
-          <input id="search" type="text" placeholder="Caută arbitru…">
+          <input id="search" type="text" placeholder="Caută…">
         </div>
-        <label class="toggle"><input type="checkbox" id="activeOnlyToggle" checked> doar activi luna asta</label>
+        <select class="filter-select" id="categoryFilter" aria-label="Filtrează după categorie">
+          <option value="">Toate categoriile</option>
+          <option value="__hidden__">Participanți ascunși</option>
+          <option disabled>──────────</option>
+          <option value="TOP">TOP</option>
+          <option value="I">Categoria I</option>
+          <option value="II">Categoria II</option>
+          <option value="III">Categoria III</option>
+          <option value="Referee">Referee</option>
+        </select>
+        <select class="filter-select" id="activityFilter" aria-label="Filtrează după activitatea lunară">
+          <option value="all">Toată activitatea</option>
+          <option value="active">Doar activi luna asta</option>
+          <option value="inactive">Fără activitate luna asta</option>
+        </select>
+        <select class="filter-select" id="sortControl" aria-label="Sortează arbitrii">
+          <option value="name-asc">↕ Nume A–Z</option>
+          <option value="name-desc">↕ Nume Z–A</option>
+          <option value="category">↕ Categorie</option>
+          <option value="activity-desc">↕ Cea mai multă activitate</option>
+          <option value="activity-asc">↕ Cea mai puțină activitate</option>
+          <option value="fee-desc">↕ Onorariu: mare–mic</option>
+          <option value="fee-asc">↕ Onorariu: mic–mare</option>
+        </select>
+        <button type="button" class="btn btn-ghost btn-sm" id="clearFilters">Resetează</button>
+        <button type="button" class="btn btn-sm btn-export" id="exportMonthBtn" title="Descarcă toate datele lunii selectate">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v9M6.5 9.5 10 13l3.5-3.5"/><path d="M4 15v2h12v-2"/></svg>
+          Descarcă luna
+        </button>
         <div class="summary-chip">
           <span>Activi: <b id="sumActive">0</b></span>
           <span>Total onorarii: <b class="num" id="sumFee">0</b> MDL</span>
@@ -304,14 +399,14 @@
         <table>
           <thead>
             <tr>
-              <th rowspan="2" style="min-width:170px">Arbitru</th>
+              <th rowspan="2" style="min-width:170px">Participant</th>
               <th colspan="2" class="grp">Turneu</th>
               <th colspan="2" class="grp">Meciuri</th>
               <th colspan="2" class="grp">Locul I</th>
               <th colspan="2" class="grp">Locul III</th>
               <th colspan="2" class="grp">Arbitraj</th>
               <th rowspan="2">Onorariu</th>
-              <th rowspan="2"></th>
+              <th rowspan="2" class="actions-head" style="min-width:260px">Acțiuni și detalii</th>
             </tr>
             <tr>
               <th>zi</th><th>noapte</th>
@@ -324,7 +419,7 @@
           <tbody id="rowsBody"></tbody>
         </table>
       </div>
-      <div class="empty-state" id="emptyState" style="display:none">Niciun arbitru găsit.</div>
+      <div class="empty-state" id="emptyState" style="display:none">Niciun participant găsit.</div>
     </main>
   </div>
 
@@ -337,20 +432,33 @@
       </div>
       <div class="modal-body">
         <p class="section-label">Deplasare / decontare</p>
-        <div class="recon-grid">
-          <div class="field"><label>Taxi (mdl)</label><input type="number" id="dTaxi" step="0.01"></div>
-          <div class="field"><label>Regiune</label><input type="text" id="dRegion"></div>
-          <div class="field"><label>Km</label><input type="number" id="dKm" step="0.01"></div>
-          <div class="field"><label>Achitat (mdl)</label><input type="number" id="dPaid" step="0.01"></div>
-          <div class="field"><label>Conform calculului</label><input type="number" id="dConform" step="0.01"></div>
-          <div class="field"><label>Rest</label><input type="text" id="dRest" disabled></div>
+        <div class="detail-grid">
+          <section class="detail-card">
+            <h3 class="detail-card-title">Deplasare</h3>
+            <div class="field"><label>Regiune</label><input type="text" id="dRegion"></div>
+            <div class="form-grid">
+              <div class="field"><label>Taxi (MDL)</label><input type="number" id="dTaxi" step="0.01"></div>
+              <div class="field"><label>Distanță (km)</label><input type="number" id="dKm" step="0.01"></div>
+            </div>
+          </section>
+          <section class="detail-card">
+            <h3 class="detail-card-title">Decontare</h3>
+            <div class="field"><label>Achitat (MDL)</label><input type="number" id="dPaid" step="0.01"></div>
+            <div class="form-grid">
+              <div class="field"><label>Conform calculului</label><input type="number" id="dConform" step="0.01"></div>
+              <div class="field"><label>Rest</label><input type="text" id="dRest" disabled></div>
+            </div>
+          </section>
         </div>
 
         <p class="section-label">Bonusuri internaționale (opțional)</p>
-        <div id="bonusList"></div>
+        <div class="bonus-groups" id="bonusList">
+          <section class="bonus-group"><h3>Mexico</h3><div id="bonusMexico"></div></section>
+          <section class="bonus-group"><h3>Rio</h3><div id="bonusRio"></div></section>
+        </div>
 
-        <p class="section-label">Notă</p>
-        <div class="field full"><input type="text" id="dNotes" placeholder="opțional"></div>
+        <p class="section-label">Notă (opțional)</p>
+        <div class="field full"><input type="text" id="dNotes" placeholder="Adaugă o notă…"></div>
       </div>
       <div class="modal-foot">
         <button class="btn btn-ghost" id="cancelDetail">Anulează</button>
@@ -363,7 +471,7 @@
   <div class="modal-backdrop" id="refModal">
     <div class="modal">
       <div class="modal-head">
-        <h2 id="refModalTitle">Arbitru nou</h2>
+        <h2 id="refModalTitle">Participant nou</h2>
         <button class="icon-btn" id="closeRef" aria-label="Închide">✕</button>
       </div>
       <div class="modal-body">
@@ -382,7 +490,10 @@
           <div class="field"><label>Nr. contract</label><input type="text" id="rContractNo"></div>
           <div class="field"><label>Data contract</label><input type="text" id="rContractDate" placeholder="ex: 25 mart"></div>
           <div class="field full">
-            <label class="toggle"><input type="checkbox" id="rActive" checked> activ (apare în lista de introducere date)</label>
+            <label class="visibility-setting">
+              <span class="visibility-copy"><strong>Ascunde din lista principală</strong><small>Participantul rămâne disponibil în filtrul „Participanți ascunși”.</small></span>
+              <span class="switch"><input type="checkbox" id="rHidden"><span class="switch-track"></span></span>
+            </label>
           </div>
         </div>
       </div>
@@ -398,11 +509,11 @@
   <div class="modal-backdrop" id="listModal">
     <div class="modal" style="max-width:520px">
       <div class="modal-head">
-        <h2>Listă arbitri</h2>
+        <h2>Listă participanți</h2>
         <button class="icon-btn" id="closeList" aria-label="Închide">✕</button>
       </div>
       <div class="modal-body">
-        <button class="btn btn-primary btn-sm" id="addRefBtn" style="margin-bottom:12px">+ Arbitru nou</button>
+        <button class="btn btn-primary btn-sm" id="addRefBtn" style="margin-bottom:12px">+ Participant nou</button>
         <div id="refList"></div>
       </div>
     </div>
@@ -416,6 +527,7 @@
         <button class="icon-btn" id="closeAct" aria-label="Închide">✕</button>
       </div>
       <div class="modal-body">
+        <p class="act-edit-hint">Folosește butonul ✎ pentru a modifica regimul de calcul sau volumul. Schimbările se aplică doar acestui act.</p>
         <div class="act-doc" id="actDoc"></div>
       </div>
       <div class="modal-foot">
@@ -456,12 +568,20 @@
   let rateCategories = {};   // category -> rates
   let globalRates = { arbitraj_day:0, arbitraj_night:0, tax_rate:0.15 };
   let entries = {};          // referee_id -> monthly_entries row (for current period)
+  let bonusesByRef = {};     // referee_id -> non-zero international bonuses for current period
   let currentPeriod = firstOfMonth(new Date());
   let searchTerm = '';
-  let activeOnly = true;
+  let categoryFilter = '';
+  let activityFilter = 'all';
+  let sortMode = 'name-asc';
   let saveTimers = {};
+  let periodLoadId = 0;
 
   function firstOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+  function isCurrentMonth(d){
+    const today = firstOfMonth(new Date());
+    return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth();
+  }
   function periodKey(d){
     // Local date components only — toISOString() converts to UTC first,
     // which silently shifts local midnight back a day for any timezone
@@ -538,24 +658,109 @@
   }
 
   async function loadPeriod(){
+    const loadId = ++periodLoadId;
+    const requestedPeriod = new Date(currentPeriod);
     document.getElementById('monthLabel').textContent =
-      MONTH_NAMES[currentPeriod.getMonth()] + ' ' + currentPeriod.getFullYear();
-    const { data } = await db.from('monthly_entries').select('*').eq('period', periodKey(currentPeriod));
+      MONTH_NAMES[requestedPeriod.getMonth()] + ' ' + requestedPeriod.getFullYear();
+    document.getElementById('nextMonth').disabled = isCurrentMonth(requestedPeriod);
+    const [{ data }, { data: bonuses }] = await Promise.all([
+      db.from('monthly_entries').select('*').eq('period', periodKey(requestedPeriod)),
+      db.from('international_bonuses').select('*').eq('period', periodKey(requestedPeriod)),
+    ]);
+    // Ignore a slower response from a month the user has already left.
+    if (loadId !== periodLoadId) return;
     entries = {};
     (data || []).forEach(e => entries[e.referee_id] = e);
+    bonusesByRef = {};
+    (bonuses || []).filter(b => Number(b.amount) !== 0).forEach(b => {
+      (bonusesByRef[b.referee_id] ||= []).push(b);
+    });
     renderRows();
   }
 
-  document.getElementById('prevMonth').addEventListener('click', () => {
+  document.getElementById('prevMonth').addEventListener('click', async () => {
     currentPeriod = new Date(currentPeriod.getFullYear(), currentPeriod.getMonth()-1, 1);
-    loadPeriod();
+    await loadPeriod();
   });
-  document.getElementById('nextMonth').addEventListener('click', () => {
+  document.getElementById('nextMonth').addEventListener('click', async () => {
+    if (isCurrentMonth(currentPeriod)) return;
     currentPeriod = new Date(currentPeriod.getFullYear(), currentPeriod.getMonth()+1, 1);
-    loadPeriod();
+    await loadPeriod();
   });
   document.getElementById('search').addEventListener('input', (e) => { searchTerm = e.target.value.toLowerCase(); renderRows(); });
-  document.getElementById('activeOnlyToggle').addEventListener('change', (e) => { activeOnly = e.target.checked; renderRows(); });
+  document.getElementById('categoryFilter').addEventListener('change', (e) => { categoryFilter = e.target.value; renderRows(); });
+  document.getElementById('activityFilter').addEventListener('change', (e) => { activityFilter = e.target.value; renderRows(); });
+  document.getElementById('sortControl').addEventListener('change', (e) => { sortMode = e.target.value; renderRows(); });
+  document.getElementById('exportMonthBtn').addEventListener('click', downloadMonthCsv);
+  document.getElementById('clearFilters').addEventListener('click', () => {
+    searchTerm = '';
+    categoryFilter = '';
+    activityFilter = 'all';
+    sortMode = 'name-asc';
+    document.getElementById('search').value = '';
+    document.getElementById('categoryFilter').value = '';
+    document.getElementById('activityFilter').value = 'all';
+    document.getElementById('sortControl').value = 'name-asc';
+    renderRows();
+  });
+
+  function csvCell(value){
+    let text = value === null || value === undefined ? '' : String(value);
+    // Prevent spreadsheet programs from treating user-entered text as a formula.
+    if (/^[=+@]/.test(text)) text = "'" + text;
+    return '"' + text.replace(/"/g, '""') + '"';
+  }
+
+  function exportNumber(value){
+    const number = Number(value);
+    if (!Number.isFinite(number)) return '';
+    return String(Math.round(number * 100) / 100).replace('.', ',');
+  }
+
+  function downloadMonthCsv(){
+    const headers = [
+      'Luna','Nume','Prenume','Categorie','Vizibilitate','Activitate în lună',
+      'Cod fiscal','IBAN','Bancă','Nr. contract','Data contract',
+      'Turneu zi','Turneu noapte','Meciuri zi','Meciuri noapte',
+      'Locul I zi','Locul I noapte','Locul III zi','Locul III noapte',
+      'Arbitraj zi','Arbitraj noapte','Taxi (MDL)','Regiune','Km',
+      'Onorariu (MDL)','Bonusuri total (MDL)',
+      'Total cu bonusuri (MDL)','Impozit (%)','Impozit (MDL)',
+      'Achitat (MDL)','Conform calculului','Rest','Notițe','Ultima actualizare'
+    ];
+    const rows = referees.slice()
+      .sort((a, b) => (a.last_name + ' ' + a.first_name).localeCompare(b.last_name + ' ' + b.first_name, 'ro', { sensitivity:'base' }))
+      .map(ref => {
+        const entry = entries[ref.id] || emptyEntry(ref.id);
+        const bonuses = Object.fromEntries((bonusesByRef[ref.id] || []).map(b => [b.label, Number(b.amount) || 0]));
+        const bonusTotal = BONUS_LABELS.reduce((sum, label) => sum + (bonuses[label] || 0), 0);
+        const fee = computeFee(ref, entry);
+        const conform = entry.conform_calcul === null || entry.conform_calcul === undefined || entry.conform_calcul === '' ? null : Number(entry.conform_calcul);
+        const rest = conform === null ? '' : (Number(entry.paid_amount) || 0) - conform;
+        return [
+          periodKey(currentPeriod).slice(0, 7), ref.last_name, ref.first_name, ref.category,
+          ref.active === false ? 'Ascuns' : 'Vizibil', hasActivity(entry) ? 'Da' : 'Nu',
+          ref.fiscal_code || '', ref.iban || '', ref.bank_name || '', ref.contract_number || '', ref.contract_date || '',
+          entry.tournament_day || 0, entry.tournament_night || 0, entry.matches_day || 0, entry.matches_night || 0,
+          entry.place1_day || 0, entry.place1_night || 0, entry.place3_day || 0, entry.place3_night || 0,
+          entry.arbitraj_day || 0, entry.arbitraj_night || 0, exportNumber(entry.taxi || 0), entry.region || '', exportNumber(entry.km || 0),
+          exportNumber(fee), exportNumber(bonusTotal),
+          exportNumber(fee + bonusTotal), exportNumber((globalRates.tax_rate || 0) * 100), exportNumber(fee * (globalRates.tax_rate || 0)),
+          exportNumber(entry.paid_amount || 0), conform === null ? '' : exportNumber(conform), rest === '' ? '' : exportNumber(rest),
+          entry.notes || '', entry.updated_at || ''
+        ];
+      });
+    const csv = '\uFEFF' + [headers, ...rows].map(row => row.map(csvCell).join(';')).join('\r\n');
+    const blob = new Blob([csv], { type:'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `pontaj-setka-${periodKey(currentPeriod).slice(0, 7)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
 
   // ══ FEE CALC — mirrors the entry_totals SQL view exactly ══
   function computeFee(referee, entry){
@@ -588,16 +793,60 @@
     return ALL_KEYS.some(k => (entry[k]||0) !== 0);
   }
 
+  function detailPreview(entry, refId){
+    const items = [];
+    if (Number(entry.taxi)) items.push(`Taxi ${fmtMoney(entry.taxi)} MDL`);
+    if ((entry.region || '').trim()) items.push(escapeHtml(entry.region.trim()));
+    if (Number(entry.km)) items.push(`${fmtMoney(entry.km)} km`);
+    if (Number(entry.paid_amount)) items.push(`Achitat ${fmtMoney(entry.paid_amount)}`);
+    if (entry.conform_calcul !== null && entry.conform_calcul !== undefined && entry.conform_calcul !== '') items.push(`Conform ${fmtMoney(entry.conform_calcul)}`);
+    if ((entry.notes || '').trim()) items.push('Notițe');
+    const bonusCount = (bonusesByRef[refId] || []).length;
+    if (bonusCount) items.push(`${bonusCount} ${bonusCount === 1 ? 'bonus' : 'bonusuri'}`);
+    if (!items.length) return '<span class="detail-empty">Nicio informație suplimentară</span>';
+    return items.map(item => `<span class="detail-chip">${item}</span>`).join('');
+  }
+
+  function missingProfilePreview(ref){
+    const fields = [
+      ['bank_name', 'banca'],
+      ['fiscal_code', 'codul fiscal'],
+      ['iban', 'IBAN-ul'],
+      ['contract_number', 'nr. contractului'],
+      ['contract_date', 'data contractului'],
+    ];
+    const missing = fields.filter(([key]) => !String(ref[key] || '').trim()).map(([, label]) => label);
+    return missing.length ? `<div class="profile-missing">Lipsesc: ${missing.join(', ')}</div>` : '';
+  }
+
   // ══ ROWS RENDER ══
   const rowsBody = document.getElementById('rowsBody');
   function renderRows(){
-    let list = referees.filter(r => r.active !== false);
+    let list = referees.filter(r => categoryFilter === '__hidden__' ? r.active === false : r.active !== false);
     if (searchTerm) {
       list = list.filter(r => (r.last_name+' '+r.first_name).toLowerCase().includes(searchTerm));
     }
-    if (activeOnly && !searchTerm) {
-      list = list.filter(r => hasActivity(entries[r.id]));
+    if (categoryFilter && categoryFilter !== '__hidden__') {
+      list = list.filter(r => r.category === categoryFilter);
     }
+    if (activityFilter === 'active') {
+      list = list.filter(r => hasActivity(entries[r.id]));
+    } else if (activityFilter === 'inactive') {
+      list = list.filter(r => !hasActivity(entries[r.id]));
+    }
+    const nameOf = r => (r.last_name + ' ' + r.first_name).trim();
+    const nameCompare = (a, b) => nameOf(a).localeCompare(nameOf(b), 'ro', { sensitivity:'base' });
+    const activityTotal = r => ALL_KEYS.reduce((sum, key) => sum + Number((entries[r.id] || {})[key] || 0), 0);
+    const categoryOrder = { TOP:0, I:1, II:2, III:3, Referee:4 };
+    list.sort((a, b) => {
+      if (sortMode === 'name-desc') return nameCompare(b, a);
+      if (sortMode === 'category') return (categoryOrder[a.category] ?? 99) - (categoryOrder[b.category] ?? 99) || nameCompare(a, b);
+      if (sortMode === 'activity-desc') return activityTotal(b) - activityTotal(a) || nameCompare(a, b);
+      if (sortMode === 'activity-asc') return activityTotal(a) - activityTotal(b) || nameCompare(a, b);
+      if (sortMode === 'fee-desc') return computeFee(b, entries[b.id]) - computeFee(a, entries[a.id]) || nameCompare(a, b);
+      if (sortMode === 'fee-asc') return computeFee(a, entries[a.id]) - computeFee(b, entries[b.id]) || nameCompare(a, b);
+      return nameCompare(a, b);
+    });
     document.getElementById('emptyState').style.display = list.length ? 'none' : 'block';
 
     rowsBody.innerHTML = '';
@@ -612,8 +861,8 @@
 
       const nameTd = document.createElement('td');
       nameTd.className = 'name-cell';
-      nameTd.innerHTML = `<div class="full">${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}</div>
-        <span class="cat-badge cat-${ref.category}">${ref.category}</span>`;
+      nameTd.innerHTML = `<div class="name-line"><div class="full">${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}</div><button type="button" class="quick-edit-btn" data-quick-edit-ref="${ref.id}" title="Informații participant" aria-label="Informații despre ${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7.5"/><path d="M10 13v-4M10 7h.01" stroke-linecap="round"/></svg></button></div>
+        <span class="cat-badge cat-${ref.category}">${ref.category}</span>${ref.active === false ? ' <span class="detail-chip">Ascuns</span>' : ''}${missingProfilePreview(ref)}`;
       tr.appendChild(nameTd);
 
       ALL_KEYS.forEach(key => {
@@ -636,16 +885,21 @@
       tr.appendChild(feeTd);
 
       const actionsTd = document.createElement('td');
+      actionsTd.className = 'actions-cell';
       const rowActions = document.createElement('div');
       rowActions.className = 'row-actions';
       rowActions.innerHTML = `
-        <button class="icon-btn" title="Detalii / bonusuri" data-detail="${ref.id}">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="7.5"/><path d="M10 13v-4M10 7h.01" stroke-linecap="round"/></svg>
-        </button>
-        <button class="icon-btn" title="Act de prestare" data-act="${ref.id}">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 3h7l3 3v11H5z"/><path d="M8 9h4M8 12h4M8 15h2"/></svg>
-        </button>
-        <span class="save-dot" id="dot-${ref.id}"></span>`;
+        <div class="row-action-buttons">
+          <button class="row-btn row-btn-detail" title="Deschide detalii și bonusuri" data-detail="${ref.id}">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 5h12M4 10h12M4 15h12"/><circle cx="8" cy="5" r="1.6" fill="var(--bg)"/><circle cx="13" cy="10" r="1.6" fill="var(--bg)"/><circle cx="7" cy="15" r="1.6" fill="var(--bg)"/></svg> Detalii
+          </button>
+          <button class="row-btn row-btn-print" title="Deschide actul pentru imprimare" data-act="${ref.id}">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3h7l3 3v11H5z"/><path d="M8 9h4M8 12h4M8 15h2"/></svg> Act / Print
+          </button>
+          <span class="save-dot" id="dot-${ref.id}"></span>
+        </div>
+        <div class="detail-preview">${detailPreview(entry, ref.id)}</div>
+      `;
       actionsTd.appendChild(rowActions);
       tr.appendChild(actionsTd);
 
@@ -654,6 +908,7 @@
 
     document.querySelectorAll('[data-detail]').forEach(b => b.addEventListener('click', () => openDetail(b.dataset.detail)));
     document.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => openAct(b.dataset.act)));
+    document.querySelectorAll('[data-quick-edit-ref]').forEach(b => b.addEventListener('click', () => openRefModal(b.dataset.quickEditRef, false)));
 
     document.getElementById('sumActive').textContent = activeCount;
     document.getElementById('sumFee').textContent = fmtMoney(sumFee);
@@ -731,8 +986,10 @@
     document.getElementById('dNotes').value = entry.notes || '';
     updateRest();
 
-    const bonusList = document.getElementById('bonusList');
-    bonusList.innerHTML = '';
+    const bonusMexico = document.getElementById('bonusMexico');
+    const bonusRio = document.getElementById('bonusRio');
+    bonusMexico.innerHTML = '';
+    bonusRio.innerHTML = '';
     db.from('international_bonuses').select('*').eq('referee_id', refId).eq('period', periodKey(currentPeriod))
       .then(({ data }) => {
         const byLabel = {};
@@ -741,7 +998,7 @@
           const row = document.createElement('div');
           row.className = 'bonus-row';
           row.innerHTML = `<label>${label}</label><input type="number" step="0.01" data-bonus="${label}" value="${byLabel[label]||0}">`;
-          bonusList.appendChild(row);
+          (label.includes('RIO') ? bonusRio : bonusMexico).appendChild(row);
         });
       });
 
@@ -774,13 +1031,16 @@
       referee_id: refId, period: periodKey(currentPeriod), label: i.dataset.bonus, amount: Number(i.value)||0
     }));
     await db.from('international_bonuses').upsert(bonusRows, { onConflict: 'referee_id,period,label' });
+    bonusesByRef[refId] = bonusRows.filter(b => b.amount !== 0);
     detailModal.classList.remove('show');
+    renderRows();
   });
 
   // ══ REFEREE ROSTER MANAGER ══
   const listModal = document.getElementById('listModal');
   const refModal = document.getElementById('refModal');
   let editingRefId = null;
+  let refModalReturnToList = false;
 
   document.getElementById('manageRefereesBtn').addEventListener('click', () => { renderRefList(); listModal.classList.add('show'); });
   document.getElementById('closeList').addEventListener('click', () => listModal.classList.remove('show'));
@@ -800,10 +1060,11 @@
   }
 
   document.getElementById('addRefBtn').addEventListener('click', () => openRefModal(null));
-  function openRefModal(refId){
+  function openRefModal(refId, returnToList = listModal.classList.contains('show')){
     editingRefId = refId;
+    refModalReturnToList = returnToList;
     const ref = refId ? referees.find(r => r.id === refId) : {};
-    document.getElementById('refModalTitle').textContent = refId ? 'Editează arbitru' : 'Arbitru nou';
+    document.getElementById('refModalTitle').textContent = refId ? 'Editează participant' : 'Participant nou';
     document.getElementById('rLastName').value = ref.last_name || '';
     document.getElementById('rFirstName').value = ref.first_name || '';
     document.getElementById('rCategory').value = ref.category || 'III';
@@ -812,14 +1073,14 @@
     document.getElementById('rIban').value = ref.iban || '';
     document.getElementById('rContractNo').value = ref.contract_number || '';
     document.getElementById('rContractDate').value = ref.contract_date || '';
-    document.getElementById('rActive').checked = ref.active !== false;
+    document.getElementById('rHidden').checked = ref.active === false;
     document.getElementById('deleteRefBtn').style.display = refId ? '' : 'none';
     listModal.classList.remove('show');   // drill-down from the roster list — don't stack modals
     refModal.classList.add('show');
   }
   function closeRefModal(){
     refModal.classList.remove('show');
-    listModal.classList.add('show');      // return to the roster list underneath
+    if (refModalReturnToList) listModal.classList.add('show');
   }
   document.getElementById('closeRef').addEventListener('click', closeRefModal);
   document.getElementById('cancelRef').addEventListener('click', closeRefModal);
@@ -834,7 +1095,7 @@
       iban: document.getElementById('rIban').value.trim() || null,
       contract_number: document.getElementById('rContractNo').value.trim() || null,
       contract_date: document.getElementById('rContractDate').value.trim() || null,
-      active: document.getElementById('rActive').checked,
+      active: !document.getElementById('rHidden').checked,
     };
     if (!payload.last_name || !payload.first_name) { alert('Nume și prenume sunt obligatorii.'); return; }
     if (editingRefId) {
@@ -875,12 +1136,17 @@
     const ref = referees.find(r => r.id === refId);
     const entry = entries[refId] || emptyEntry(refId);
     let total = 0;
-    const rows = ITEM_ROWS.map(([key,label]) => {
+    const rows = ITEM_ROWS.map(([key,label], index) => {
       const rate = rateFor(ref, key);
       const vol = entry[key] || 0;
       const fee = rate * vol;
       total += fee;
-      return `<tr><td>${label}</td><td class="r">${fmtMoney(rate)}</td><td class="r">${vol}</td><td class="r">${fmtMoney(fee)}</td></tr>`;
+      return `<tr data-act-row="${index}">
+        <td>${label}</td>
+        <td class="r"><span class="act-value-wrap"><button type="button" class="act-edit-btn" aria-label="Editează regimul de calcul" data-edit-act-value>✎</button><span class="act-value" contenteditable="false" inputmode="decimal" data-act-rate>${fmtMoney(rate)}</span></span></td>
+        <td class="r"><span class="act-value-wrap"><button type="button" class="act-edit-btn" aria-label="Editează volumul serviciilor" data-edit-act-value>✎</button><span class="act-value" contenteditable="false" inputmode="decimal" data-act-volume>${vol}</span></span></td>
+        <td class="r" data-act-fee>${fmtMoney(fee)}</td>
+      </tr>`;
     }).join('');
     const tax = total * globalRates.tax_rate;
     document.getElementById('actDoc').innerHTML = `
@@ -891,19 +1157,67 @@
         <thead><tr><th>Categoria calcul</th><th>Regim calcul (mdl)</th><th>Volum servicii</th><th>Onorariu (mdl)</th></tr></thead>
         <tbody>
           ${rows}
-          <tr class="act-total-row"><td colspan="3">TOTAL SPRE PLATĂ</td><td class="r">${fmtMoney(total)}</td></tr>
-          <tr><td colspan="3">inclusiv impozit 15%</td><td class="r">${fmtMoney(tax)}</td></tr>
+          <tr class="act-total-row"><td colspan="3">TOTAL SPRE PLATĂ</td><td class="r" id="actTotal">${fmtMoney(total)}</td></tr>
+          <tr><td colspan="3">inclusiv impozit ${fmtMoney(globalRates.tax_rate * 100)}%</td><td class="r" id="actTax">${fmtMoney(tax)}</td></tr>
         </tbody>
       </table>
       <div class="act-sign">
         <div><b>Beneficiar</b>SRL SETKA-PRO<br>cod fiscal 1022600014457</div>
         <div style="text-align:right"><b>Prestator</b>${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}<br>cod fiscal ${escapeHtml(ref.fiscal_code||'—')}<br>IBAN ${escapeHtml(ref.iban||'—')}</div>
       </div>`;
+    document.getElementById('actDoc').oninput = recalculateAct;
+    document.getElementById('actDoc').onclick = (event) => {
+      const button = event.target.closest('[data-edit-act-value]');
+      if (!button) return;
+      const value = button.parentElement.querySelector('.act-value');
+      value.contentEditable = 'true';
+      value.onblur = () => { value.contentEditable = 'false'; };
+      value.focus();
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(value);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    };
     actModal.classList.add('show');
+  }
+  function editableNumber(el){
+    const normalized = el.textContent.replace(/\s/g, '').replace(',', '.');
+    const value = Number(normalized);
+    return Number.isFinite(value) ? value : 0;
+  }
+  function recalculateAct(){
+    let total = 0;
+    document.querySelectorAll('#actDoc [data-act-row]').forEach(row => {
+      const fee = editableNumber(row.querySelector('[data-act-rate]')) * editableNumber(row.querySelector('[data-act-volume]'));
+      row.querySelector('[data-act-fee]').textContent = fmtMoney(fee);
+      total += fee;
+    });
+    document.getElementById('actTotal').textContent = fmtMoney(total);
+    document.getElementById('actTax').textContent = fmtMoney(total * globalRates.tax_rate);
   }
   document.getElementById('closeAct').addEventListener('click', () => actModal.classList.remove('show'));
   document.getElementById('closeActBtn').addEventListener('click', () => actModal.classList.remove('show'));
   document.getElementById('printActBtn').addEventListener('click', () => window.print());
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    if (actModal.classList.contains('show')) {
+      actModal.classList.remove('show');
+      return;
+    }
+    if (detailModal.classList.contains('show')) {
+      detailModal.classList.remove('show');
+      return;
+    }
+    if (refModal.classList.contains('show')) {
+      closeRefModal();
+      return;
+    }
+    if (listModal.classList.contains('show')) {
+      listModal.classList.remove('show');
+    }
+  });
 
 })();
 </script>
