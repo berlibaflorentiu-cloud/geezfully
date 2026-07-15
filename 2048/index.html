@@ -279,6 +279,15 @@
   .overlay-card h2{ font-family:'Fraunces',serif; font-weight:800; font-size:26px; margin:0 0 8px; color:var(--cream-hi); }
   .overlay-card p{ font-size:13px; color:#C9B8A0; margin:0 0 16px; max-width:26ch; }
   .overlay-card .row{ display:flex; gap:10px; justify-content:center; }
+  .save-covor{
+    display:inline-flex; align-items:center; gap:6px; margin-top:14px;
+    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:12px; letter-spacing:.03em;
+    background:none; border:0; color:#B9A88C; cursor:pointer; padding:4px 6px;
+  }
+  .save-covor:hover{ color:var(--gold-hi); }
+  .save-covor:focus-visible{ outline:2px solid var(--gold-hi); outline-offset:2px; border-radius:4px; }
+  .save-covor svg{ width:13px; height:13px; display:block; }
+  .save-covor:disabled{ opacity:.6; cursor:default; }
   button.ghost{
     font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13px;
     background:transparent; color:var(--cream-hi); border:1px solid var(--line); border-radius:9px;
@@ -380,6 +389,10 @@
               <button class="ghost" id="overlayContinue">Continuă</button>
               <button class="new-game" id="overlayNew">Covor nou</button>
             </div>
+            <button class="save-covor" id="saveCovor" type="button">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3v10M6 9l4 4 4-4M4 15.5v1a1.5 1.5 0 0 0 1.5 1.5h9a1.5 1.5 0 0 0 1.5-1.5v-1"/></svg>
+              Descarcă covorul
+            </button>
           </div>
         </div>
       </div>
@@ -623,6 +636,179 @@
   });
   document.getElementById('overlayNew').addEventListener('click', newGame);
   document.getElementById('newGameBtn').addEventListener('click', newGame);
+
+  // ── "Descarcă covorul" — renders the finished board as an actual woven-
+  // carpet card (canvas, not a screenshot) so the game's premise — you are
+  // weaving something — leaves you with a real keepsake, not just a score.
+  const bourImg = new Image();
+  let bourImgReady = false;
+  bourImg.onload = () => { bourImgReady = true; };
+  bourImg.src = 'assets/moldovan-folk-symbol.png';
+
+  function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function resolveCSSColor(str){
+    return str.replace(/var\((--[a-zA-Z0-9-]+)\)/g, (_, name) => cssVar(name));
+  }
+  function roundRect(ctx, x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y, x+w, y+h, r);
+    ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r);
+    ctx.arcTo(x, y, x+w, y, r);
+    ctx.closePath();
+  }
+  function drawTintedBour(ctx, x, y, w, h, color){
+    if (!bourImgReady || w <= 0 || h <= 0) return;
+    const off = document.createElement('canvas');
+    off.width = Math.ceil(w); off.height = Math.ceil(h);
+    const octx = off.getContext('2d');
+    octx.drawImage(bourImg, 0, 0, off.width, off.height);
+    octx.globalCompositeOperation = 'source-in';
+    octx.fillStyle = color;
+    octx.fillRect(0, 0, off.width, off.height);
+    ctx.drawImage(off, x, y);
+  }
+
+  async function buildCovorCard(){
+    if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch(e){} }
+    const W = 1080, H = 1350;
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    const CREAM_HI = cssVar('--cream-hi');
+    const GOLD = cssVar('--gold'), GOLD_HI = cssVar('--gold-hi'), TERRA = cssVar('--terracotta');
+    const WALNUT = cssVar('--walnut'), WALNUT2 = cssVar('--walnut-2');
+    const FLAG_B = cssVar('--flag-blue'), FLAG_Y = cssVar('--flag-yellow'), FLAG_R = cssVar('--flag-red');
+
+    // background
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, WALNUT); bgGrad.addColorStop(.7, WALNUT2); bgGrad.addColorStop(1, WALNUT2);
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+    const glow = ctx.createRadialGradient(W/2, 40, 40, W/2, 40, 640);
+    glow.addColorStop(0, 'rgba(241,215,138,.16)');
+    glow.addColorStop(1, 'rgba(241,215,138,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H);
+
+    // kilim tricolor stitch band, reused top and bottom
+    function kilim(yTop){
+      const stripeH = 16, seg = 12;
+      ctx.save();
+      roundRect(ctx, 64, yTop, W - 128, stripeH, stripeH/2);
+      ctx.clip();
+      const colors = [FLAG_B, FLAG_Y, FLAG_R];
+      for (let x = 0; x < W - 128 + seg*3; x += seg*3) {
+        colors.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(64 + x + i*seg, yTop - 4, seg, stripeH + 8); });
+      }
+      ctx.restore();
+    }
+    kilim(56);
+    kilim(H - 70);
+
+    // header
+    ctx.textAlign = 'center';
+    ctx.fillStyle = GOLD_HI;
+    ctx.font = '600 24px "Space Grotesk"';
+    ctx.fillText('✦   C O V O R U L   N O R O C U L U I', W/2, 148);
+
+    ctx.fillStyle = CREAM_HI;
+    ctx.font = '900 130px "Fraunces"';
+    ctx.fillText('2048', W/2, 274);
+
+    ctx.fillStyle = GOLD_HI;
+    ctx.font = '700 34px "Fraunces"';
+    ctx.fillText('Scor ' + score + '  ·  Record ' + best, W/2, 332);
+
+    // board frame + swatches, drawn from the live tile state — sized to
+    // leave clear room for the bottom kilim stitch and footer line below it
+    const frameY = 400, frameSize = Math.min(W - 180, H - frameY - 190);
+    const frameX = (W - frameSize) / 2;
+    ctx.fillStyle = '#241609';
+    roundRect(ctx, frameX, frameY, frameSize, frameSize, 28); ctx.fill();
+    ctx.strokeStyle = 'rgba(241,215,138,.18)'; ctx.lineWidth = 2;
+    roundRect(ctx, frameX, frameY, frameSize, frameSize, 28); ctx.stroke();
+
+    const pad = 22;
+    const boardX = frameX + pad, boardY = frameY + pad, boardSize = frameSize - pad*2;
+    ctx.fillStyle = WALNUT2;
+    roundRect(ctx, boardX, boardY, boardSize, boardSize, 16); ctx.fill();
+
+    const cellSize = boardSize / 4, gap = 12;
+    ctx.fillStyle = 'rgba(237,224,200,.045)';
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
+      roundRect(ctx, boardX + c*cellSize + gap/2, boardY + r*cellSize + gap/2, cellSize - gap, cellSize - gap, 10);
+      ctx.fill();
+    }
+
+    const TIER_HEX = {};
+    Object.keys(TIERS).forEach(v => {
+      if (v === '2048') return;
+      TIER_HEX[v] = { bg: resolveCSSColor(TIERS[v].bg), fg: resolveCSSColor(TIERS[v].fg), sym: TIERS[v].sym };
+    });
+
+    tiles.forEach(t => {
+      const cx = boardX + t.c*cellSize + gap/2, cy = boardY + t.r*cellSize + gap/2;
+      const w = cellSize - gap, h = cellSize - gap;
+      if (t.v >= 2048) {
+        const grad = ctx.createLinearGradient(cx, cy, cx + w, cy + h);
+        grad.addColorStop(0, GOLD_HI); grad.addColorStop(.6, GOLD); grad.addColorStop(1, TERRA);
+        ctx.fillStyle = grad;
+        roundRect(ctx, cx, cy, w, h, 10); ctx.fill();
+        drawTintedBour(ctx, cx + w*0.22, cy + h*0.22, w*0.56, h*0.56, WALNUT);
+      } else {
+        const tier = TIER_HEX[t.v] || TIER_HEX[2];
+        ctx.fillStyle = tier.bg;
+        roundRect(ctx, cx, cy, w, h, 10); ctx.fill();
+        ctx.fillStyle = tier.fg;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        const fs = String(t.v).length >= 4 ? 40 : String(t.v).length === 3 ? 50 : 60;
+        ctx.font = '700 ' + fs + 'px "Fraunces"';
+        ctx.fillText(String(t.v), cx + w/2, cy + h/2 + 4);
+        if (tier.sym) {
+          const mx = cx + w - 30, my = cy + 30, mr = 20;
+          ctx.beginPath(); ctx.arc(mx, my, mr, 0, Math.PI*2);
+          ctx.fillStyle = 'rgba(0,0,0,.16)'; ctx.fill();
+          ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 1.5; ctx.stroke();
+          ctx.fillStyle = tier.fg;
+          ctx.font = '18px "Fraunces"';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(tier.sym, mx, my + 1);
+        }
+      }
+      ctx.textBaseline = 'alphabetic';
+    });
+
+    ctx.fillStyle = 'rgba(201,184,160,.85)';
+    ctx.font = '400 22px "Space Grotesk"';
+    ctx.textAlign = 'center';
+    ctx.fillText('2048 — Covorul Norocului · geezfully.com/2048', W/2, H - 24);
+
+    return canvas;
+  }
+
+  document.getElementById('saveCovor').addEventListener('click', async () => {
+    const btn = document.getElementById('saveCovor');
+    const label = btn.lastChild;
+    const original = label.textContent;
+    btn.disabled = true;
+    label.textContent = ' Se țese...';
+    try {
+      const canvas = await buildCovorCard();
+      const url = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'covorul-norocului-' + score + '.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } finally {
+      label.textContent = original;
+      btn.disabled = false;
+    }
+  });
 
   function tierFor(v){ return TIERS[v] || TIERS[2048]; }
 
