@@ -106,6 +106,12 @@
   }
   .month-nav button:hover{ background:var(--surface2); color:var(--text); }
   .month-nav button:disabled{ opacity:.35; cursor:not-allowed; background:var(--bg); color:var(--muted); }
+  .month-nav .lock-month-btn{ width:auto; height:auto; margin-left:6px; gap:5px; white-space:nowrap; }
+  .month-nav .lock-month-btn svg{ width:13px; height:13px; }
+  .month-nav .lock-month-btn.is-locked{ border-color:rgba(248,81,73,.5); background:var(--danger-bg); color:#FF9089; }
+  .month-nav .lock-month-btn.is-locked:hover{ background:rgba(248,81,73,.22); }
+  .period-locked-banner{ display:flex; align-items:center; gap:8px; margin-bottom:14px; padding:9px 12px; border-radius:7px; background:var(--danger-bg); border:1px solid rgba(248,81,73,.35); color:#FF9089; font-size:12.5px; }
+  .period-locked-banner svg{ width:15px; height:15px; flex:0 0 auto; }
   .month-label{
     font-weight:700; min-width:132px; text-align:center; text-transform:capitalize; font-size:13.5px;
   }
@@ -361,6 +367,9 @@
   .btn-save-act.is-saved{ background:var(--green-dim); border-color:rgba(63,185,80,.5); color:var(--green); cursor:default; opacity:1; }
   .archived-banner{ display:flex; align-items:center; gap:8px; margin:0 0 12px; padding:8px 10px; border-radius:7px; background:var(--green-dim); color:var(--green); font-size:12px; }
   .archived-banner svg{ width:15px; height:15px; flex:0 0 auto; }
+  .ytd-summary{ display:flex; align-items:center; gap:5px; margin:0 0 16px; padding:9px 12px; border-radius:7px; background:var(--gold-dim); border:1px solid rgba(200,169,110,.35); color:var(--gold-hi); font-size:12.5px; }
+  .ytd-summary b{ color:var(--gold-hi); }
+  .ytd-summary #ytdTotal{ font-size:14px; }
 
   /* ── Arhivă acte ── */
   #archiveModal .modal{ max-width:920px; }
@@ -514,7 +523,7 @@
       <span class="wordmark">PONTAJ</span>
       <p class="client-tag">SETKA-PRO</p>
       <div class="auth-rule"></div>
-      <p class="sub">Acces intern — introducere date arbitri</p>
+      <p class="sub">Acces intern — introducere date participanți</p>
       <p class="login-error" id="loginError"></p>
       <form id="loginForm">
         <div class="field">
@@ -543,11 +552,15 @@
   <!-- ══ APP ══ -->
   <div id="app">
     <header class="topbar">
-      <div class="brand"><span class="wordmark">PONTAJ</span> <small>SETKA-PRO · arbitri</small></div>
+      <div class="brand"><span class="wordmark">PONTAJ</span> <small>SETKA-PRO · participanți</small></div>
       <div class="month-nav">
         <button type="button" id="prevMonth" aria-label="Luna precedentă">‹</button>
         <span class="month-label num" id="monthLabel">—</span>
         <button type="button" id="nextMonth" aria-label="Luna următoare">›</button>
+        <button type="button" class="btn btn-sm btn-ghost lock-month-btn" id="lockMonthBtn">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" id="lockMonthIcon"><rect x="5" y="9" width="10" height="7" rx="1.5"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9"/></svg>
+          <span id="lockMonthLabel">Blochează luna</span>
+        </button>
       </div>
       <button class="btn btn-sm btn-gold" id="manageRefereesBtn">Participanți</button>
       <button class="btn btn-sm btn-gold" id="openArchiveBtn">Arhivă acte</button>
@@ -578,7 +591,7 @@
           <option value="active">Doar activi luna asta</option>
           <option value="inactive">Fără activitate luna asta</option>
         </select>
-        <select class="filter-select" id="sortControl" aria-label="Sortează arbitrii">
+        <select class="filter-select" id="sortControl" aria-label="Sortează participanții">
           <option value="name-asc">↕ Nume A–Z</option>
           <option value="name-desc">↕ Nume Z–A</option>
           <option value="category">↕ Categorie</option>
@@ -597,6 +610,11 @@
           <span>Total onorarii: <b class="num" id="sumFee">0</b> MDL</span>
           <span>Impozit 15%: <b class="num" id="sumTax">0</b> MDL</span>
         </div>
+      </div>
+
+      <div class="period-locked-banner" id="periodLockedBanner" style="display:none">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="9" width="10" height="7" rx="1.5"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9"/></svg>
+        Luna este blocată — datele nu pot fi editate. Deblocheaz-o din butonul de lângă navigarea lunilor pentru a face modificări.
       </div>
 
       <div class="table-wrap">
@@ -653,10 +671,13 @@
   <div class="modal-backdrop" id="detailModal">
     <div class="modal">
       <div class="modal-head">
-        <h2 id="detailTitle">Detalii arbitru</h2>
+        <h2 id="detailTitle">Detalii participant</h2>
         <button class="icon-btn" id="closeDetail" aria-label="Închide">✕</button>
       </div>
       <div class="modal-body">
+        <div class="ytd-summary" id="ytdSummary" style="display:none">
+          <span>Total încasat în <b id="ytdYear"></b>:</span> <b id="ytdTotal" class="num"></b>&nbsp;MDL
+        </div>
         <p class="section-label">Deplasare / decontare</p>
         <div class="detail-grid">
           <section class="detail-card">
@@ -735,7 +756,7 @@
     </div>
   </div>
 
-  <!-- ══ Referee list / picker (opened from "Arbitri" button) ══ -->
+  <!-- ══ Participant list / picker (opened from "Participanți" button) ══ -->
   <div class="modal-backdrop" id="listModal">
     <div class="modal" style="max-width:520px">
       <div class="modal-head">
@@ -876,6 +897,7 @@
   let savedActs = [];
   let archiveLoaded = false;
   let archiveRefFilter = '';
+  let periodLocked = false;
 
   function firstOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
   function isCurrentMonth(d){
@@ -963,9 +985,10 @@
     document.getElementById('monthLabel').textContent =
       MONTH_NAMES[requestedPeriod.getMonth()] + ' ' + requestedPeriod.getFullYear();
     document.getElementById('nextMonth').disabled = isCurrentMonth(requestedPeriod);
-    const [{ data }, { data: bonuses }] = await Promise.all([
+    const [{ data }, { data: bonuses }, { data: lockRow }] = await Promise.all([
       db.from('monthly_entries').select('*').eq('period', periodKey(requestedPeriod)),
       db.from('international_bonuses').select('*').eq('period', periodKey(requestedPeriod)),
+      db.from('locked_periods').select('period').eq('period', periodKey(requestedPeriod)).maybeSingle(),
     ]);
     // Ignore a slower response from a month the user has already left.
     if (loadId !== periodLoadId) return;
@@ -975,8 +998,34 @@
     (bonuses || []).filter(b => Number(b.amount) !== 0).forEach(b => {
       (bonusesByRef[b.referee_id] ||= []).push(b);
     });
+    periodLocked = !!lockRow;
+    renderLockUi();
     renderRows();
   }
+
+  function renderLockUi(){
+    document.getElementById('lockMonthBtn').classList.toggle('is-locked', periodLocked);
+    document.getElementById('lockMonthLabel').textContent = periodLocked ? 'Deblochează luna' : 'Blochează luna';
+    document.getElementById('periodLockedBanner').style.display = periodLocked ? 'flex' : 'none';
+  }
+  document.getElementById('lockMonthBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('lockMonthBtn');
+    btn.disabled = true;
+    const key = periodKey(currentPeriod);
+    if (periodLocked) {
+      const { error } = await db.from('locked_periods').delete().eq('period', key);
+      if (error) { alert('Nu s-a putut debloca luna: ' + error.message); btn.disabled = false; return; }
+      periodLocked = false;
+    } else {
+      if (!confirm(`Blochezi ${MONTH_NAMES[currentPeriod.getMonth()]} ${currentPeriod.getFullYear()}? Datele acestei luni nu vor mai putea fi editate până o deblochezi.`)) { btn.disabled = false; return; }
+      const { error } = await db.from('locked_periods').insert({ period: key, locked_by: session.user.id });
+      if (error) { alert('Nu s-a putut bloca luna: ' + error.message); btn.disabled = false; return; }
+      periodLocked = true;
+    }
+    renderLockUi();
+    renderRows();
+    btn.disabled = false;
+  });
 
   document.getElementById('prevMonth').addEventListener('click', async () => {
     currentPeriod = new Date(currentPeriod.getFullYear(), currentPeriod.getMonth()-1, 1);
@@ -1186,6 +1235,7 @@
         const input = document.createElement('input');
         input.type = 'number'; input.min = '0'; input.step = '1';
         input.value = entry[key] || 0;
+        input.disabled = periodLocked;
         input.dataset.refId = ref.id; input.dataset.key = key;
         input.addEventListener('input', onCellInput);
         input.addEventListener('blur', onCellBlur);
@@ -1304,6 +1354,9 @@
     document.getElementById('dPaid').value = entry.paid_amount || 0;
     document.getElementById('dConform').value = entry.conform_calcul ?? '';
     document.getElementById('dNotes').value = entry.notes || '';
+    ['dTaxi','dRegion','dKm','dPaid','dConform','dNotes'].forEach(id => { document.getElementById(id).disabled = periodLocked; });
+    document.getElementById('saveDetail').disabled = periodLocked;
+    document.getElementById('saveDetail').title = periodLocked ? 'Luna este blocată' : '';
     updateRest();
 
     const bonusMexico = document.getElementById('bonusMexico');
@@ -1319,7 +1372,7 @@
         BONUS_LABELS.forEach(label => {
           const row = document.createElement('div');
           row.className = 'bonus-row';
-          row.innerHTML = `<label>${label}</label><input type="number" step="0.01" data-bonus="${label}" value="${byLabel[label]||0}">`;
+          row.innerHTML = `<label>${label}</label><input type="number" step="0.01" data-bonus="${label}" value="${byLabel[label]||0}" ${periodLocked ? 'disabled' : ''}>`;
           (label.includes('RIO') ? bonusRio : bonusMexico).appendChild(row);
         });
       })
@@ -1329,6 +1382,24 @@
     document.getElementById('dPaid').oninput = updateRest;
     document.getElementById('dConform').oninput = updateRest;
     detailModal.classList.add('show');
+    loadYtdSummary(refId);
+  }
+  function loadYtdSummary(refId){
+    const year = currentPeriod.getFullYear();
+    const ytdEl = document.getElementById('ytdSummary');
+    ytdEl.style.display = 'none';
+    document.getElementById('ytdYear').textContent = year;
+    db.from('entry_totals').select('total_fee, bonus_total')
+      .eq('referee_id', refId)
+      .gte('period', `${year}-01-01`)
+      .lte('period', `${year}-12-31`)
+      .then(({ data, error }) => {
+        if (error || refId !== detailRefId) return; // modal may have moved to another participant by the time this resolves
+        const total = (data || []).reduce((sum, row) => sum + Number(row.total_fee || 0) + Number(row.bonus_total || 0), 0);
+        document.getElementById('ytdTotal').textContent = fmtMoney(total);
+        ytdEl.style.display = 'flex';
+      })
+      .catch(error => console.error('Nu s-a putut încărca totalul anual', error));
   }
   function updateRest(){
     const paid = Number(document.getElementById('dPaid').value)||0;
@@ -1339,6 +1410,7 @@
   document.getElementById('cancelDetail').addEventListener('click', () => detailModal.classList.remove('show'));
 
   document.getElementById('saveDetail').addEventListener('click', async () => {
+    if (periodLocked) return;
     const refId = detailRefId;
     const entry = entries[refId] || (entries[refId] = emptyEntry(refId));
     entry.taxi = Number(document.getElementById('dTaxi').value)||0;
@@ -1435,7 +1507,7 @@
 
   document.getElementById('deleteRefBtn').addEventListener('click', async () => {
     if (!editingRefId) return;
-    if (!confirm('Sigur ștergi acest arbitru? Se șterg și toate înregistrările lui.')) return;
+    if (!confirm('Sigur ștergi acest participant? Se șterg și toate înregistrările lui.')) return;
     await db.from('referees').delete().eq('id', editingRefId);
     await loadStaticData();
     await loadPeriod();
