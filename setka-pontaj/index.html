@@ -53,7 +53,7 @@
   }
   .login-card{
     width:100%; max-width:360px; background:var(--surface); border:1px solid var(--border);
-    border-radius:14px; padding:36px 28px; box-shadow:0 20px 50px rgba(0,0,0,.35); text-align:center;
+    border-radius:12px; padding:32px; box-shadow:0 24px 60px rgba(0,0,0,.38); text-align:center;
   }
   .login-card .wordmark{ font-size:clamp(40px,10vw,56px); display:block; }
   .login-card .client-tag{
@@ -72,14 +72,15 @@
   .btn{
     display:inline-flex; align-items:center; justify-content:center; gap:6px;
     padding:9px 16px; border-radius:6px; border:1px solid transparent; cursor:pointer;
-    font-weight:600; font-size:13.5px; transition:filter .1s ease;
+    font-weight:600; font-size:13.5px; transition:opacity .15s ease, background .15s ease, border-color .15s ease, color .15s ease;
   }
   .btn:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
-  .btn-primary{ background:var(--gold); color:var(--bg); width:100%; }
-  .btn-primary:hover{ filter:brightness(1.08); }
+  .btn-primary{ background:var(--gold); color:var(--bg); width:auto; }
+  .btn-primary:hover{ opacity:.86; }
   .btn-primary:disabled{ opacity:.55; cursor:default; }
+  #loginSubmit{ width:100%; }
   .btn-ghost{ background:transparent; color:var(--muted); border-color:var(--border); }
-  .btn-ghost:hover{ background:var(--surface2); color:var(--text); }
+  .btn-ghost:hover{ color:var(--text); border-color:var(--muted); }
   .btn-sm{ padding:6px 11px; font-size:12.5px; }
   .login-error{ color:var(--red); font-size:12.5px; margin:0 0 12px; min-height:1em; }
   .login-toggle{ text-align:center; margin-top:14px; font-size:12.5px; color:var(--muted); }
@@ -90,7 +91,8 @@
   #app.show{ display:flex; }
   header.topbar{
     background:var(--surface); border-bottom:1px solid var(--border);
-    padding:12px 20px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+    min-height:56px; padding:0 32px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+    box-shadow:0 1px 0 rgba(200,169,110,.14);
     position:sticky; top:0; z-index:20;
   }
   .brand{ display:flex; align-items:baseline; gap:9px; margin-right:auto; }
@@ -107,18 +109,18 @@
     font-weight:700; min-width:132px; text-align:center; text-transform:capitalize; font-size:13.5px;
   }
   .user-chip{ font-size:12.5px; color:var(--muted); }
-  main{ flex:1; padding:18px 20px 60px; max-width:1400px; width:100%; margin:0 auto; }
+  main{ flex:1; padding:30px 32px 64px; max-width:1400px; width:100%; margin:0 auto; }
 
-  .toolbar{ display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+  .toolbar{ display:flex; align-items:center; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
   .search-wrap{ position:relative; flex:1; min-width:200px; max-width:340px; }
   .search-wrap svg{ position:absolute; left:10px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--muted); }
   #search{
-    width:100%; padding:8px 10px 8px 32px; border:1px solid var(--border); border-radius:7px; background:var(--surface); color:var(--text);
+    width:100%; padding:9px 10px 9px 32px; border:1px solid var(--border); border-radius:7px; background:var(--bg); color:var(--text);
   }
   #search:focus{ outline:2px solid var(--gold); outline-offset:1px; }
   .filter-select{
     padding:8px 30px 8px 10px; border:1px solid var(--border); border-radius:7px;
-    background:var(--surface); color:var(--text); cursor:pointer;
+    background:var(--bg); color:var(--text); cursor:pointer;
   }
   .filter-select:focus{ outline:2px solid var(--gold); outline-offset:1px; }
   .btn-export{ border-color:rgba(200,169,110,.55); background:var(--gold-dim); color:var(--gold-hi); white-space:nowrap; }
@@ -142,14 +144,14 @@
   .switch input:focus-visible + .switch-track{ outline:2px solid var(--gold); outline-offset:2px; }
   .summary-chip{
     margin-left:auto; display:flex; gap:14px; font-size:12.5px; color:var(--muted);
-    background:var(--surface); border:1px solid var(--border); border-radius:7px; padding:7px 14px;
+    background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:8px 14px;
   }
-  .summary-chip b{ color:var(--text); font-weight:700; }
+  .summary-chip b{ color:var(--gold); font-weight:700; }
 
   /* ── Table ── */
   .table-wrap{
     background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-    overflow-x:auto; box-shadow:0 1px 2px rgba(0,0,0,.15);
+    overflow-x:auto; box-shadow:0 12px 30px rgba(0,0,0,.14);
   }
   table{ border-collapse:collapse; width:100%; min-width:1180px; }
   thead th{
@@ -225,38 +227,38 @@
 
   /* ── Modal ── */
   .modal-backdrop{
-    position:fixed; inset:0; background:rgba(0,0,0,.6); display:none;
+    position:fixed; inset:0; background:rgba(0,0,0,.72); display:none;
     align-items:flex-start; justify-content:center; z-index:100; padding:5vh 16px; overflow-y:auto;
   }
   .modal-backdrop.show{ display:flex; }
   .modal{
-    background:var(--surface); border:1px solid var(--border); border-radius:14px; width:100%; max-width:560px;
-    box-shadow:0 30px 60px rgba(0,0,0,.5); animation:modalIn .15s ease;
+    background:var(--surface); border:1px solid var(--border); border-radius:12px; width:100%; max-width:560px;
+    box-shadow:0 30px 70px rgba(0,0,0,.55); animation:modalIn .15s ease;
   }
   @keyframes modalIn{ from{ opacity:0; transform:translateY(8px);} to{ opacity:1; transform:none; } }
   .modal-head{
-    display:flex; align-items:center; justify-content:space-between; padding:16px 20px;
+    display:flex; align-items:center; justify-content:space-between; padding:20px 28px;
     border-bottom:1px solid var(--border);
   }
-  .modal-head h2{ font-size:15.5px; margin:0; color:var(--text); }
+  .modal-head h2{ font-family:'Cormorant Garamond',serif; font-size:21px; font-weight:600; letter-spacing:.02em; margin:0; color:var(--gold); }
   .modal-head .icon-btn{ border:0; }
-  .modal-body{ padding:18px 20px; max-height:70vh; overflow-y:auto; }
-  .modal-foot{ padding:14px 20px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
+  .modal-body{ padding:24px 28px; max-height:70vh; overflow-y:auto; }
+  .modal-foot{ padding:16px 28px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
   .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .form-grid .field.full{ grid-column:1/-1; }
   .section-label{
-    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted);
-    margin:18px 0 8px;
+    font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.1em; color:var(--gold);
+    margin:22px 0 10px;
   }
   .section-label:first-child{ margin-top:0; }
   #detailModal .modal{ max-width:760px; }
   .detail-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .detail-card{ background:var(--bg); border:1px solid var(--border); border-radius:9px; padding:14px; }
-  .detail-card-title{ margin:0 0 12px; color:var(--text); font-size:12px; font-weight:700; }
+  .detail-card{ background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:16px; }
+  .detail-card-title{ margin:0 0 14px; color:var(--text); font-size:15px; font-weight:700; }
   .detail-card .field:last-child{ margin-bottom:0; }
   .bonus-groups{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .bonus-group{ background:var(--bg); border:1px solid var(--border); border-radius:9px; padding:4px 12px 8px; }
-  .bonus-group h3{ margin:8px 0 4px; color:var(--text); font-size:12px; }
+  .bonus-group{ background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:6px 14px 10px; }
+  .bonus-group h3{ margin:10px 0 6px; color:var(--text); font-size:15px; font-weight:700; }
   .bonus-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px solid var(--line-2); }
   .bonus-row:last-child{ border-bottom:0; }
   .bonus-row label{ font-size:12.5px; color:var(--muted); }
@@ -305,6 +307,7 @@
   .act-doc table{ width:100%; min-width:0; margin:0; border-collapse:collapse; table-layout:fixed; }
   .act-doc th, .act-doc td{ border:1px solid #c8cdd3; padding:3px 4px; font-size:11.5px; line-height:1.15; color:#111; }
   .act-doc th{ position:static; background:#fff; text-transform:none; letter-spacing:0; font-weight:700; text-align:center; }
+  .act-doc tbody tr:hover{ background:transparent; } /* the roster table's row-hover tint is unscoped and otherwise bleeds into this table too */
   .act-doc th:first-child{ text-align:left; }
   .act-doc td.r{ text-align:center; }
   .act-services th:nth-child(1){ width:48%; }
@@ -548,7 +551,9 @@
       <div class="toolbar">
         <div class="search-wrap">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="9" r="6"/><path d="M17 17l-4-4" stroke-linecap="round"/></svg>
-          <input id="search" type="text" placeholder="Caută…">
+          <input id="search" name="participant-search-no-autofill" type="search" placeholder="Caută…"
+            autocomplete="off" autocapitalize="none" spellcheck="false" aria-autocomplete="none"
+            data-lpignore="true" data-form-type="other">
         </div>
         <select class="filter-select" id="categoryFilter" aria-label="Filtrează după categorie">
           <option value="">Toate categoriile</option>
@@ -826,7 +831,8 @@
   let session = null;
   let referees = [];         // full roster
   let rateCategories = {};   // category -> rates
-  let globalRates = { arbitraj_day:0, arbitraj_night:0, tax_rate:0.15 };
+  const ACT_TAX_RATE = 0.15; // the printed act's legal tax rate is fixed — it must not drift if globalRates.tax_rate is ever reconfigured
+  let globalRates = { arbitraj_day:0, arbitraj_night:0, tax_rate:ACT_TAX_RATE };
   let entries = {};          // referee_id -> monthly_entries row (for current period)
   let bonusesByRef = {};     // referee_id -> non-zero international bonuses for current period
   let currentPeriod = firstOfMonth(new Date());
@@ -1435,9 +1441,10 @@
         <td class="r" data-act-fee>${fmtMoney(fee)}</td>
       </tr>`;
     }).join('');
-    const tax = total * globalRates.tax_rate;
+    const tax = total * ACT_TAX_RATE;
+    const totalIncludingTax = total + tax;
     const monthLabel = `${MONTH_NAMES[currentPeriod.getMonth()]} ${currentPeriod.getFullYear()}`;
-    const taxPercent = fmtMoney(globalRates.tax_rate * 100);
+    const taxPercent = fmtMoney(ACT_TAX_RATE * 100);
     const participantBic = bicForParticipant(ref);
     document.getElementById('actDoc').innerHTML = `
       <div class="act-title">
@@ -1486,7 +1493,7 @@
               <tr class="act-blank-row"><td colspan="3"></td><td></td></tr>
               <tr class="act-blank-row"><td colspan="3"></td><td></td></tr>
               <tr class="act-total-row"><td colspan="3">TOTAL SPRE PLATĂ</td><td class="r" id="actTotal">${fmtMoney(total)}</td></tr>
-              <tr class="act-tax-row"><td colspan="3">inclusiv impozit ${taxPercent}%</td><td class="r" id="actTax">${fmtMoney(tax)}</td></tr>
+              <tr class="act-tax-row"><td colspan="3">inclusiv impozit ${taxPercent}%</td><td class="r" id="actTax">${fmtMoney(totalIncludingTax)}</td></tr>
             </tbody>
           </table>
         </div>
@@ -1572,9 +1579,10 @@
       row.querySelector('[data-act-fee]').textContent = fmtMoney(fee);
       total += fee;
     });
-    const tax = total * globalRates.tax_rate;
+    const tax = total * ACT_TAX_RATE;
+    const totalIncludingTax = total + tax;
     document.getElementById('actTotal').textContent = fmtMoney(total);
-    document.getElementById('actTax').textContent = fmtMoney(tax);
+    document.getElementById('actTax').textContent = fmtMoney(totalIncludingTax);
     if (_actState) {
       _actState.total = total;
       _actState.tax = tax;
