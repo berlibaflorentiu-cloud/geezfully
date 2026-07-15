@@ -1,0 +1,898 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pontaj — SETKA-PRO</title>
+<meta name="robots" content="noindex, nofollow">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root{
+    --ink:#1B2432; --ink-2:#4B5768; --line:#E2E5EA; --line-2:#EDEFF2;
+    --bg:#F5F6F8; --card:#FFFFFF;
+    --accent:#1B4B6B; --accent-hi:#256089; --accent-bg:#EAF1F6;
+    --good:#1F7A4D; --good-bg:#E8F5EE;
+    --warn:#B5651D; --warn-bg:#FBF0E6;
+    --danger:#B5303B; --danger-bg:#FBEAEC;
+    --radius:10px;
+  }
+  *,*::before,*::after{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;
+    font-size:14px; line-height:1.45;
+  }
+  .num{ font-variant-numeric:tabular-nums; font-feature-settings:'tnum'; }
+  button{ font-family:inherit; }
+  input,select{ font-family:inherit; font-size:inherit; }
+
+  /* ── Login ── */
+  #loginScreen{
+    min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .login-card{
+    width:100%; max-width:360px; background:var(--card); border:1px solid var(--line);
+    border-radius:14px; padding:32px 28px; box-shadow:0 12px 32px rgba(20,30,50,.06);
+  }
+  .login-card h1{ font-size:19px; margin:0 0 4px; }
+  .login-card p.sub{ margin:0 0 22px; color:var(--ink-2); font-size:13px; }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12.5px; font-weight:600; color:var(--ink-2); margin-bottom:5px; }
+  .field input{
+    width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:8px;
+    background:#fff; color:var(--ink);
+  }
+  .field input:focus{ outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent); }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    padding:9px 16px; border-radius:8px; border:1px solid transparent; cursor:pointer;
+    font-weight:600; font-size:13.5px; transition:filter .1s ease;
+  }
+  .btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .btn-primary{ background:var(--accent); color:#fff; width:100%; }
+  .btn-primary:hover{ filter:brightness(1.08); }
+  .btn-primary:disabled{ opacity:.55; cursor:default; }
+  .btn-ghost{ background:transparent; color:var(--ink-2); border-color:var(--line); }
+  .btn-ghost:hover{ background:var(--line-2); }
+  .btn-sm{ padding:6px 11px; font-size:12.5px; }
+  .login-error{ color:var(--danger); font-size:12.5px; margin:0 0 12px; min-height:1em; }
+  .login-toggle{ text-align:center; margin-top:14px; font-size:12.5px; color:var(--ink-2); }
+  .login-toggle button{ background:none; border:0; color:var(--accent); font-weight:600; cursor:pointer; padding:0; }
+
+  /* ── App shell ── */
+  #app{ display:none; min-height:100dvh; flex-direction:column; }
+  #app.show{ display:flex; }
+  header.topbar{
+    background:var(--card); border-bottom:1px solid var(--line);
+    padding:12px 20px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+    position:sticky; top:0; z-index:20;
+  }
+  .brand{ font-weight:800; font-size:15.5px; letter-spacing:-.01em; margin-right:auto; }
+  .brand small{ display:block; font-weight:500; font-size:11px; color:var(--ink-2); letter-spacing:.02em; }
+  .month-nav{ display:flex; align-items:center; gap:6px; }
+  .month-nav button{
+    width:28px; height:28px; border-radius:7px; border:1px solid var(--line); background:#fff;
+    color:var(--ink-2); cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .month-nav button:hover{ background:var(--line-2); }
+  .month-label{
+    font-weight:700; min-width:132px; text-align:center; text-transform:capitalize; font-size:13.5px;
+  }
+  .user-chip{ font-size:12.5px; color:var(--ink-2); }
+  main{ flex:1; padding:18px 20px 60px; max-width:1400px; width:100%; margin:0 auto; }
+
+  .toolbar{ display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+  .search-wrap{ position:relative; flex:1; min-width:200px; max-width:340px; }
+  .search-wrap svg{ position:absolute; left:10px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--ink-2); }
+  #search{
+    width:100%; padding:8px 10px 8px 32px; border:1px solid var(--line); border-radius:8px; background:#fff;
+  }
+  #search:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  .toggle{ display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-2); cursor:pointer; user-select:none; }
+  .toggle input{ accent-color:var(--accent); }
+  .summary-chip{
+    margin-left:auto; display:flex; gap:14px; font-size:12.5px; color:var(--ink-2);
+    background:#fff; border:1px solid var(--line); border-radius:8px; padding:7px 14px;
+  }
+  .summary-chip b{ color:var(--ink); font-weight:700; }
+
+  /* ── Table ── */
+  .table-wrap{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    overflow-x:auto; box-shadow:0 1px 2px rgba(20,30,50,.03);
+  }
+  table{ border-collapse:collapse; width:100%; min-width:1180px; }
+  thead th{
+    position:sticky; top:0; background:#FAFBFC; z-index:5;
+    text-align:left; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em;
+    color:var(--ink-2); padding:9px 8px; border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  thead th.grp{ text-align:center; background:#F3F5F7; }
+  tbody td{ padding:5px 6px; border-bottom:1px solid var(--line-2); vertical-align:middle; }
+  tbody tr:hover{ background:#FAFBFC; }
+  tbody tr.inactive-row{ opacity:.55; }
+  .name-cell{ min-width:170px; }
+  .name-cell .full{ font-weight:600; white-space:nowrap; }
+  .cat-badge{
+    display:inline-block; font-size:10px; font-weight:700; padding:2px 7px; border-radius:99px;
+    margin-top:2px; letter-spacing:.02em;
+  }
+  .cat-TOP{ background:#F6E9D0; color:#8A5A0A; }
+  .cat-I{ background:var(--accent-bg); color:var(--accent); }
+  .cat-II{ background:#E7ECF7; color:#3B4E8C; }
+  .cat-III{ background:var(--line-2); color:var(--ink-2); }
+  .cat-Referee{ background:var(--good-bg); color:var(--good); }
+  td.num-cell input{
+    width:52px; padding:5px 4px; text-align:center; border:1px solid transparent; border-radius:6px;
+    background:transparent; color:var(--ink);
+  }
+  td.num-cell input:hover{ border-color:var(--line); background:#fff; }
+  td.num-cell input:focus{ outline:2px solid var(--accent); outline-offset:0; border-color:var(--accent); background:#fff; }
+  td.num-cell input.dirty{ background:var(--accent-bg); }
+  .fee-cell{ font-weight:700; text-align:right; padding-right:10px; white-space:nowrap; }
+  .row-actions{ display:flex; gap:4px; }
+  .icon-btn{
+    width:26px; height:26px; border-radius:6px; border:1px solid var(--line); background:#fff;
+    color:var(--ink-2); cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .icon-btn:hover{ background:var(--line-2); color:var(--ink); }
+  .icon-btn svg{ width:14px; height:14px; }
+  .save-dot{
+    width:7px; height:7px; border-radius:50%; display:inline-block; margin-left:5px;
+    background:var(--good); opacity:0; transition:opacity .3s ease;
+  }
+  .save-dot.show{ opacity:1; }
+  .save-dot.err{ background:var(--danger); }
+
+  .empty-state{ text-align:center; padding:50px 20px; color:var(--ink-2); }
+
+  /* ── Modal ── */
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(20,26,38,.5); display:none;
+    align-items:flex-start; justify-content:center; z-index:100; padding:5vh 16px; overflow-y:auto;
+  }
+  .modal-backdrop.show{ display:flex; }
+  .modal{
+    background:#fff; border-radius:14px; width:100%; max-width:560px;
+    box-shadow:0 30px 60px rgba(20,30,50,.25); animation:modalIn .15s ease;
+  }
+  @keyframes modalIn{ from{ opacity:0; transform:translateY(8px);} to{ opacity:1; transform:none; } }
+  .modal-head{
+    display:flex; align-items:center; justify-content:space-between; padding:16px 20px;
+    border-bottom:1px solid var(--line);
+  }
+  .modal-head h2{ font-size:15.5px; margin:0; }
+  .modal-head .icon-btn{ border:0; }
+  .modal-body{ padding:18px 20px; max-height:70vh; overflow-y:auto; }
+  .modal-foot{ padding:14px 20px; border-top:1px solid var(--line); display:flex; justify-content:flex-end; gap:8px; }
+  .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .form-grid .field.full{ grid-column:1/-1; }
+  .section-label{
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-2);
+    margin:18px 0 8px;
+  }
+  .section-label:first-child{ margin-top:0; }
+  .bonus-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px solid var(--line-2); }
+  .bonus-row label{ font-size:12.5px; color:var(--ink-2); }
+  .bonus-row input{ width:100px; padding:6px 8px; border:1px solid var(--line); border-radius:6px; text-align:right; }
+  .recon-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+
+  /* ── Act de prestare (print doc) ── */
+  #actModal .modal{ max-width:680px; }
+  .act-doc{ padding:8px 4px; font-size:13px; }
+  .act-doc h3{ text-align:center; font-size:15px; letter-spacing:.02em; margin:0 0 18px; }
+  .act-doc table{ width:100%; margin:14px 0; min-width:0; }
+  .act-doc th, .act-doc td{ border:1px solid var(--line); padding:6px 8px; font-size:12.5px; }
+  .act-doc th{ background:#FAFBFC; text-transform:none; letter-spacing:0; font-size:11.5px; }
+  .act-doc td.r{ text-align:right; }
+  .act-total-row td{ font-weight:700; }
+  .act-meta{ color:var(--ink-2); font-size:12.5px; margin:2px 0; }
+  .act-sign{ display:flex; justify-content:space-between; margin-top:26px; gap:20px; }
+  .act-sign div{ flex:1; font-size:12px; color:var(--ink-2); }
+  .act-sign b{ display:block; color:var(--ink); margin-bottom:2px; }
+
+  @media print{
+    body *{ visibility:hidden; }
+    #actModal, #actModal *{ visibility:visible; }
+    #actModal{ position:absolute; inset:0; background:#fff; padding:0; }
+    #actModal .modal{ box-shadow:none; max-width:none; }
+    #actModal .modal-head, #actModal .modal-foot{ display:none; }
+  }
+
+  @media (max-width:760px){
+    .form-grid{ grid-template-columns:1fr; }
+    .recon-grid{ grid-template-columns:1fr 1fr; }
+    header.topbar{ padding:10px 14px; }
+    main{ padding:14px 14px 50px; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ══ LOGIN ══ -->
+  <div id="loginScreen">
+    <div class="login-card">
+      <h1>Pontaj SETKA-PRO</h1>
+      <p class="sub">Acces intern — introducere date arbitri</p>
+      <p class="login-error" id="loginError"></p>
+      <form id="loginForm">
+        <div class="field">
+          <label for="loginEmail">Email</label>
+          <input id="loginEmail" type="email" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="loginPassword">Parolă</label>
+          <input id="loginPassword" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn btn-primary" type="submit" id="loginSubmit">Intră în cont</button>
+      </form>
+      <p class="login-toggle">
+        <span id="toggleToSignup">Nu ai cont? <button type="button" id="showSignup">Creează unul</button></span>
+        <span id="toggleToLogin" style="display:none">Ai deja cont? <button type="button" id="showLogin">Intră în cont</button></span>
+      </p>
+    </div>
+  </div>
+
+  <!-- ══ PENDING APPROVAL ══ -->
+  <div id="pendingScreen" style="display:none; min-height:100dvh; align-items:center; justify-content:center; padding:20px;">
+    <div class="login-card">
+      <h1>Cont în așteptare</h1>
+      <p class="sub">Contul <b id="pendingEmail"></b> a fost creat, dar nu are încă acces aprobat. Cere unui administrator să aprobe contul din baza de date.</p>
+      <button class="btn btn-ghost" id="pendingLogout" style="width:100%">Ieși din cont</button>
+    </div>
+  </div>
+
+  <!-- ══ APP ══ -->
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">Pontaj <small>SETKA-PRO · arbitri</small></div>
+      <div class="month-nav">
+        <button id="prevMonth" aria-label="Luna precedentă">‹</button>
+        <span class="month-label num" id="monthLabel">—</span>
+        <button id="nextMonth" aria-label="Luna următoare">›</button>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="manageRefereesBtn">Arbitri</button>
+      <span class="user-chip" id="userChip"></span>
+      <button class="btn btn-ghost btn-sm" id="logoutBtn">Ieși</button>
+    </header>
+
+    <main>
+      <div class="toolbar">
+        <div class="search-wrap">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="9" r="6"/><path d="M17 17l-4-4" stroke-linecap="round"/></svg>
+          <input id="search" type="text" placeholder="Caută arbitru…">
+        </div>
+        <label class="toggle"><input type="checkbox" id="activeOnlyToggle" checked> doar activi luna asta</label>
+        <div class="summary-chip">
+          <span>Activi: <b id="sumActive">0</b></span>
+          <span>Total onorarii: <b class="num" id="sumFee">0</b> MDL</span>
+          <span>Impozit 15%: <b class="num" id="sumTax">0</b> MDL</span>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th rowspan="2" style="min-width:170px">Arbitru</th>
+              <th colspan="2" class="grp">Turneu</th>
+              <th colspan="2" class="grp">Meciuri</th>
+              <th colspan="2" class="grp">Locul I</th>
+              <th colspan="2" class="grp">Locul III</th>
+              <th colspan="2" class="grp">Arbitraj</th>
+              <th rowspan="2">Onorariu</th>
+              <th rowspan="2"></th>
+            </tr>
+            <tr>
+              <th>zi</th><th>noapte</th>
+              <th>zi</th><th>noapte</th>
+              <th>zi</th><th>noapte</th>
+              <th>zi</th><th>noapte</th>
+              <th>zi</th><th>noapte</th>
+            </tr>
+          </thead>
+          <tbody id="rowsBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="emptyState" style="display:none">Niciun arbitru găsit.</div>
+    </main>
+  </div>
+
+  <!-- ══ Referee detail modal (bonuses + travel/reconciliation + edit roster) ══ -->
+  <div class="modal-backdrop" id="detailModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="detailTitle">Detalii arbitru</h2>
+        <button class="icon-btn" id="closeDetail" aria-label="Închide">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="section-label">Deplasare / decontare</p>
+        <div class="recon-grid">
+          <div class="field"><label>Taxi (mdl)</label><input type="number" id="dTaxi" step="0.01"></div>
+          <div class="field"><label>Regiune</label><input type="text" id="dRegion"></div>
+          <div class="field"><label>Km</label><input type="number" id="dKm" step="0.01"></div>
+          <div class="field"><label>Achitat (mdl)</label><input type="number" id="dPaid" step="0.01"></div>
+          <div class="field"><label>Conform calculului</label><input type="number" id="dConform" step="0.01"></div>
+          <div class="field"><label>Rest</label><input type="text" id="dRest" disabled></div>
+        </div>
+
+        <p class="section-label">Bonusuri internaționale (opțional)</p>
+        <div id="bonusList"></div>
+
+        <p class="section-label">Notă</p>
+        <div class="field full"><input type="text" id="dNotes" placeholder="opțional"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" id="cancelDetail">Anulează</button>
+        <button class="btn btn-primary" id="saveDetail">Salvează</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Referee roster manager ══ -->
+  <div class="modal-backdrop" id="refModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="refModalTitle">Arbitru nou</h2>
+        <button class="icon-btn" id="closeRef" aria-label="Închide">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field"><label>Nume</label><input type="text" id="rLastName" required></div>
+          <div class="field"><label>Prenume</label><input type="text" id="rFirstName" required></div>
+          <div class="field"><label>Categorie</label>
+            <select id="rCategory">
+              <option value="TOP">TOP</option><option value="I">I</option><option value="II">II</option>
+              <option value="III">III</option><option value="Referee">Referee</option>
+            </select>
+          </div>
+          <div class="field"><label>Bancă</label><input type="text" id="rBank"></div>
+          <div class="field"><label>Cod fiscal</label><input type="text" id="rFiscal"></div>
+          <div class="field"><label>IBAN</label><input type="text" id="rIban"></div>
+          <div class="field"><label>Nr. contract</label><input type="text" id="rContractNo"></div>
+          <div class="field"><label>Data contract</label><input type="text" id="rContractDate" placeholder="ex: 25 mart"></div>
+          <div class="field full">
+            <label class="toggle"><input type="checkbox" id="rActive" checked> activ (apare în lista de introducere date)</label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" id="deleteRefBtn" style="margin-right:auto; color:var(--danger); border-color:var(--danger-bg)">Șterge</button>
+        <button class="btn btn-ghost" id="cancelRef">Anulează</button>
+        <button class="btn btn-primary" id="saveRef">Salvează</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Referee list / picker (opened from "Arbitri" button) ══ -->
+  <div class="modal-backdrop" id="listModal">
+    <div class="modal" style="max-width:520px">
+      <div class="modal-head">
+        <h2>Listă arbitri</h2>
+        <button class="icon-btn" id="closeList" aria-label="Închide">✕</button>
+      </div>
+      <div class="modal-body">
+        <button class="btn btn-primary btn-sm" id="addRefBtn" style="margin-bottom:12px">+ Arbitru nou</button>
+        <div id="refList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Act de prestare (printable) ══ -->
+  <div class="modal-backdrop" id="actModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>Act de prestare a serviciilor sportive</h2>
+        <button class="icon-btn" id="closeAct" aria-label="Închide">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="act-doc" id="actDoc"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" id="closeActBtn">Închide</button>
+        <button class="btn btn-primary" id="printActBtn">Printează</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  'use strict';
+
+  // ══════════ CONFIG — fill in once the Supabase project exists ══════════
+  const SUPA_URL = 'https://ufkeqoeyrhwvvvtiopyt.supabase.co';
+  const SUPA_KEY = 'sb_publishable_ikWN1Xa22Mj90c1r6pwuhQ_eb8m7Juv';
+  // ══════════════════════════════════════════════════════════════════════
+
+  const db = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+  const ITEM_KEYS = [
+    ['tournament_day','tournament_night'],
+    ['matches_day','matches_night'],
+    ['place1_day','place1_night'],
+    ['place3_day','place3_night'],
+    ['arbitraj_day','arbitraj_night'],
+  ];
+  const ALL_KEYS = ITEM_KEYS.flat();
+  const BONUS_LABELS = [
+    'MEXICO (T)','MEXICO (WM)','MEXICO (I)','MEXICO (III)',
+    'RIO (T)','RIO (WM)','RIO (I)','RIO (III)',
+    'REFF MEX DAY','REFF MEX NIGHT','REFF RIO'
+  ];
+  const MONTH_NAMES = ['ianuarie','februarie','martie','aprilie','mai','iunie','iulie','august','septembrie','octombrie','noiembrie','decembrie'];
+
+  let session = null;
+  let referees = [];         // full roster
+  let rateCategories = {};   // category -> rates
+  let globalRates = { arbitraj_day:0, arbitraj_night:0, tax_rate:0.15 };
+  let entries = {};          // referee_id -> monthly_entries row (for current period)
+  let currentPeriod = firstOfMonth(new Date());
+  let searchTerm = '';
+  let activeOnly = true;
+  let saveTimers = {};
+
+  function firstOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+  function periodKey(d){
+    // Local date components only — toISOString() converts to UTC first,
+    // which silently shifts local midnight back a day for any timezone
+    // ahead of UTC (e.g. Moldova, UTC+2/+3), landing entries in the wrong month.
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-01';
+  }
+  function fmtMoney(n){ return (Math.round((n||0)*100)/100).toLocaleString('ro-RO'); }
+
+  // ══ AUTH ══
+  const loginScreen = document.getElementById('loginScreen');
+  const appEl = document.getElementById('app');
+  const loginForm = document.getElementById('loginForm');
+  const loginError = document.getElementById('loginError');
+  const loginSubmit = document.getElementById('loginSubmit');
+  let signupMode = false;
+
+  document.getElementById('showSignup').addEventListener('click', () => {
+    signupMode = true;
+    document.getElementById('toggleToSignup').style.display = 'none';
+    document.getElementById('toggleToLogin').style.display = '';
+    loginSubmit.textContent = 'Creează cont';
+  });
+  document.getElementById('showLogin').addEventListener('click', () => {
+    signupMode = false;
+    document.getElementById('toggleToSignup').style.display = '';
+    document.getElementById('toggleToLogin').style.display = 'none';
+    loginSubmit.textContent = 'Intră în cont';
+  });
+
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    loginError.textContent = '';
+    loginSubmit.disabled = true;
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    try {
+      const { error } = signupMode
+        ? await db.auth.signUp({ email, password })
+        : await db.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      if (signupMode) loginError.textContent = 'Cont creat. Verifică email-ul dacă e nevoie de confirmare, apoi intră în cont.';
+    } catch (err) {
+      loginError.textContent = err.message || 'Eroare la autentificare.';
+    } finally {
+      loginSubmit.disabled = false;
+    }
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', () => db.auth.signOut());
+  document.getElementById('pendingLogout').addEventListener('click', () => db.auth.signOut());
+  const pendingScreen = document.getElementById('pendingScreen');
+
+  db.auth.onAuthStateChange(async (event, s) => {
+    session = s;
+    pendingScreen.style.display = 'none';
+    if (session) {
+      loginScreen.style.display = 'none';
+      // RLS blocks unapproved profiles from seeing *other* rows, but a user
+      // can always read their own profile row — use that to gate the app UI
+      // with a clear message instead of silently rendering empty data.
+      const { data: profile } = await db.from('profiles').select('approved').eq('id', session.user.id).single();
+      if (!profile || !profile.approved) {
+        appEl.classList.remove('show');
+        document.getElementById('pendingEmail').textContent = session.user.email;
+        pendingScreen.style.display = 'flex';
+        return;
+      }
+      appEl.classList.add('show');
+      document.getElementById('userChip').textContent = session.user.email;
+      await loadStaticData();
+      await loadPeriod();
+    } else {
+      appEl.classList.remove('show');
+      loginScreen.style.display = 'flex';
+    }
+  });
+
+  // ══ DATA LOADING ══
+  async function loadStaticData(){
+    const [{ data: refs }, { data: rc }, { data: gr }] = await Promise.all([
+      db.from('referees').select('*').order('last_name'),
+      db.from('rate_categories').select('*'),
+      db.from('global_rates').select('*').eq('id', 1).single(),
+    ]);
+    referees = refs || [];
+    rateCategories = {};
+    (rc || []).forEach(r => rateCategories[r.category] = r);
+    if (gr) globalRates = gr;
+    renderRefList();
+  }
+
+  async function loadPeriod(){
+    document.getElementById('monthLabel').textContent =
+      MONTH_NAMES[currentPeriod.getMonth()] + ' ' + currentPeriod.getFullYear();
+    const { data } = await db.from('monthly_entries').select('*').eq('period', periodKey(currentPeriod));
+    entries = {};
+    (data || []).forEach(e => entries[e.referee_id] = e);
+    renderRows();
+  }
+
+  document.getElementById('prevMonth').addEventListener('click', () => {
+    currentPeriod = new Date(currentPeriod.getFullYear(), currentPeriod.getMonth()-1, 1);
+    loadPeriod();
+  });
+  document.getElementById('nextMonth').addEventListener('click', () => {
+    currentPeriod = new Date(currentPeriod.getFullYear(), currentPeriod.getMonth()+1, 1);
+    loadPeriod();
+  });
+  document.getElementById('search').addEventListener('input', (e) => { searchTerm = e.target.value.toLowerCase(); renderRows(); });
+  document.getElementById('activeOnlyToggle').addEventListener('change', (e) => { activeOnly = e.target.checked; renderRows(); });
+
+  // ══ FEE CALC — mirrors the entry_totals SQL view exactly ══
+  function computeFee(referee, entry){
+    if (!entry) return 0;
+    const rc = rateCategories[referee.category] || {};
+    let total = 0;
+    total += (entry.tournament_day||0)   * (rc.tournament_day||0);
+    total += (entry.tournament_night||0) * (rc.tournament_night||0);
+    total += (entry.matches_day||0)      * (rc.matches_day||0);
+    total += (entry.matches_night||0)    * (rc.matches_night||0);
+    total += (entry.place1_day||0)       * (rc.place1_day||0);
+    total += (entry.place1_night||0)     * (rc.place1_night||0);
+    total += (entry.place3_day||0)       * (rc.place3_day||0);
+    total += (entry.place3_night||0)     * (rc.place3_night||0);
+    total += (entry.arbitraj_day||0)     * (globalRates.arbitraj_day||0);
+    total += (entry.arbitraj_night||0)   * (globalRates.arbitraj_night||0);
+    return total;
+  }
+
+  function emptyEntry(refereeId){
+    return { referee_id: refereeId, period: periodKey(currentPeriod),
+      tournament_day:0, tournament_night:0, matches_day:0, matches_night:0,
+      place1_day:0, place1_night:0, place3_day:0, place3_night:0,
+      arbitraj_day:0, arbitraj_night:0, taxi:0, region:'', km:0,
+      paid_amount:0, conform_calcul:null, notes:'' };
+  }
+
+  function hasActivity(entry){
+    if (!entry) return false;
+    return ALL_KEYS.some(k => (entry[k]||0) !== 0);
+  }
+
+  // ══ ROWS RENDER ══
+  const rowsBody = document.getElementById('rowsBody');
+  function renderRows(){
+    let list = referees.filter(r => r.active !== false);
+    if (searchTerm) {
+      list = list.filter(r => (r.last_name+' '+r.first_name).toLowerCase().includes(searchTerm));
+    }
+    if (activeOnly && !searchTerm) {
+      list = list.filter(r => hasActivity(entries[r.id]));
+    }
+    document.getElementById('emptyState').style.display = list.length ? 'none' : 'block';
+
+    rowsBody.innerHTML = '';
+    let sumFee = 0, activeCount = 0;
+    list.forEach(ref => {
+      const entry = entries[ref.id] || emptyEntry(ref.id);
+      const fee = computeFee(ref, entry);
+      if (hasActivity(entry)) { sumFee += fee; activeCount++; }
+
+      const tr = document.createElement('tr');
+      if (!hasActivity(entry)) tr.className = 'inactive-row';
+
+      const nameTd = document.createElement('td');
+      nameTd.className = 'name-cell';
+      nameTd.innerHTML = `<div class="full">${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}</div>
+        <span class="cat-badge cat-${ref.category}">${ref.category}</span>`;
+      tr.appendChild(nameTd);
+
+      ALL_KEYS.forEach(key => {
+        const td = document.createElement('td');
+        td.className = 'num-cell';
+        const input = document.createElement('input');
+        input.type = 'number'; input.min = '0'; input.step = '1';
+        input.value = entry[key] || 0;
+        input.dataset.refId = ref.id; input.dataset.key = key;
+        input.addEventListener('input', onCellInput);
+        input.addEventListener('blur', onCellBlur);
+        td.appendChild(input);
+        tr.appendChild(td);
+      });
+
+      const feeTd = document.createElement('td');
+      feeTd.className = 'fee-cell num';
+      feeTd.id = 'fee-' + ref.id;
+      feeTd.textContent = fmtMoney(fee);
+      tr.appendChild(feeTd);
+
+      const actionsTd = document.createElement('td');
+      const rowActions = document.createElement('div');
+      rowActions.className = 'row-actions';
+      rowActions.innerHTML = `
+        <button class="icon-btn" title="Detalii / bonusuri" data-detail="${ref.id}">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="7.5"/><path d="M10 13v-4M10 7h.01" stroke-linecap="round"/></svg>
+        </button>
+        <button class="icon-btn" title="Act de prestare" data-act="${ref.id}">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 3h7l3 3v11H5z"/><path d="M8 9h4M8 12h4M8 15h2"/></svg>
+        </button>
+        <span class="save-dot" id="dot-${ref.id}"></span>`;
+      actionsTd.appendChild(rowActions);
+      tr.appendChild(actionsTd);
+
+      rowsBody.appendChild(tr);
+    });
+
+    document.querySelectorAll('[data-detail]').forEach(b => b.addEventListener('click', () => openDetail(b.dataset.detail)));
+    document.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => openAct(b.dataset.act)));
+
+    document.getElementById('sumActive').textContent = activeCount;
+    document.getElementById('sumFee').textContent = fmtMoney(sumFee);
+    document.getElementById('sumTax').textContent = fmtMoney(sumFee * globalRates.tax_rate);
+  }
+
+  function onCellInput(e){
+    const input = e.target;
+    input.classList.add('dirty');
+    const refId = input.dataset.refId;
+    const ref = referees.find(r => r.id === refId);
+    const entry = entries[refId] || (entries[refId] = emptyEntry(refId));
+    entry[input.dataset.key] = Number(input.value) || 0;
+    const fee = computeFee(ref, entry);
+    document.getElementById('fee-' + refId).textContent = fmtMoney(fee);
+
+    // recompute summary chips from real numbers, not by re-parsing formatted text
+    // (a fmtMoney() string uses '.' as a thousands separator and ',' for decimals —
+    // stripping non-digits from it would mangle any fee that isn't a whole number)
+    let sumFee = 0, activeCount = 0;
+    referees.forEach(r => {
+      if (hasActivity(entries[r.id])) { sumFee += computeFee(r, entries[r.id]); activeCount++; }
+    });
+    document.getElementById('sumActive').textContent = activeCount;
+    document.getElementById('sumFee').textContent = fmtMoney(sumFee);
+    document.getElementById('sumTax').textContent = fmtMoney(sumFee * globalRates.tax_rate);
+
+    const tr = input.closest('tr');
+    if (tr) tr.classList.toggle('inactive-row', !hasActivity(entry));
+  }
+
+  function onCellBlur(e){
+    const refId = e.target.dataset.refId;
+    clearTimeout(saveTimers[refId]);
+    saveTimers[refId] = setTimeout(() => saveEntry(refId), 250);
+  }
+
+  async function saveEntry(refId){
+    const entry = entries[refId];
+    if (!entry) return;
+    const dot = document.getElementById('dot-' + refId);
+    try {
+      const payload = Object.assign({}, entry, { referee_id: refId, period: periodKey(currentPeriod), updated_by: session.user.id });
+      delete payload.id;
+      const { data, error } = await db.from('monthly_entries')
+        .upsert(payload, { onConflict: 'referee_id,period' })
+        .select().single();
+      if (error) throw error;
+      entries[refId] = data;
+      document.querySelectorAll(`input[data-ref-id="${refId}"]`).forEach(i => i.classList.remove('dirty'));
+      if (dot) { dot.classList.remove('err'); dot.classList.add('show'); setTimeout(() => dot.classList.remove('show'), 1200); }
+    } catch (err) {
+      console.error(err);
+      if (dot) { dot.classList.add('show','err'); }
+      alert('Nu s-a putut salva: ' + (err.message || err));
+    }
+  }
+
+  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  // ══ DETAIL MODAL (bonuses + travel/reconciliation) ══
+  const detailModal = document.getElementById('detailModal');
+  let detailRefId = null;
+
+  function openDetail(refId){
+    detailRefId = refId;
+    const ref = referees.find(r => r.id === refId);
+    const entry = entries[refId] || emptyEntry(refId);
+    document.getElementById('detailTitle').textContent = `${ref.last_name} ${ref.first_name} — detalii`;
+    document.getElementById('dTaxi').value = entry.taxi || 0;
+    document.getElementById('dRegion').value = entry.region || '';
+    document.getElementById('dKm').value = entry.km || 0;
+    document.getElementById('dPaid').value = entry.paid_amount || 0;
+    document.getElementById('dConform').value = entry.conform_calcul ?? '';
+    document.getElementById('dNotes').value = entry.notes || '';
+    updateRest();
+
+    const bonusList = document.getElementById('bonusList');
+    bonusList.innerHTML = '';
+    db.from('international_bonuses').select('*').eq('referee_id', refId).eq('period', periodKey(currentPeriod))
+      .then(({ data }) => {
+        const byLabel = {};
+        (data||[]).forEach(b => byLabel[b.label] = b.amount);
+        BONUS_LABELS.forEach(label => {
+          const row = document.createElement('div');
+          row.className = 'bonus-row';
+          row.innerHTML = `<label>${label}</label><input type="number" step="0.01" data-bonus="${label}" value="${byLabel[label]||0}">`;
+          bonusList.appendChild(row);
+        });
+      });
+
+    document.getElementById('dPaid').oninput = updateRest;
+    document.getElementById('dConform').oninput = updateRest;
+    detailModal.classList.add('show');
+  }
+  function updateRest(){
+    const paid = Number(document.getElementById('dPaid').value)||0;
+    const conform = document.getElementById('dConform').value === '' ? null : Number(document.getElementById('dConform').value);
+    document.getElementById('dRest').value = conform === null ? '—' : fmtMoney(paid - conform);
+  }
+  document.getElementById('closeDetail').addEventListener('click', () => detailModal.classList.remove('show'));
+  document.getElementById('cancelDetail').addEventListener('click', () => detailModal.classList.remove('show'));
+
+  document.getElementById('saveDetail').addEventListener('click', async () => {
+    const refId = detailRefId;
+    const entry = entries[refId] || (entries[refId] = emptyEntry(refId));
+    entry.taxi = Number(document.getElementById('dTaxi').value)||0;
+    entry.region = document.getElementById('dRegion').value;
+    entry.km = Number(document.getElementById('dKm').value)||0;
+    entry.paid_amount = Number(document.getElementById('dPaid').value)||0;
+    const conformVal = document.getElementById('dConform').value;
+    entry.conform_calcul = conformVal === '' ? null : Number(conformVal);
+    entry.notes = document.getElementById('dNotes').value;
+    await saveEntry(refId);
+
+    const bonusInputs = document.querySelectorAll('#bonusList [data-bonus]');
+    const bonusRows = Array.from(bonusInputs).map(i => ({
+      referee_id: refId, period: periodKey(currentPeriod), label: i.dataset.bonus, amount: Number(i.value)||0
+    }));
+    await db.from('international_bonuses').upsert(bonusRows, { onConflict: 'referee_id,period,label' });
+    detailModal.classList.remove('show');
+  });
+
+  // ══ REFEREE ROSTER MANAGER ══
+  const listModal = document.getElementById('listModal');
+  const refModal = document.getElementById('refModal');
+  let editingRefId = null;
+
+  document.getElementById('manageRefereesBtn').addEventListener('click', () => { renderRefList(); listModal.classList.add('show'); });
+  document.getElementById('closeList').addEventListener('click', () => listModal.classList.remove('show'));
+
+  function renderRefList(){
+    const el = document.getElementById('refList');
+    if (!el) return;
+    el.innerHTML = '';
+    referees.slice().sort((a,b)=>a.last_name.localeCompare(b.last_name)).forEach(ref => {
+      const row = document.createElement('div');
+      row.className = 'bonus-row';
+      row.innerHTML = `<label>${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)} <span class="cat-badge cat-${ref.category}">${ref.category}</span>${ref.active===false ? ' <em style="color:var(--ink-2)">(inactiv)</em>' : ''}</label>
+        <button class="icon-btn" data-edit-ref="${ref.id}">✎</button>`;
+      el.appendChild(row);
+    });
+    el.querySelectorAll('[data-edit-ref]').forEach(b => b.addEventListener('click', () => openRefModal(b.dataset.editRef)));
+  }
+
+  document.getElementById('addRefBtn').addEventListener('click', () => openRefModal(null));
+  function openRefModal(refId){
+    editingRefId = refId;
+    const ref = refId ? referees.find(r => r.id === refId) : {};
+    document.getElementById('refModalTitle').textContent = refId ? 'Editează arbitru' : 'Arbitru nou';
+    document.getElementById('rLastName').value = ref.last_name || '';
+    document.getElementById('rFirstName').value = ref.first_name || '';
+    document.getElementById('rCategory').value = ref.category || 'III';
+    document.getElementById('rBank').value = ref.bank_name || '';
+    document.getElementById('rFiscal').value = ref.fiscal_code || '';
+    document.getElementById('rIban').value = ref.iban || '';
+    document.getElementById('rContractNo').value = ref.contract_number || '';
+    document.getElementById('rContractDate').value = ref.contract_date || '';
+    document.getElementById('rActive').checked = ref.active !== false;
+    document.getElementById('deleteRefBtn').style.display = refId ? '' : 'none';
+    listModal.classList.remove('show');   // drill-down from the roster list — don't stack modals
+    refModal.classList.add('show');
+  }
+  function closeRefModal(){
+    refModal.classList.remove('show');
+    listModal.classList.add('show');      // return to the roster list underneath
+  }
+  document.getElementById('closeRef').addEventListener('click', closeRefModal);
+  document.getElementById('cancelRef').addEventListener('click', closeRefModal);
+
+  document.getElementById('saveRef').addEventListener('click', async () => {
+    const payload = {
+      last_name: document.getElementById('rLastName').value.trim(),
+      first_name: document.getElementById('rFirstName').value.trim(),
+      category: document.getElementById('rCategory').value,
+      bank_name: document.getElementById('rBank').value.trim(),
+      fiscal_code: document.getElementById('rFiscal').value.trim() || null,
+      iban: document.getElementById('rIban').value.trim() || null,
+      contract_number: document.getElementById('rContractNo').value.trim() || null,
+      contract_date: document.getElementById('rContractDate').value.trim() || null,
+      active: document.getElementById('rActive').checked,
+    };
+    if (!payload.last_name || !payload.first_name) { alert('Nume și prenume sunt obligatorii.'); return; }
+    if (editingRefId) {
+      await db.from('referees').update(payload).eq('id', editingRefId);
+    } else {
+      await db.from('referees').insert(payload);
+    }
+    await loadStaticData();
+    await loadPeriod();
+    renderRefList();
+    closeRefModal();
+  });
+
+  document.getElementById('deleteRefBtn').addEventListener('click', async () => {
+    if (!editingRefId) return;
+    if (!confirm('Sigur ștergi acest arbitru? Se șterg și toate înregistrările lui.')) return;
+    await db.from('referees').delete().eq('id', editingRefId);
+    await loadStaticData();
+    await loadPeriod();
+    renderRefList();
+    closeRefModal();
+  });
+
+  // ══ ACT DE PRESTARE (printable) ══
+  const actModal = document.getElementById('actModal');
+  const ITEM_ROWS = [
+    ['tournament_day','Participare turneu sportiv zi'], ['tournament_night','Participare turneu sportiv noapte'],
+    ['matches_day','Meciuri câștigate zi'], ['matches_night','Meciuri câștigate noapte'],
+    ['place1_day','Locul I turneu zi'], ['place1_night','Locul I turneu noapte'],
+    ['place3_day','Locul III turneu zi'], ['place3_night','Locul III turneu noapte'],
+    ['arbitraj_day','Arbitraj turnee zi'], ['arbitraj_night','Arbitraj turnee noapte'],
+  ];
+  function rateFor(ref, key){
+    if (key.startsWith('arbitraj')) return key.endsWith('day') ? globalRates.arbitraj_day : globalRates.arbitraj_night;
+    return (rateCategories[ref.category] || {})[key] || 0;
+  }
+  function openAct(refId){
+    const ref = referees.find(r => r.id === refId);
+    const entry = entries[refId] || emptyEntry(refId);
+    let total = 0;
+    const rows = ITEM_ROWS.map(([key,label]) => {
+      const rate = rateFor(ref, key);
+      const vol = entry[key] || 0;
+      const fee = rate * vol;
+      total += fee;
+      return `<tr><td>${label}</td><td class="r">${fmtMoney(rate)}</td><td class="r">${vol}</td><td class="r">${fmtMoney(fee)}</td></tr>`;
+    }).join('');
+    const tax = total * globalRates.tax_rate;
+    document.getElementById('actDoc').innerHTML = `
+      <h3>ACT DE PRESTARE A SERVICIILOR SPORTIVE</h3>
+      <p class="act-meta">Perioada: <b>${MONTH_NAMES[currentPeriod.getMonth()]} ${currentPeriod.getFullYear()}</b>, categorie <b>${ref.category}</b></p>
+      <p class="act-meta">Contract nr. ${escapeHtml(ref.contract_number||'—')}${ref.contract_date ? ', din ' + escapeHtml(ref.contract_date) : ''}</p>
+      <table>
+        <thead><tr><th>Categoria calcul</th><th>Regim calcul (mdl)</th><th>Volum servicii</th><th>Onorariu (mdl)</th></tr></thead>
+        <tbody>
+          ${rows}
+          <tr class="act-total-row"><td colspan="3">TOTAL SPRE PLATĂ</td><td class="r">${fmtMoney(total)}</td></tr>
+          <tr><td colspan="3">inclusiv impozit 15%</td><td class="r">${fmtMoney(tax)}</td></tr>
+        </tbody>
+      </table>
+      <div class="act-sign">
+        <div><b>Beneficiar</b>SRL SETKA-PRO<br>cod fiscal 1022600014457</div>
+        <div style="text-align:right"><b>Prestator</b>${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}<br>cod fiscal ${escapeHtml(ref.fiscal_code||'—')}<br>IBAN ${escapeHtml(ref.iban||'—')}</div>
+      </div>`;
+    actModal.classList.add('show');
+  }
+  document.getElementById('closeAct').addEventListener('click', () => actModal.classList.remove('show'));
+  document.getElementById('closeActBtn').addEventListener('click', () => actModal.classList.remove('show'));
+  document.getElementById('printActBtn').addEventListener('click', () => window.print());
+
+})();
+</script>
+</body>
+</html>
