@@ -227,10 +227,7 @@
         </div>
         <button class="btn btn-primary" type="submit" id="loginSubmit">Intră în cont</button>
       </form>
-      <p class="login-toggle">
-        <span id="toggleToSignup">Nu ai cont? <button type="button" id="showSignup">Creează unul</button></span>
-        <span id="toggleToLogin" style="display:none">Ai deja cont? <button type="button" id="showLogin">Intră în cont</button></span>
-      </p>
+      <p class="login-toggle">Conturile se creează doar din Supabase — cere unui administrator un cont.</p>
     </div>
   </div>
 
@@ -441,26 +438,13 @@
   }
   function fmtMoney(n){ return (Math.round((n||0)*100)/100).toLocaleString('ro-RO'); }
 
-  // ══ AUTH ══
+  // ══ AUTH — login only. Accounts are created in Supabase (Dashboard or
+  // Admin API), never through this page. ══
   const loginScreen = document.getElementById('loginScreen');
   const appEl = document.getElementById('app');
   const loginForm = document.getElementById('loginForm');
   const loginError = document.getElementById('loginError');
   const loginSubmit = document.getElementById('loginSubmit');
-  let signupMode = false;
-
-  document.getElementById('showSignup').addEventListener('click', () => {
-    signupMode = true;
-    document.getElementById('toggleToSignup').style.display = 'none';
-    document.getElementById('toggleToLogin').style.display = '';
-    loginSubmit.textContent = 'Creează cont';
-  });
-  document.getElementById('showLogin').addEventListener('click', () => {
-    signupMode = false;
-    document.getElementById('toggleToSignup').style.display = '';
-    document.getElementById('toggleToLogin').style.display = 'none';
-    loginSubmit.textContent = 'Intră în cont';
-  });
 
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -469,11 +453,8 @@
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
     try {
-      const { error } = signupMode
-        ? await db.auth.signUp({ email, password })
-        : await db.auth.signInWithPassword({ email, password });
+      const { error } = await db.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      if (signupMode) loginError.textContent = 'Cont creat. Verifică email-ul dacă e nevoie de confirmare, apoi intră în cont.';
     } catch (err) {
       loginError.textContent = err.message || 'Eroare la autentificare.';
     } finally {
