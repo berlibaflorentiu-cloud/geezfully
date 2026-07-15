@@ -497,6 +497,13 @@
     .table-wrap tbody td.num-cell input{ width:70px; text-align:right; }
     table.archive-table tbody tr{ grid-template-columns:1fr; }
   }
+  @media (max-width:760px){
+    #exportConfirmModal{ align-items:center; padding:16px; }
+    #exportConfirmModal .modal{ min-height:0; border-radius:12px; }
+    #exportConfirmModal .modal-body{ flex:0; }
+    #exportConfirmModal .modal-foot{ flex-wrap:nowrap; }
+    #exportConfirmModal .modal-foot .btn{ flex:0 1 auto; }
+  }
 </style>
 </head>
 <body>
@@ -618,6 +625,28 @@
       </div>
       <div class="empty-state" id="emptyState" style="display:none">Niciun participant găsit.</div>
     </main>
+  </div>
+
+  <!-- ══ Monthly export confirmation ══ -->
+  <div class="modal-backdrop" id="exportConfirmModal">
+    <div class="modal" style="max-width:440px">
+      <div class="modal-head">
+        <h2>Descarcă datele lunii?</h2>
+        <button class="icon-btn" id="closeExportConfirm" aria-label="Închide">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin:0; color:var(--muted); line-height:1.6">
+          Se va descărca fișierul complet pentru <strong id="exportConfirmPeriod" style="color:var(--text)"></strong>, cu datele tuturor participanților.
+        </p>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" id="cancelExportMonth">Anulează</button>
+        <button type="button" class="btn btn-export" id="confirmExportMonth">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v9M6.5 9.5 10 13l3.5-3.5"/><path d="M4 15v2h12v-2"/></svg>
+          Descarcă
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- ══ Referee detail modal (bonuses + travel/reconciliation + edit roster) ══ -->
@@ -962,7 +991,21 @@
   document.getElementById('categoryFilter').addEventListener('change', (e) => { categoryFilter = e.target.value; renderRows(); });
   document.getElementById('activityFilter').addEventListener('change', (e) => { activityFilter = e.target.value; renderRows(); });
   document.getElementById('sortControl').addEventListener('change', (e) => { sortMode = e.target.value; renderRows(); });
-  document.getElementById('exportMonthBtn').addEventListener('click', downloadMonthCsv);
+  const exportConfirmModal = document.getElementById('exportConfirmModal');
+  function closeExportConfirmation(){
+    exportConfirmModal.classList.remove('show');
+  }
+  document.getElementById('exportMonthBtn').addEventListener('click', () => {
+    document.getElementById('exportConfirmPeriod').textContent = `${MONTH_NAMES[currentPeriod.getMonth()]} ${currentPeriod.getFullYear()}`;
+    exportConfirmModal.classList.add('show');
+    document.getElementById('confirmExportMonth').focus();
+  });
+  document.getElementById('closeExportConfirm').addEventListener('click', closeExportConfirmation);
+  document.getElementById('cancelExportMonth').addEventListener('click', closeExportConfirmation);
+  document.getElementById('confirmExportMonth').addEventListener('click', () => {
+    closeExportConfirmation();
+    downloadMonthCsv();
+  });
   document.getElementById('clearFilters').addEventListener('click', () => {
     searchTerm = '';
     categoryFilter = '';
@@ -1869,6 +1912,10 @@
 
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
+    if (exportConfirmModal.classList.contains('show')) {
+      closeExportConfirmation();
+      return;
+    }
     if (archiveModal.classList.contains('show')) {
       archiveModal.classList.remove('show');
       return;
