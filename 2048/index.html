@@ -288,6 +288,36 @@
   .save-covor:focus-visible{ outline:2px solid var(--gold-hi); outline-offset:2px; border-radius:4px; }
   .save-covor svg{ width:13px; height:13px; display:block; }
   .save-covor:disabled{ opacity:.6; cursor:default; }
+
+  /* Covor preview lightbox — the download builds this first so the card is
+     actually seen, not just silently saved. Fixed to the viewport (not
+     nested in .board) so it isn't boxed in by the board's own small frame. */
+  .covor-preview{
+    position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center;
+    padding:24px; background:rgba(15,10,6,.82); backdrop-filter:blur(3px);
+    opacity:0; pointer-events:none; transition:opacity .25s ease;
+  }
+  .covor-preview.show{ opacity:1; pointer-events:auto; }
+  .covor-preview-card{
+    position:relative; max-width:400px; width:100%;
+    background:linear-gradient(180deg, #3A2718, #241609); border-radius:20px; padding:18px;
+    box-shadow:0 40px 80px -30px rgba(0,0,0,.7), inset 0 0 0 1px rgba(241,215,138,.14);
+    text-align:center;
+  }
+  .covor-preview img{
+    width:100%; max-height:64vh; object-fit:contain; display:block;
+    border-radius:12px; background:var(--walnut-2); box-shadow:0 10px 30px rgba(0,0,0,.4);
+  }
+  .covor-preview-caption{ font-size:12px; color:#B9A88C; margin:12px 0 14px; }
+  .covor-preview-close{
+    position:absolute; top:-14px; right:-14px; width:32px; height:32px; border-radius:50%;
+    background:var(--walnut); border:1px solid rgba(241,215,138,.3); color:var(--cream-hi);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:18px; line-height:1;
+    box-shadow:0 6px 16px rgba(0,0,0,.4);
+  }
+  .covor-preview-close:hover{ color:var(--gold-hi); }
+  .covor-preview-close:focus-visible{ outline:2px solid var(--gold-hi); outline-offset:2px; }
+  @media (prefers-reduced-motion: reduce){ .covor-preview{ transition:none; } }
   button.ghost{
     font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13px;
     background:transparent; color:var(--cream-hi); border:1px solid var(--line); border-radius:9px;
@@ -409,12 +439,22 @@
     <footer>inspirat de covorul moldovenesc, tricolor, stema cu bour și motivele satului</footer>
   </div>
 
+  <div class="covor-preview" id="covorPreview" aria-hidden="true">
+    <div class="covor-preview-card">
+      <button class="covor-preview-close" id="covorPreviewClose" type="button" aria-label="Închide">&times;</button>
+      <img id="covorPreviewImg" alt="Covorul tău, țesut din mutările jocului">
+      <p class="covor-preview-caption">Apasă lung pe imagine ca s-o salvezi, sau descarc-o mai jos.</p>
+      <button class="new-game" id="covorPreviewDownload" type="button">Descarcă imaginea</button>
+    </div>
+  </div>
+
 <script>
 (function(){
   'use strict';
   const SIZE = 4;
   const boardEl = document.getElementById('board');
   const overlayEl = document.getElementById('overlay');
+  const covorPreviewEl = document.getElementById('covorPreview');
   const scoreEl = document.getElementById('score');
   const bestEl = document.getElementById('best');
 
@@ -515,6 +555,7 @@
   function move(dir){
     if (over) return;
     if (overlayEl.classList.contains('show')) return;   // win pause — wait for a choice
+    if (covorPreviewEl.classList.contains('show')) return;  // covor preview open — ignore board input
     if (busy) { pendingDir = dir; return; }             // buffer the latest input, fire it when the slide settles
     const g = grid();
     let moved = false;
@@ -789,6 +830,36 @@
     return canvas;
   }
 
+  // "Descarcă covorul" builds the card, then opens it in a full preview —
+  // a silent download is easy to miss entirely; seeing the card is the point.
+  const covorPreviewImg = document.getElementById('covorPreviewImg');
+  let covorDataUrl = null, covorFilename = null;
+
+  function openCovorPreview(dataUrl, filename){
+    covorDataUrl = dataUrl; covorFilename = filename;
+    covorPreviewImg.src = dataUrl;
+    covorPreviewEl.classList.add('show');
+    document.getElementById('covorPreviewClose').focus();
+  }
+  function closeCovorPreview(){
+    covorPreviewEl.classList.remove('show');
+    document.getElementById('saveCovor').focus();
+  }
+  document.getElementById('covorPreviewClose').addEventListener('click', closeCovorPreview);
+  covorPreviewEl.addEventListener('click', (e) => { if (e.target === covorPreviewEl) closeCovorPreview(); });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && covorPreviewEl.classList.contains('show')) closeCovorPreview();
+  });
+  document.getElementById('covorPreviewDownload').addEventListener('click', () => {
+    if (!covorDataUrl) return;
+    const a = document.createElement('a');
+    a.href = covorDataUrl;
+    a.download = covorFilename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  });
+
   document.getElementById('saveCovor').addEventListener('click', async () => {
     const btn = document.getElementById('saveCovor');
     const label = btn.lastChild;
@@ -797,13 +868,7 @@
     label.textContent = ' Se țese...';
     try {
       const canvas = await buildCovorCard();
-      const url = canvas.toDataURL('image/png');
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'covorul-norocului-' + score + '.png';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      openCovorPreview(canvas.toDataURL('image/png'), 'covorul-norocului-' + score + '.png');
     } finally {
       label.textContent = original;
       btn.disabled = false;
