@@ -286,6 +286,25 @@
   .stats-act-row:last-child{ border-bottom:0; }
   .stats-act-row .muted{ color:var(--muted); }
   .stats-empty{ color:var(--muted); font-size:12.5px; font-style:italic; padding:4px 0 8px; }
+
+  /* ── Statistici generale (org-wide overview) ── */
+  #statsOverviewModal .modal{ max-width:980px; }
+  #statsOverviewModal .modal-head{ flex-wrap:wrap; gap:10px; }
+  #statsYearSelect{ padding:6px 26px 6px 10px; font-size:12.5px; }
+  #statsOverviewModal .detail-grid{ margin-bottom:8px; }
+  .stats-rank-table{ width:100%; border-collapse:collapse; min-width:0; margin-bottom:6px; }
+  .stats-rank-table th{
+    position:static; text-align:left; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--muted); padding:8px; border-bottom:1px solid var(--border); white-space:nowrap;
+  }
+  .stats-rank-table td{ padding:8px; border-bottom:1px solid var(--line-2); font-size:13px; vertical-align:middle; }
+  .stats-rank-table td.r{ text-align:right; white-space:nowrap; }
+  .stats-rank-table tr:hover td{ background:var(--surface2); }
+  .stats-rank-num{ display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:var(--gold-dim); color:var(--gold-hi); font-size:11px; font-weight:700; }
+  .stats-inactive-list{ display:flex; flex-wrap:wrap; gap:6px; }
+  .stats-hygiene-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px solid var(--line-2); font-size:12.5px; color:var(--muted); }
+  .stats-hygiene-row:last-child{ border-bottom:0; }
+  .stats-hygiene-row b{ color:var(--text); }
   .detail-card .field:last-child{ margin-bottom:0; }
   .bonus-groups{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .bonus-group{ background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:6px 14px 10px; }
@@ -431,7 +450,7 @@
     .recon-grid{ grid-template-columns:1fr 1fr; }
     header.topbar{ padding:10px 14px; row-gap:8px; }
     .brand{ margin-right:auto; order:1; flex-basis:100%; }
-    #manageRefereesBtn, #openArchiveBtn, #logoutBtn{ order:2; flex:1 1 auto; }
+    #manageRefereesBtn, #openArchiveBtn, #openStatsOverviewBtn, #logoutBtn{ order:2; flex:1 1 auto; }
     .month-nav{ order:3; flex-basis:100%; justify-content:center; }
     .user-chip{ order:4; flex-basis:100%; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     main{ padding:12px 12px 70px; }
@@ -524,6 +543,19 @@
     table.archive-table td:nth-child(5){ text-align:left; }
     table.archive-table td:nth-child(6){ grid-column:1/-1; }
     .archive-actions{ justify-content:flex-start; margin-top:4px; }
+
+    .stats-rank-table thead{ display:none; }
+    .stats-rank-table tbody tr{
+      display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:4px 10px;
+      background:var(--bg); border:1px solid var(--border); border-radius:10px;
+      padding:10px 12px; margin-bottom:8px;
+    }
+    .stats-rank-table td{ display:block; padding:0 !important; border:0 !important; }
+    .stats-rank-table td:nth-child(1){ grid-row:1/3; }
+    .stats-rank-table td:nth-child(2){ font-weight:600; }
+    .stats-rank-table td:nth-child(3){ grid-column:2; }
+    .stats-rank-table td:nth-child(4){ grid-row:1/3; grid-column:3; text-align:right; font-weight:700; }
+    .stats-rank-table td:nth-child(5){ grid-column:1/-1; margin-top:4px; }
   }
 
   @media (max-width:400px){
@@ -591,6 +623,7 @@
       </div>
       <button class="btn btn-sm btn-gold" id="manageRefereesBtn">Participanți</button>
       <button class="btn btn-sm btn-gold" id="openArchiveBtn">Arhivă acte</button>
+      <button class="btn btn-sm btn-gold" id="openStatsOverviewBtn">Statistici</button>
       <span class="user-chip" id="userChip"></span>
       <button class="btn btn-ghost btn-sm" id="logoutBtn">Ieși</button>
     </header>
@@ -873,6 +906,52 @@
           <tbody id="archiveBody"></tbody>
         </table>
         <div class="empty-state" id="archiveEmpty" style="display:none">Niciun act salvat momentan. Actele apar aici după ce apeși „Salvează în arhivă“ pe un act deschis.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Statistici generale ══ -->
+  <div class="modal-backdrop" id="statsOverviewModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>Statistici generale</h2>
+        <div style="display:flex; align-items:center; gap:10px">
+          <select class="filter-select" id="statsYearSelect" aria-label="Anul de referință"></select>
+          <button class="icon-btn" id="closeStatsOverview" aria-label="Închide">✕</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="stats-kpis" id="ovKpis"></div>
+
+        <p class="section-label">Onorarii lunare — organizație (anul selectat)</p>
+        <div class="stats-chart-wrap" id="ovChart"></div>
+
+        <div class="detail-grid">
+          <section class="detail-card">
+            <h3 class="detail-card-title">Pe categorie</h3>
+            <div id="ovCategoryBreakdown"></div>
+          </section>
+          <section class="detail-card">
+            <h3 class="detail-card-title">Pe tip de activitate</h3>
+            <div id="ovActivityBreakdown"></div>
+          </section>
+        </div>
+
+        <p class="section-label">Clasament — cei mai plătiți participanți</p>
+        <table class="stats-rank-table" id="ovRankTable">
+          <thead><tr><th>#</th><th>Participant</th><th>Categorie</th><th class="r">Total (mdl)</th><th></th></tr></thead>
+          <tbody id="ovRankBody"></tbody>
+        </table>
+        <p class="stats-empty" id="ovRankMore" style="display:none"></p>
+
+        <p class="section-label">Fără activitate în anul selectat</p>
+        <div id="ovInactive"></div>
+
+        <p class="section-label">Igiena datelor</p>
+        <div id="ovDataHygiene"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" id="closeStatsOverviewBtn">Închide</button>
       </div>
     </div>
   </div>
@@ -1398,6 +1477,7 @@
   const detailModal = document.getElementById('detailModal');
   let detailRefId = null;
   const statsModal = document.getElementById('statsModal');
+  const statsOverviewModal = document.getElementById('statsOverviewModal');
   let statsRefId = null;
 
   function openDetail(refId){
@@ -1534,10 +1614,10 @@
       ? acts.map(a => `<div class="stats-act-row"><span class="muted" style="text-transform:capitalize">${fmtArchivePeriod(a.period)}</span><span>${fmtMoney(a.total)} MDL</span></div>`).join('')
       : '<p class="stats-empty">Niciun act salvat în arhivă.</p>';
   }
-  function renderStatsChart(months){
-    const wrap = document.getElementById('statsChart');
+  function renderStatsChart(months, containerId, emptyText){
+    const wrap = document.getElementById(containerId || 'statsChart');
     if (months.every(m => m.value === 0)) {
-      wrap.innerHTML = '<p class="stats-chart-empty">Nicio activitate în ultimele 12 luni.</p>';
+      wrap.innerHTML = `<p class="stats-chart-empty">${emptyText || 'Nicio activitate în ultimele 12 luni.'}</p>`;
       return;
     }
     const max = Math.max(...months.map(m => m.value), 1);
@@ -1554,10 +1634,10 @@
     }).join('');
     wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}">${bars}</svg>`;
   }
-  function renderStatsBreakdown(groups){
-    const el = document.getElementById('statsBreakdown');
+  function renderStatsBreakdown(groups, containerId, emptyText){
+    const el = document.getElementById(containerId || 'statsBreakdown');
     const max = Math.max(...groups.map(g => g.total), 0);
-    if (max <= 0) { el.innerHTML = '<p class="stats-empty">Nicio activitate plătită în acest an.</p>'; return; }
+    if (max <= 0) { el.innerHTML = `<p class="stats-empty">${emptyText || 'Nicio activitate plătită în acest an.'}</p>`; return; }
     el.innerHTML = groups.map(g => `
       <div class="stats-breakdown-row">
         <span class="stats-breakdown-swatch" style="background:${g.color}"></span>
@@ -1568,6 +1648,138 @@
   }
   document.getElementById('closeStats').addEventListener('click', () => statsModal.classList.remove('show'));
   document.getElementById('closeStatsBtn').addEventListener('click', () => statsModal.classList.remove('show'));
+
+  // ══ STATISTICI GENERALE (org-wide overview) ══
+  const CATEGORY_COLORS = { TOP:'#B8863A', I:'#3B7DDE', II:'#A257B0', III:'#2F9E5C', Referee:'#B8415A' };
+  const CATEGORY_ORDER = ['TOP','I','II','III','Referee'];
+  let ovData = null; // cached across year switches — refetched only when the modal is reopened fresh
+
+  async function openStatsOverview(){
+    statsOverviewModal.classList.add('show');
+    if (!ovData) {
+      document.getElementById('ovKpis').innerHTML = '<p class="stats-empty">Se încarcă…</p>';
+      const [totalsRes, entriesRes, actsRes] = await Promise.all([
+        db.from('entry_totals').select('referee_id, period, total_fee, bonus_total, last_name, first_name, category'),
+        db.from('monthly_entries').select('referee_id, period, tournament_day, tournament_night, matches_day, matches_night, place1_day, place1_night, place3_day, place3_night, arbitraj_day, arbitraj_night'),
+        db.from('saved_acts').select('period, total'),
+      ]);
+      ovData = { totals: totalsRes.data || [], entries: entriesRes.data || [], acts: actsRes.data || [] };
+
+      const years = Array.from(new Set(ovData.totals.map(r => r.period.slice(0, 4))));
+      const currentYear = String(currentPeriod.getFullYear());
+      if (!years.includes(currentYear)) years.push(currentYear);
+      years.sort();
+      const sel = document.getElementById('statsYearSelect');
+      sel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+      sel.value = currentYear;
+    }
+    renderStatsOverviewForYear(document.getElementById('statsYearSelect').value);
+  }
+
+  function renderStatsOverviewForYear(year){
+    const totals = ovData.totals.filter(r => r.period.startsWith(year));
+    const rowTotal = r => Number(r.total_fee || 0) + Number(r.bonus_total || 0);
+
+    const totalPaid = totals.reduce((s, r) => s + rowTotal(r), 0);
+    const byRef = {};
+    totals.forEach(r => { byRef[r.referee_id] = (byRef[r.referee_id] || 0) + rowTotal(r); });
+    const activeCount = Object.values(byRef).filter(v => v > 0).length;
+    const activeMonths = new Set(totals.filter(r => rowTotal(r) > 0).map(r => r.period)).size;
+    const avgMonthly = activeMonths ? totalPaid / activeMonths : 0;
+    const actsThisYear = ovData.acts.filter(a => a.period.startsWith(year)).length;
+    const incompleteCount = referees.filter(r => !r.bank_name || !r.fiscal_code || !r.iban || !r.contract_number || !r.contract_date).length;
+
+    document.getElementById('ovKpis').innerHTML = `
+      <div class="stats-kpi gold"><div class="stats-kpi-label">Total plătit ${year}</div><div class="stats-kpi-value">${fmtMoney(totalPaid)} MDL</div></div>
+      <div class="stats-kpi"><div class="stats-kpi-label">Participanți activi ${year}</div><div class="stats-kpi-value">${activeCount} / ${referees.length}</div></div>
+      <div class="stats-kpi"><div class="stats-kpi-label">Medie lunară ${year}</div><div class="stats-kpi-value">${fmtMoney(avgMonthly)} MDL</div></div>
+      <div class="stats-kpi"><div class="stats-kpi-label">Acte generate ${year}</div><div class="stats-kpi-value">${actsThisYear}</div></div>
+      <div class="stats-kpi"><div class="stats-kpi-label">Profiluri incomplete</div><div class="stats-kpi-value">${incompleteCount}</div></div>
+    `;
+
+    const monthMap = {};
+    totals.forEach(r => { monthMap[r.period] = (monthMap[r.period] || 0) + rowTotal(r); });
+    const months = [];
+    for (let m = 0; m < 12; m++) {
+      const key = `${year}-${String(m + 1).padStart(2, '0')}-01`;
+      months.push({ label: MONTH_NAMES[m].slice(0, 3), full: `${MONTH_NAMES[m]} ${year}`, value: monthMap[key] || 0 });
+    }
+    renderStatsChart(months, 'ovChart', `Nicio activitate plătită în ${year}.`);
+
+    const catTotals = {};
+    totals.forEach(r => { catTotals[r.category] = (catTotals[r.category] || 0) + rowTotal(r); });
+    const catActive = {};
+    totals.filter(r => rowTotal(r) > 0).forEach(r => { (catActive[r.category] ||= new Set()).add(r.referee_id); });
+    const catGroups = CATEGORY_ORDER.map(c => ({
+      key: `${c} (${catActive[c] ? catActive[c].size : 0}/${referees.filter(r => r.category === c).length})`,
+      color: CATEGORY_COLORS[c],
+      total: catTotals[c] || 0,
+    }));
+    renderStatsBreakdown(catGroups, 'ovCategoryBreakdown', `Nicio activitate plătită în ${year}.`);
+
+    const entries = ovData.entries.filter(e => e.period.startsWith(year));
+    const refCategoryMap = {};
+    referees.forEach(r => { refCategoryMap[r.id] = r.category; });
+    const activityGroups = STATS_ACTIVITY_GROUPS.map(g => {
+      let total = 0;
+      entries.forEach(e => {
+        const rc = rateCategories[refCategoryMap[e.referee_id]] || {};
+        const rateDay = g.useGlobal ? Number(globalRates.arbitraj_day || 0) : Number(rc[g.day] || 0);
+        const rateNight = g.useGlobal ? Number(globalRates.arbitraj_night || 0) : Number(rc[g.night] || 0);
+        total += Number(e[g.day] || 0) * rateDay + Number(e[g.night] || 0) * rateNight;
+      });
+      return { ...g, total };
+    });
+    renderStatsBreakdown(activityGroups, 'ovActivityBreakdown', `Nicio activitate plătită în ${year}.`);
+
+    const rankRows = Object.entries(byRef)
+      .map(([refId, total]) => {
+        const person = totals.find(r => r.referee_id === refId);
+        return { refId, total, name: person ? `${person.last_name} ${person.first_name}` : '—', category: person ? person.category : '' };
+      })
+      .filter(r => r.total > 0)
+      .sort((a, b) => b.total - a.total);
+    const TOP_N = 15;
+    const rankBody = document.getElementById('ovRankBody');
+    rankBody.innerHTML = rankRows.slice(0, TOP_N).map((r, i) => `
+      <tr>
+        <td><span class="stats-rank-num">${i + 1}</span></td>
+        <td>${escapeHtml(r.name)}</td>
+        <td><span class="cat-badge cat-${r.category}">${escapeHtml(r.category || '—')}</span></td>
+        <td class="r num">${fmtMoney(r.total)}</td>
+        <td><button class="icon-btn" data-ov-stats-ref="${r.refId}" aria-label="Statistici pentru ${escapeHtml(r.name)}" title="Statistici individuale"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 15V9M10 15V5M15 15v-3"/></svg></button></td>
+      </tr>`).join('') || '<tr><td colspan="5"><p class="stats-empty">Nicio activitate plătită în acest an.</p></td></tr>';
+    const ovRankMore = document.getElementById('ovRankMore');
+    if (rankRows.length > TOP_N) {
+      ovRankMore.style.display = 'block';
+      ovRankMore.textContent = `+ încă ${rankRows.length - TOP_N} participanți cu activitate în ${year}.`;
+    } else {
+      ovRankMore.style.display = 'none';
+    }
+    rankBody.querySelectorAll('[data-ov-stats-ref]').forEach(b => b.addEventListener('click', () => {
+      statsOverviewModal.classList.remove('show');
+      openStats(b.dataset.ovStatsRef);
+    }));
+
+    const activeRefIds = new Set(Object.entries(byRef).filter(([, v]) => v > 0).map(([id]) => id));
+    const inactive = referees.filter(r => r.active !== false && !activeRefIds.has(r.id));
+    document.getElementById('ovInactive').innerHTML = inactive.length
+      ? `<div class="stats-inactive-list">${inactive.map(r => `<span class="detail-chip">${escapeHtml(r.last_name)} ${escapeHtml(r.first_name)}</span>`).join('')}</div>`
+      : `<p class="stats-empty">Toți participanții activi au avut activitate plătită în ${year}.</p>`;
+
+    const missingFields = [
+      ['bank_name', 'bancă'], ['fiscal_code', 'cod fiscal'], ['iban', 'IBAN'], ['contract_number', 'nr. contract'], ['contract_date', 'data contract'],
+    ];
+    document.getElementById('ovDataHygiene').innerHTML = missingFields.map(([field, label]) => {
+      const count = referees.filter(r => !String(r[field] || '').trim()).length;
+      return `<div class="stats-hygiene-row"><span>Fără ${label}</span><b>${count} / ${referees.length}</b></div>`;
+    }).join('');
+  }
+
+  document.getElementById('openStatsOverviewBtn').addEventListener('click', openStatsOverview);
+  document.getElementById('statsYearSelect').addEventListener('change', (e) => renderStatsOverviewForYear(e.target.value));
+  document.getElementById('closeStatsOverview').addEventListener('click', () => statsOverviewModal.classList.remove('show'));
+  document.getElementById('closeStatsOverviewBtn').addEventListener('click', () => statsOverviewModal.classList.remove('show'));
 
   function updateRest(){
     const paid = Number(document.getElementById('dPaid').value)||0;
@@ -2162,6 +2374,10 @@
     }
     if (statsModal.classList.contains('show')) {
       statsModal.classList.remove('show');
+      return;
+    }
+    if (statsOverviewModal.classList.contains('show')) {
+      statsOverviewModal.classList.remove('show');
       return;
     }
     if (actModal.classList.contains('show')) {
