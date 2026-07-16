@@ -28,15 +28,21 @@
   .rank-strip{ display:flex; gap:14px; overflow-x:auto; padding-bottom:8px; scrollbar-width:none; }
   .rank-strip::-webkit-scrollbar{ display:none; }
   .rank-card{
-    flex:0 0 220px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-    padding:20px; position:relative; overflow:hidden;
+    flex:0 0 200px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:20px 18px; position:relative; overflow:hidden; text-align:center;
   }
-  .rank-card .rank-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
-  .rank-card .rank-no{ font-family:var(--font-mono); font-size:12px; color:var(--rally); font-weight:700; }
-  .rank-avatar{ width:34px; height:34px; border-radius:50%; overflow:hidden; background:linear-gradient(135deg,var(--surface-3),var(--surface-2)); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:12px; font-weight:700; }
-  .rank-card .rank-name{ font-family:var(--font-display); font-size:17px; font-weight:600; margin-bottom:4px; }
-  .rank-card .rank-city{ font-size:12.5px; color:var(--muted); margin-bottom:16px; }
-  .rank-card .rank-rating{ font-family:var(--font-mono); font-size:26px; font-weight:700; color:var(--spin-hi); }
+  .rank-card .rank-no{
+    position:absolute; top:12px; left:12px; font-family:var(--font-mono); font-size:11px; color:var(--rally-hi);
+    font-weight:700; background:var(--rally-dim); padding:3px 8px; border-radius:999px; z-index:1;
+  }
+  .rank-avatar{
+    width:88px; height:88px; border-radius:50%; overflow:hidden; margin:0 auto 14px; border:2px solid var(--border-hi);
+    background:linear-gradient(135deg,var(--surface-3),var(--surface-2)); display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display); font-size:28px; font-weight:700; box-shadow:0 6px 20px rgba(0,0,0,.3);
+  }
+  .rank-card .rank-name{ font-family:var(--font-display); font-size:16px; font-weight:600; margin-bottom:4px; }
+  .rank-card .rank-city{ font-size:12.5px; color:var(--muted); margin-bottom:14px; }
+  .rank-card .rank-rating{ font-family:var(--font-mono); font-size:24px; font-weight:700; color:var(--spin-hi); }
   .rank-card .rank-rating small{ font-family:var(--font-body); font-size:11px; color:var(--muted); font-weight:600; margin-left:4px; }
 
   .news-grid{ display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:20px; }
@@ -276,7 +282,8 @@
   const rankStrip = document.getElementById('rankStrip');
   rankStrip.innerHTML = ranked.length ? ranked.map((p,i) => `
     <div class="rank-card">
-      <div class="rank-top"><span class="rank-no">#${i+1}</span><span class="rank-avatar">${avatarHtml(p)}</span></div>
+      <span class="rank-no">#${i+1}</span>
+      <div class="rank-avatar">${avatarHtml(p)}</div>
       <div class="rank-name">${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</div>
       <div class="rank-city">${escapeHtml(p.city || 'Moldova')}</div>
       <div class="rank-rating">${p.setka_cup_cache.rating_sc}<small>rating</small></div>
