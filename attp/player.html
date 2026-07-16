@@ -11,8 +11,13 @@
 <link rel="stylesheet" href="css/style.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
-  .profile-head{ display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
-  .profile-avatar{ width:88px; height:88px; border-radius:50%; overflow:hidden; background:linear-gradient(135deg,var(--surface-3),var(--surface-2)); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:30px; font-weight:700; flex:0 0 auto; }
+  .profile-head{ display:flex; gap:28px; align-items:center; flex-wrap:wrap; }
+  .profile-avatar{
+    width:160px; height:160px; border-radius:50%; overflow:hidden; border:3px solid var(--border-hi);
+    background:linear-gradient(135deg,var(--surface-3),var(--surface-2)); display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display); font-size:52px; font-weight:700; flex:0 0 auto; box-shadow:0 8px 28px rgba(0,0,0,.35);
+  }
+  @media (max-width:600px){ .profile-avatar{ width:112px; height:112px; font-size:38px; } }
   .kpi-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin:32px 0; }
   .kpi{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; }
   .kpi b{ display:block; font-family:var(--font-mono); font-size:24px; }
