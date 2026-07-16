@@ -18,6 +18,12 @@
   .kpi b{ display:block; font-family:var(--font-mono); font-size:24px; }
   .kpi span{ font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
   @media (max-width:700px){ .kpi-row{ grid-template-columns:1fr 1fr; } }
+
+  .gear-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px 28px; margin-top:16px; }
+  .gear-item .gear-label{ font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-bottom:4px; }
+  .gear-item .gear-value{ font-size:14.5px; color:var(--chalk); font-weight:600; }
+  @media (max-width:700px){ .gear-grid{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:460px){ .gear-grid{ grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
@@ -43,6 +49,10 @@
   </div>
   <section class="container section-tight">
     <div class="kpi-row" id="kpiRow"></div>
+    <div class="card" id="gearCard" style="display:none;margin-bottom:32px">
+      <div class="eyebrow" style="margin-bottom:0">Echipament &amp; stil</div>
+      <div class="gear-grid" id="gearGrid"></div>
+    </div>
     <div class="eyebrow">Istoric</div>
     <h2 class="mb-24">Turnee recente</h2>
     <table class="data" id="statsTable">
@@ -89,6 +99,25 @@
     <div class="kpi"><b class="num" style="color:var(--win)">${s.wins}</b><span>Victorii</span></div>
     <div class="kpi"><b class="num" style="color:var(--loss)">${s.losses}</b><span>Înfrângeri</span></div>
   ` : '<p class="muted">Acest profil nu este încă legat de datele Setka Cup.</p>';
+
+  const RANK_LABELS = { rank_1:'Categoria I', rank_2:'Categoria II', rank_3:'Categoria III', candidate:'Candidat de maestru', master:'Maestru al sportului' };
+  const GRIP_LABELS = { european:'Europeană', asian:'Asiatică' };
+  const STYLE_LABELS = { attacking:'Atacant', defensive:'Defensiv' };
+  const HAND_LABELS = { right_hand:'Dreapta', left_hand:'Stânga' };
+  const gearItems = [
+    p.game_style && ['Stil de joc', STYLE_LABELS[p.game_style] || p.game_style],
+    p.sport_rank && ['Categorie', RANK_LABELS[p.sport_rank] || p.sport_rank],
+    p.player_grip && ['Priză', GRIP_LABELS[p.player_grip] || p.player_grip],
+    p.playing_hand && ['Mâna de joc', HAND_LABELS[p.playing_hand] || p.playing_hand],
+    p.blade && ['Paletă (lemn)', p.blade],
+    p.forehand && ['Forehand', p.forehand],
+    p.backhand && ['Backhand', p.backhand],
+  ].filter(Boolean);
+  if (gearItems.length) {
+    document.getElementById('gearCard').style.display = '';
+    document.getElementById('gearGrid').innerHTML = gearItems.map(([label, value]) => `
+      <div class="gear-item"><div class="gear-label">${escapeHtml(label)}</div><div class="gear-value">${escapeHtml(value)}</div></div>`).join('');
+  }
 
   const stats = (c?.tournament_stats || []).slice().sort((a,b) => new Date(b.startDate) - new Date(a.startDate)).slice(0, 25);
   const body = document.getElementById('statsBody');
