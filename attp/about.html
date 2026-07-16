@@ -24,7 +24,7 @@
 
   .person-card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; text-align:center; }
   .person-avatar{
-    width:64px; height:64px; border-radius:50%; margin:0 auto 14px; background:linear-gradient(135deg,var(--surface-3),var(--surface-2));
+    width:64px; height:64px; border-radius:50%; overflow:hidden; margin:0 auto 14px; background:linear-gradient(135deg,var(--surface-3),var(--surface-2));
     display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:700; font-size:20px; color:var(--chalk-dim);
   }
   .person-card h3{ font-size:15px; margin-bottom:4px; }
@@ -37,7 +37,7 @@
 <header class="topbar">
   <div class="container topbar-inner">
     <a href="index.html" class="brand">
-      <span class="brand-mark">A</span>
+      <span class="brand-mark"><img src="images/logo.svg" alt="" width="20" height="20"></span>
       <span><span class="brand-word">ATTP</span><span class="brand-sub" style="display:block">Tenis de masă</span></span>
     </a>
     <nav class="nav-links">
@@ -133,7 +133,7 @@
 <script src="js/supabase-init.js"></script>
 <script>
 (async function(){
-  const { data: all } = await db.from('players').select('*').order('sort_order');
+  const { data: all } = await db.from('players').select('*, setka_cup_cache(*)').order('sort_order');
   const players = all || [];
   const founders = players.filter(p => p.roles.includes('founder'));
   const staff = players.filter(p => !p.roles.includes('founder'));
@@ -143,14 +143,14 @@
 
   document.getElementById('foundersGrid').innerHTML = founders.map(p => `
     <div class="person-card">
-      <div class="person-avatar">${initials(p)}</div>
+      <div class="person-avatar">${avatarHtml(p)}</div>
       <h3>${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</h3>
       <div class="person-role">${escapeHtml(roleText(p))}</div>
     </div>`).join('') || '<p class="muted">—</p>';
 
   document.getElementById('staffGrid').innerHTML = staff.map(p => `
     <div class="person-card">
-      <div class="person-avatar">${initials(p)}</div>
+      <div class="person-avatar">${avatarHtml(p)}</div>
       <h3>${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</h3>
       <div class="person-role">${escapeHtml(roleText(p))}</div>
       ${p.city ? `<div class="person-city">${escapeHtml(p.city)}</div>` : ''}

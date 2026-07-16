@@ -18,15 +18,17 @@
   }
   .filters input{ flex:1; min-width:200px; }
   .filters input:focus, .filters select:focus{ outline:2px solid var(--rally); border-color:var(--rally); }
-  .player-row{ display:grid; grid-template-columns:40px 1fr auto auto auto; align-items:center; gap:16px; padding:14px 16px; border-radius:10px; }
+  .player-row{ display:grid; grid-template-columns:28px 40px 1fr auto auto auto; align-items:center; gap:14px; padding:10px 16px; border-radius:10px; }
   .player-row:hover{ background:var(--surface); }
   .player-row .p-rank{ font-family:var(--font-mono); color:var(--muted); font-size:13px; }
+  .p-avatar{ width:40px; height:40px; border-radius:50%; overflow:hidden; background:linear-gradient(135deg,var(--surface-3),var(--surface-2)); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:700; font-size:14px; color:var(--chalk-dim); flex:0 0 auto; }
   .player-row .p-name{ font-weight:700; }
   .player-row .p-city{ font-size:12.5px; color:var(--muted); }
   .player-row .p-rating{ font-family:var(--font-mono); font-weight:700; font-size:17px; color:var(--spin-hi); text-align:right; }
   .player-row .p-record{ font-family:var(--font-mono); font-size:12.5px; color:var(--muted); text-align:right; white-space:nowrap; }
   @media (max-width:700px){
-    .player-row{ grid-template-columns:24px 1fr auto; }
+    .player-row{ grid-template-columns:20px 34px 1fr auto; }
+    .p-avatar{ width:34px; height:34px; }
     .p-record{ display:none; }
   }
 </style>
@@ -35,7 +37,7 @@
 
 <header class="topbar">
   <div class="container topbar-inner">
-    <a href="index.html" class="brand"><span class="brand-mark">A</span><span><span class="brand-word">ATTP</span><span class="brand-sub" style="display:block">Tenis de masă</span></span></a>
+    <a href="index.html" class="brand"><span class="brand-mark"><img src="images/logo.svg" alt="" width="20" height="20"></span><span><span class="brand-word">ATTP</span><span class="brand-sub" style="display:block">Tenis de masă</span></span></a>
     <nav class="nav-links">
       <a href="about.html">Despre</a><a href="news.html">Știri</a><a href="players.html" class="active">Jucători</a>
       <a href="tournaments.html">Turnee</a><a href="gallery.html">Media</a><a href="documents.html">Documente</a>
@@ -107,6 +109,7 @@ function render(){
     const c = p.setka_cup_cache;
     return `<a href="player.html?id=${p.id}" class="player-row">
       <span class="p-rank">${i+1}</span>
+      <span class="p-avatar">${avatarHtml(p)}</span>
       <span><span class="p-name">${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</span><br><span class="p-city">${escapeHtml(p.city||'Moldova')} · ${escapeHtml(p.roles.map(roleLabel).join(', '))}</span></span>
       <span class="p-record">${c ? `${c.wins}V — ${c.losses}Î` : '—'}</span>
       <span class="p-record">${c ? `${c.total_matches} meciuri` : ''}</span>

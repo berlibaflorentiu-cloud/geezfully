@@ -16,6 +16,18 @@ function fmtDateShort(iso){
 function escapeHtml(s){
   return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+function setkaPhotoUrl(token, size){
+  if (!token) return null;
+  return `https://tabletennis.setkacup.com/api/Image/setka/${size || '180x180'}/${token}.jpeg`;
+}
+function avatarHtml(p, size){
+  const token = p.setka_cup_cache?.photo_token;
+  const url = setkaPhotoUrl(token, size === 'lg' ? '280x280' : '90x90');
+  const initials = (p.first_name[0]+p.last_name[0]).toUpperCase();
+  return url
+    ? `<img src="${url}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`
+    : initials;
+}
 function roleLabel(role){
   return { founder:'Fondator', president:'Președinte', management:'Management', coach:'Antrenor', referee:'Arbitru', player:'Jucător' }[role] || role;
 }
