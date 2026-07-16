@@ -28,6 +28,16 @@ function avatarHtml(p, size){
     ? `<img src="${url}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:50% 12%;border-radius:inherit">`
     : initials;
 }
+function playerStats(p){
+  const c = p.setka_cup_cache;
+  if (c && c.rating_sc != null) {
+    return { rating: c.rating_sc, tournaments: c.total_tournaments, matches: c.total_matches, wins: c.wins, losses: c.losses, live: true };
+  }
+  if (p.attp_total_matches != null && (p.attp_total_matches > 0 || p.attp_rating_sc != null)) {
+    return { rating: p.attp_rating_sc, tournaments: p.attp_total_tournaments, matches: p.attp_total_matches, wins: p.attp_win_matches, losses: p.attp_total_matches - p.attp_win_matches, live: false };
+  }
+  return null;
+}
 function roleLabel(role){
   return { founder:'Fondator', president:'Președinte', management:'Management', coach:'Antrenor', referee:'Arbitru', player:'Jucător' }[role] || role;
 }

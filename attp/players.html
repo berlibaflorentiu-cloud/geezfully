@@ -98,22 +98,22 @@ function render(){
   const sort = document.getElementById('sortSelect').value;
   let list = ALL_PLAYERS.filter(p => !q || `${p.first_name} ${p.last_name}`.toLowerCase().includes(q));
   list.sort((a,b) => {
-    const ca = a.setka_cup_cache, cb = b.setka_cup_cache;
-    if (sort === 'rating') return (cb?.rating_sc||0) - (ca?.rating_sc||0);
-    if (sort === 'matches') return (cb?.total_matches||0) - (ca?.total_matches||0);
+    const sa = playerStats(a), sb = playerStats(b);
+    if (sort === 'rating') return (sb?.rating||0) - (sa?.rating||0);
+    if (sort === 'matches') return (sb?.matches||0) - (sa?.matches||0);
     return `${a.last_name}`.localeCompare(`${b.last_name}`,'ro');
   });
   const el = document.getElementById('playerList');
   if (!list.length) { el.innerHTML = '<div class="empty-state"><p>Niciun jucător găsit.</p></div>'; return; }
   el.innerHTML = list.map((p,i) => {
-    const c = p.setka_cup_cache;
+    const s = playerStats(p);
     return `<a href="player.html?id=${p.id}" class="player-row">
       <span class="p-rank">${i+1}</span>
       <span class="p-avatar">${avatarHtml(p)}</span>
       <span><span class="p-name">${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</span><br><span class="p-city">${escapeHtml(p.city||'Moldova')} · ${escapeHtml(p.roles.map(roleLabel).join(', '))}${p.category ? ' · ' + escapeHtml(p.category) : ''}</span></span>
-      <span class="p-record">${c ? `${c.wins}V — ${c.losses}Î` : '—'}</span>
-      <span class="p-record">${c ? `${c.total_matches} meciuri` : ''}</span>
-      <span class="p-rating">${c && c.rating_sc != null ? c.rating_sc : '—'}</span>
+      <span class="p-record">${s ? `${s.wins}V — ${s.losses}Î` : '—'}</span>
+      <span class="p-record">${s ? `${s.matches} meciuri` : ''}</span>
+      <span class="p-rating">${s && s.rating != null ? s.rating : '—'}</span>
     </a>`;
   }).join('');
 }

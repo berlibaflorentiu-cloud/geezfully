@@ -72,6 +72,7 @@
   const { data: p } = await db.from('players').select('*, setka_cup_cache(*)').eq('id', id).single();
   if (!p) { document.getElementById('profileHead').innerHTML = '<p class="muted">Jucător negăsit.</p>'; return; }
   const c = p.setka_cup_cache;
+  const s = playerStats(p);
 
   document.title = `${p.first_name} ${p.last_name} — ATTP`;
   document.getElementById('crumbName').textContent = `${p.first_name} ${p.last_name}`;
@@ -82,11 +83,11 @@
       <p class="dim mt-8">${escapeHtml(p.city||'Moldova')} · ${escapeHtml(p.roles.map(roleLabel).join(', '))}${p.category ? ' · ' + escapeHtml(p.category) : ''}</p>
     </div>`;
 
-  document.getElementById('kpiRow').innerHTML = c ? `
-    <div class="kpi"><b class="num" style="color:var(--spin-hi)">${c.rating_sc ?? '—'}</b><span>Rating Setka Cup</span></div>
-    <div class="kpi"><b class="num">${c.total_tournaments}</b><span>Turnee jucate</span></div>
-    <div class="kpi"><b class="num" style="color:var(--win)">${c.wins}</b><span>Victorii</span></div>
-    <div class="kpi"><b class="num" style="color:var(--loss)">${c.losses}</b><span>Înfrângeri</span></div>
+  document.getElementById('kpiRow').innerHTML = s ? `
+    <div class="kpi"><b class="num" style="color:var(--spin-hi)">${s.rating ?? '—'}</b><span>Rating Setka Cup</span></div>
+    <div class="kpi"><b class="num">${s.tournaments}</b><span>Turnee jucate</span></div>
+    <div class="kpi"><b class="num" style="color:var(--win)">${s.wins}</b><span>Victorii</span></div>
+    <div class="kpi"><b class="num" style="color:var(--loss)">${s.losses}</b><span>Înfrângeri</span></div>
   ` : '<p class="muted">Acest profil nu este încă legat de datele Setka Cup.</p>';
 
   const stats = (c?.tournament_stats || []).slice().sort((a,b) => new Date(b.startDate) - new Date(a.startDate)).slice(0, 25);
@@ -99,7 +100,7 @@
       <td class="r num">${t.matchWin ?? '–'}:${t.matchLost ?? '–'}</td>
       <td class="r num">${t.points ?? '—'}</td>
       <td class="r num">${t.position ?? '—'}</td>
-    </tr>`).join('') : '<tr><td colspan="6"><p class="muted" style="padding:20px 0">Niciun turneu înregistrat încă.</p></td></tr>';
+    </tr>`).join('') : `<tr><td colspan="6"><p class="muted" style="padding:20px 0">${s ? 'Istoricul turneu-cu-turneu se leagă automat de îndată ce profilul e confirmat pe Setka Cup — totalurile de mai sus sunt deja disponibile.' : 'Niciun turneu înregistrat încă.'}</p></td></tr>`;
 })();
 </script>
 </body>

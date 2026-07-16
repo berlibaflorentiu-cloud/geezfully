@@ -227,9 +227,9 @@
   // Hero stat counters
   const totalMatches = results.length ? null : null;
   const { count: playerCount } = await db.from('players').select('id', { count:'exact', head:true }).contains('roles', ['player']);
-  const { data: cacheRows } = await db.from('setka_cup_cache').select('total_tournaments,total_matches');
-  const sumT = (cacheRows||[]).reduce((s,r)=>s+(r.total_tournaments||0),0);
-  const sumM = (cacheRows||[]).reduce((s,r)=>s+(r.total_matches||0),0);
+  const { data: statRows } = await db.from('players').select('setka_cup_cache(total_tournaments,total_matches), attp_total_tournaments, attp_total_matches').contains('roles', ['player']);
+  const sumT = (statRows||[]).reduce((s,p)=>s+(playerStats(p)?.tournaments||0),0);
+  const sumM = (statRows||[]).reduce((s,p)=>s+(playerStats(p)?.matches||0),0);
   document.getElementById('statPlayers').textContent = playerCount ?? '—';
   document.getElementById('statTournaments').textContent = sumT.toLocaleString('ro-RO');
   document.getElementById('statMatches').textContent = sumM.toLocaleString('ro-RO');
