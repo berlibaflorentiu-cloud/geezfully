@@ -22,7 +22,7 @@ function setkaPhotoUrl(token, size){
 }
 function avatarHtml(p, size){
   const token = p.setka_cup_cache?.photo_token;
-  const url = setkaPhotoUrl(token, size === 'lg' ? '280x280' : '90x90');
+  const url = p.photo_url || setkaPhotoUrl(token, size === 'lg' ? '280x280' : '90x90');
   const initials = (p.first_name[0]+p.last_name[0]).toUpperCase();
   return url
     ? `<img src="${url}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`
@@ -47,7 +47,7 @@ async function fetchFeaturedPlayers(){
   return data || [];
 }
 async function fetchAllPlayers(){
-  const { data, error } = await db.from('players').select('*, setka_cup_cache(*)').order('last_name');
+  const { data, error } = await db.from('players').select('*, setka_cup_cache(*)').contains('roles', ['player']).order('last_name');
   if (error) { console.error(error); return []; }
   return data || [];
 }

@@ -110,7 +110,7 @@ function render(){
     return `<a href="player.html?id=${p.id}" class="player-row">
       <span class="p-rank">${i+1}</span>
       <span class="p-avatar">${avatarHtml(p)}</span>
-      <span><span class="p-name">${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</span><br><span class="p-city">${escapeHtml(p.city||'Moldova')} · ${escapeHtml(p.roles.map(roleLabel).join(', '))}</span></span>
+      <span><span class="p-name">${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</span><br><span class="p-city">${escapeHtml(p.city||'Moldova')} · ${escapeHtml(p.roles.map(roleLabel).join(', '))}${p.category ? ' · ' + escapeHtml(p.category) : ''}</span></span>
       <span class="p-record">${c ? `${c.wins}V — ${c.losses}Î` : '—'}</span>
       <span class="p-record">${c ? `${c.total_matches} meciuri` : ''}</span>
       <span class="p-rating">${c && c.rating_sc != null ? c.rating_sc : '—'}</span>

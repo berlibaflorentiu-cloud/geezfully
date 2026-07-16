@@ -226,7 +226,7 @@
 
   // Hero stat counters
   const totalMatches = results.length ? null : null;
-  const { count: playerCount } = await db.from('players').select('id', { count:'exact', head:true });
+  const { count: playerCount } = await db.from('players').select('id', { count:'exact', head:true }).contains('roles', ['player']);
   const { data: cacheRows } = await db.from('setka_cup_cache').select('total_tournaments,total_matches');
   const sumT = (cacheRows||[]).reduce((s,r)=>s+(r.total_tournaments||0),0);
   const sumM = (cacheRows||[]).reduce((s,r)=>s+(r.total_matches||0),0);
