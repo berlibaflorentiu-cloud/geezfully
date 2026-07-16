@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Profil jucător — ATTP</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%230B1A2B%22/><circle cx=%2216%22 cy=%2216%22 r=%228%22 fill=%22%23FF6B35%22/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  .profile-head{ display:flex; gap:24px; align-items:center; flex-wrap:wrap; }
+  .profile-avatar{ width:88px; height:88px; border-radius:50%; background:linear-gradient(135deg,var(--surface-3),var(--surface-2)); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:30px; font-weight:700; }
+  .kpi-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin:32px 0; }
+  .kpi{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; }
+  .kpi b{ display:block; font-family:var(--font-mono); font-size:24px; }
+  .kpi span{ font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+  @media (max-width:700px){ .kpi-row{ grid-template-columns:1fr 1fr; } }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="container topbar-inner">
+    <a href="index.html" class="brand"><span class="brand-mark">A</span><span><span class="brand-word">ATTP</span><span class="brand-sub" style="display:block">Tenis de masă</span></span></a>
+    <nav class="nav-links"><a href="about.html">Despre</a><a href="news.html">Știri</a><a href="players.html" class="active">Jucători</a><a href="tournaments.html">Turnee</a><a href="gallery.html">Media</a><a href="documents.html">Documente</a><a href="fairplay.html">Fair Play</a><a href="contact.html">Contact</a></nav>
+    <div class="lang-switch"><a href="#" class="active">RO</a><a href="#" title="În curând">RU</a><a href="#" title="În curând">EN</a></div>
+    <button class="nav-toggle" id="navToggle" aria-label="Deschide meniul"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 5h14M3 10h14M3 15h14"/></svg></button>
+  </div>
+</header>
+<div id="mobileNav">
+  <div class="mobile-head"><span class="brand-word">ATTP</span><button class="nav-toggle" id="navClose" aria-label="Închide meniul"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button></div>
+  <a href="about.html">Despre</a><a href="news.html">Știri</a><a href="players.html">Jucători</a><a href="tournaments.html">Turnee</a><a href="gallery.html">Media</a><a href="documents.html">Documente</a><a href="fairplay.html">Fair Play</a><a href="contact.html">Contact</a>
+</div>
+
+<main>
+  <div class="page-head container">
+    <div class="breadcrumb"><a href="index.html">Acasă</a> / <a href="players.html">Jucători</a> / <span id="crumbName">…</span></div>
+    <div class="profile-head" id="profileHead">
+      <div class="card skeleton" style="width:100%;height:88px"></div>
+    </div>
+  </div>
+  <section class="container section-tight">
+    <div class="kpi-row" id="kpiRow"></div>
+    <div class="eyebrow">Istoric</div>
+    <h2 class="mb-24">Turnee recente</h2>
+    <table class="data" id="statsTable">
+      <thead><tr><th>Turneu</th><th>Dată</th><th>Div.</th><th class="r">Scor</th><th class="r">Puncte</th><th class="r">Loc</th></tr></thead>
+      <tbody id="statsBody"><tr><td colspan="6"><div class="skeleton" style="height:40px"></div></td></tr></tbody>
+    </table>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div><span class="brand-word">ATTP</span><p class="mt-16" style="max-width:280px">Asociația Națională a Jucătorilor Profesioniști de Tenis de Masă din Republica Moldova.</p></div>
+      <div><h4>Navigare</h4><a href="about.html">Despre</a><a href="news.html">Știri</a><a href="players.html">Jucători</a><a href="tournaments.html">Turnee</a></div>
+      <div><h4>Resurse</h4><a href="documents.html">Documente</a><a href="fairplay.html">Fair Play</a><a href="gallery.html">Media</a></div>
+      <div><h4>Asociația</h4><a href="contact.html">Contact</a><a href="privacy.html">Confidențialitate</a></div>
+    </div>
+    <div class="footer-bottom"><span>© 2023–2026 ATTP. Toate drepturile rezervate.</span><span>Date live via Setka Cup</span></div>
+  </div>
+</footer>
+
+<script src="js/supabase-init.js"></script>
+<script>
+(async function(){
+  const id = new URLSearchParams(location.search).get('id');
+  if (!id) { document.getElementById('profileHead').innerHTML = '<p class="muted">Jucător negăsit.</p>'; return; }
+  const { data: p } = await db.from('players').select('*, setka_cup_cache(*)').eq('id', id).single();
+  if (!p) { document.getElementById('profileHead').innerHTML = '<p class="muted">Jucător negăsit.</p>'; return; }
+  const c = p.setka_cup_cache;
+
+  document.title = `${p.first_name} ${p.last_name} — ATTP`;
+  document.getElementById('crumbName').textContent = `${p.first_name} ${p.last_name}`;
+  document.getElementById('profileHead').innerHTML = `
+    <div class="profile-avatar">${(p.first_name[0]+p.last_name[0]).toUpperCase()}</div>
+    <div>
+      <h1>${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</h1>
+      <p class="dim mt-8">${escapeHtml(p.city||'Moldova')} · ${escapeHtml(p.roles.map(roleLabel).join(', '))}</p>
+    </div>`;
+
+  document.getElementById('kpiRow').innerHTML = c ? `
+    <div class="kpi"><b class="num" style="color:var(--spin-hi)">${c.rating_sc ?? '—'}</b><span>Rating Setka Cup</span></div>
+    <div class="kpi"><b class="num">${c.total_tournaments}</b><span>Turnee jucate</span></div>
+    <div class="kpi"><b class="num" style="color:var(--win)">${c.wins}</b><span>Victorii</span></div>
+    <div class="kpi"><b class="num" style="color:var(--loss)">${c.losses}</b><span>Înfrângeri</span></div>
+  ` : '<p class="muted">Acest profil nu este încă legat de datele Setka Cup.</p>';
+
+  const stats = (c?.tournament_stats || []).slice().sort((a,b) => new Date(b.startDate) - new Date(a.startDate)).slice(0, 25);
+  const body = document.getElementById('statsBody');
+  body.innerHTML = stats.length ? stats.map(t => `
+    <tr>
+      <td>${escapeHtml(t.name||'')}</td>
+      <td class="num">${t.startDate ? fmtDateShort(t.startDate) : '—'}</td>
+      <td>${t.divisionToken === 'man' ? 'Bărbați' : t.divisionToken === 'woman' ? 'Femei' : (t.divisionToken||'—')}</td>
+      <td class="r num">${t.matchWin ?? '–'}:${t.matchLost ?? '–'}</td>
+      <td class="r num">${t.points ?? '—'}</td>
+      <td class="r num">${t.position ?? '—'}</td>
+    </tr>`).join('') : '<tr><td colspan="6"><p class="muted" style="padding:20px 0">Niciun turneu înregistrat încă.</p></td></tr>';
+})();
+</script>
+</body>
+</html>

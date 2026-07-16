@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contact — ATTP</title>
+<meta name="description" content="Contactează Asociația Națională a Jucătorilor Profesioniști de Tenis de Masă din Republica Moldova.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%230B1A2B%22/><circle cx=%2216%22 cy=%2216%22 r=%228%22 fill=%22%23FF6B35%22/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  .contact-wrap{ display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:start; }
+  .contact-detail{ display:flex; gap:14px; padding:16px 0; border-top:1px solid var(--border); }
+  .contact-detail:first-child{ border-top:0; }
+  .contact-icon{ width:36px; height:36px; border-radius:8px; background:var(--rally-dim); color:var(--rally-hi); display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
+  .form-status{ font-size:13.5px; margin-top:12px; min-height:18px; }
+  @media (max-width:800px){ .contact-wrap{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="container topbar-inner">
+    <a href="index.html" class="brand"><span class="brand-mark">A</span><span><span class="brand-word">ATTP</span><span class="brand-sub" style="display:block">Tenis de masă</span></span></a>
+    <nav class="nav-links"><a href="about.html">Despre</a><a href="news.html">Știri</a><a href="players.html">Jucători</a><a href="tournaments.html">Turnee</a><a href="gallery.html">Media</a><a href="documents.html">Documente</a><a href="fairplay.html">Fair Play</a><a href="contact.html" class="active">Contact</a></nav>
+    <div class="lang-switch"><a href="#" class="active">RO</a><a href="#" title="În curând">RU</a><a href="#" title="În curând">EN</a></div>
+    <button class="nav-toggle" id="navToggle" aria-label="Deschide meniul"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 5h14M3 10h14M3 15h14"/></svg></button>
+  </div>
+</header>
+<div id="mobileNav">
+  <div class="mobile-head"><span class="brand-word">ATTP</span><button class="nav-toggle" id="navClose" aria-label="Închide meniul"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button></div>
+  <a href="about.html">Despre</a><a href="news.html">Știri</a><a href="players.html">Jucători</a><a href="tournaments.html">Turnee</a><a href="gallery.html">Media</a><a href="documents.html">Documente</a><a href="fairplay.html">Fair Play</a><a href="contact.html">Contact</a>
+</div>
+
+<main>
+  <div class="page-head container">
+    <div class="breadcrumb"><a href="index.html">Acasă</a> / Contact</div>
+    <div class="eyebrow">Scrie-ne</div>
+    <h1>Hai să vorbim</h1>
+    <p class="lede mt-16">Pentru înscrieri la turnee, parteneriate sau întrebări despre asociație — completează formularul sau scrie-ne direct.</p>
+  </div>
+
+  <section class="container section-tight">
+    <div class="contact-wrap">
+      <div>
+        <div id="contactDetails">
+          <div class="contact-detail"><span class="contact-icon"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 5h14v10H3z"/><path d="M3 5l7 6 7-6"/></svg></span><div><div style="font-weight:700">Email</div><span class="muted" id="contactEmail">office@attp.md</span></div></div>
+          <div class="contact-detail"><span class="contact-icon"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h3l2 5-2 1a11 11 0 0 0 5 5l1-2 5 2v3a2 2 0 0 1-2 2A15 15 0 0 1 2 6a2 2 0 0 1 2-2z"/></svg></span><div><div style="font-weight:700">Telefon</div><span class="muted" id="contactPhone">La cerere</span></div></div>
+          <div class="contact-detail"><span class="contact-icon"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="8" r="3"/><path d="M10 18s6-5.5 6-10a6 6 0 0 0-12 0c0 4.5 6 10 6 10z"/></svg></span><div><div style="font-weight:700">Locație</div><span class="muted" id="contactAddress">Chișinău, Republica Moldova</span></div></div>
+        </div>
+        <p class="muted mt-24" style="font-size:12.5px">Detaliile complete de contact urmează să fie confirmate de asociație.</p>
+      </div>
+
+      <form id="contactForm" class="card">
+        <div class="field"><label for="cName">Nume</label><input type="text" id="cName" name="name" required></div>
+        <div class="field"><label for="cEmail">Email</label><input type="email" id="cEmail" name="email" required></div>
+        <div class="field"><label for="cMessage">Mesaj</label><textarea id="cMessage" name="message" rows="5" required></textarea></div>
+        <button class="btn btn-primary" type="submit" style="width:100%" id="submitBtn">Trimite mesajul</button>
+        <p class="form-status" id="formStatus"></p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div><span class="brand-word">ATTP</span><p class="mt-16" style="max-width:280px">Asociația Națională a Jucătorilor Profesioniști de Tenis de Masă din Republica Moldova.</p></div>
+      <div><h4>Navigare</h4><a href="about.html">Despre</a><a href="news.html">Știri</a><a href="players.html">Jucători</a><a href="tournaments.html">Turnee</a></div>
+      <div><h4>Resurse</h4><a href="documents.html">Documente</a><a href="fairplay.html">Fair Play</a><a href="gallery.html">Media</a></div>
+      <div><h4>Asociația</h4><a href="contact.html">Contact</a><a href="privacy.html">Confidențialitate</a></div>
+    </div>
+    <div class="footer-bottom"><span>© 2023–2026 ATTP. Toate drepturile rezervate.</span><span>Date live via Setka Cup</span></div>
+  </div>
+</footer>
+
+<script src="js/supabase-init.js"></script>
+<script>
+// TODO: replace with a real Web3Forms access key before launch (same pattern used on the other client sites).
+const WEB3FORMS_KEY = 'REPLACE_ME';
+
+(async function(){
+  const s = await fetchSiteSettings();
+  if (s.contact_email) document.getElementById('contactEmail').textContent = s.contact_email;
+  if (s.contact_phone) document.getElementById('contactPhone').textContent = s.contact_phone;
+  if (s.address) document.getElementById('contactAddress').textContent = s.address;
+})();
+
+document.getElementById('contactForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const status = document.getElementById('formStatus');
+  if (WEB3FORMS_KEY === 'REPLACE_ME') {
+    status.textContent = 'Formularul nu este încă activat — adaugă o cheie Web3Forms reală.';
+    status.style.color = 'var(--loss)';
+    return;
+  }
+  btn.disabled = true; btn.textContent = 'Se trimite…';
+  const fd = new FormData(e.target);
+  fd.append('access_key', WEB3FORMS_KEY);
+  try {
+    const res = await fetch('https://api.web3forms.com/submit', { method:'POST', body: fd });
+    const json = await res.json();
+    if (json.success) {
+      status.textContent = 'Mesaj trimis. Îți răspundem cât mai curând.';
+      status.style.color = 'var(--win)';
+      e.target.reset();
+    } else throw new Error(json.message);
+  } catch (err) {
+    status.textContent = 'Nu am putut trimite mesajul. Încearcă din nou.';
+    status.style.color = 'var(--loss)';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Trimite mesajul';
+  }
+});
+</script>
+</body>
+</html>
