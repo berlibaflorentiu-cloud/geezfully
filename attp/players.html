@@ -111,7 +111,7 @@ function render(){
       <span class="p-rank">${i+1}</span>
       <span class="p-avatar">${avatarHtml(p)}</span>
       <span><span class="p-name">${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</span><br><span class="p-city">${escapeHtml(p.city||'Moldova')} · ${escapeHtml(p.roles.map(roleLabel).join(', '))}${p.category ? ' · ' + escapeHtml(p.category) : ''}</span></span>
-      <span class="p-record">${s ? `${s.wins}V — ${s.losses}Î` : '—'}</span>
+      <span class="p-record">${s ? `<span style="color:var(--win)">${s.wins}W</span> — <span style="color:var(--loss)">${s.losses}L</span>` : '—'}</span>
       <span class="p-record">${s ? `${s.matches} meciuri` : ''}</span>
       <span class="p-rating">${s && s.rating != null ? s.rating : '—'}</span>
     </a>`;

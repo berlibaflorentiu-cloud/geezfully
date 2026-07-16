@@ -25,7 +25,7 @@ function avatarHtml(p, size){
   const url = p.photo_url || setkaPhotoUrl(token, size === 'lg' ? '280x280' : '90x90');
   const initials = (p.first_name[0]+p.last_name[0]).toUpperCase();
   return url
-    ? `<img src="${url}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:50% 12%;border-radius:inherit">`
+    ? `<img src="${url}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`
     : initials;
 }
 function playerStats(p){
