@@ -513,7 +513,7 @@
     .recon-grid{ grid-template-columns:1fr 1fr; }
     header.topbar{ padding:10px 14px; row-gap:8px; }
     .brand{ margin-right:auto; order:1; flex-basis:100%; }
-    #manageRefereesBtn, #openStudioTableBtn, #openArchiveBtn, #openStatsOverviewBtn, #logoutBtn{ order:2; flex:1 1 auto; }
+    #manageRefereesBtn, #openStudioTableBtn, #openArchiveBtn, #openStatsOverviewBtn, #openSetkaSyncBtn, #logoutBtn{ order:2; flex:1 1 auto; }
     .month-nav{ order:3; flex-basis:100%; justify-content:center; }
     .user-chip{ order:4; flex-basis:100%; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     main{ padding:12px 12px 70px; }
@@ -658,6 +658,34 @@
     #exportConfirmModal .modal-foot{ flex-wrap:nowrap; }
     #exportConfirmModal .modal-foot .btn{ flex:0 1 auto; }
   }
+
+  /* ══ Sincronizare Setka ══ */
+  .setka-btn{ position:relative; }
+  .setka-btn .setka-dot{ position:absolute; top:-3px; right:-3px; width:9px; height:9px; border-radius:50%; background:var(--red); border:2px solid var(--surface2); display:none; }
+  .setka-btn.has-notice .setka-dot{ display:block; }
+  .setka-tabs{ display:flex; gap:6px; margin-bottom:14px; border-bottom:1px solid var(--line-2); padding-bottom:10px; }
+  .setka-tab{ padding:7px 14px; border-radius:8px; border:1px solid transparent; background:none; color:var(--muted); font-size:13px; font-weight:600; cursor:pointer; }
+  .setka-tab.active{ background:var(--bg); border-color:var(--border); color:var(--text); }
+  .setka-tab .count{ margin-left:6px; font-size:11px; color:var(--gold); }
+  .setka-countdown{ font-size:12.5px; color:var(--muted); margin-bottom:14px; padding:10px 12px; background:var(--bg); border:1px solid var(--border); border-radius:8px; }
+  .setka-countdown b{ color:var(--text); }
+  .setka-item{ display:flex; align-items:center; gap:12px; padding:12px; border:1px solid var(--border); border-radius:10px; margin-bottom:8px; background:var(--bg); flex-wrap:wrap; }
+  .setka-item .setka-who{ flex:1 1 220px; min-width:0; }
+  .setka-item .setka-who .name{ font-weight:700; font-size:13.5px; }
+  .setka-item .setka-who .meta{ font-size:11.5px; color:var(--muted); margin-top:2px; }
+  .setka-item .setka-who .field-tag{ color:var(--gold-hi); font-weight:700; }
+  .setka-item .setka-diff{ font-variant-numeric:tabular-nums; font-size:14px; white-space:nowrap; flex:0 0 auto; font-weight:700; }
+  .setka-item .setka-diff .delta.pos{ color:var(--gold-hi); }
+  .setka-item .setka-diff .delta.neg{ color:var(--red); }
+  .setka-item .setka-diff .base{ color:var(--muted); font-weight:400; font-size:11.5px; margin-left:5px; }
+  .setka-item .setka-actions{ display:flex; gap:6px; flex:0 0 auto; align-items:center; }
+  .setka-item .setka-edit-input{ width:56px; padding:5px 6px; border-radius:6px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-size:13px; text-align:center; }
+  .setka-empty{ padding:30px; text-align:center; color:var(--muted); font-size:13px; }
+  .setka-log-row{ display:flex; align-items:center; gap:12px; padding:10px 12px; border-bottom:1px solid var(--line-2); font-size:12.5px; }
+  .setka-log-row .setka-log-when{ color:var(--muted); font-size:11.5px; white-space:nowrap; margin-left:auto; }
+  .setka-batch-group{ margin-bottom:18px; }
+  .setka-batch-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .setka-batch-head .label{ font-size:12px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
 </style>
 </head>
 <body>
@@ -711,6 +739,7 @@
       <button class="btn btn-sm btn-gold" id="openStudioTableBtn">Tabel date</button>
       <button class="btn btn-sm btn-gold" id="openArchiveBtn">Arhivă acte</button>
       <button class="btn btn-sm btn-gold" id="openStatsOverviewBtn">Statistici</button>
+      <button class="btn btn-sm btn-gold setka-btn" id="openSetkaSyncBtn">Setka<span class="setka-dot"></span></button>
       <span class="user-chip" id="userChip"></span>
       <button class="btn btn-ghost btn-sm" id="logoutBtn">Ieși</button>
     </header>
@@ -1095,6 +1124,45 @@
     </div>
   </div>
 
+  <!-- ══ Sincronizare Setka Cup ══ -->
+  <div class="modal-backdrop" id="setkaSyncModal">
+    <div class="modal" style="max-width:820px">
+      <div class="modal-head">
+        <div><h2 style="margin:0">Sincronizare Setka Cup</h2><p class="muted" style="margin:3px 0 0">Turneu, meciuri câștigate, Locul I/III — verificate automat contra Setka Cup. Arbitrajul nu e disponibil acolo, rămâne manual.</p></div>
+        <button class="icon-btn" id="closeSetkaSync" aria-label="Închide">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="setka-tabs">
+          <button type="button" class="setka-tab active" data-setka-tab="current">Notificare curentă<span class="count" id="setkaTabCountCurrent"></span></button>
+          <button type="button" class="setka-tab" data-setka-tab="missed">Modificări ratate<span class="count" id="setkaTabCountMissed"></span></button>
+          <button type="button" class="setka-tab" data-setka-tab="history">Istoric &amp; anulare</button>
+        </div>
+
+        <div id="setkaPaneCurrent">
+          <div class="setka-countdown" id="setkaCountdown" style="display:none"></div>
+          <div id="setkaCurrentList"></div>
+          <div class="setka-empty" id="setkaCurrentEmpty" style="display:none">Nicio modificare propusă momentan. Datele se extrag din Setka Cup la fiecare 5 ore.</div>
+        </div>
+
+        <div id="setkaPaneMissed" style="display:none">
+          <p class="muted" style="font-size:12.5px; margin:0 0 12px">Modificări care nu au fost aprobate în 72h de la afișare. Rămân disponibile aici încă 7 zile, apoi dispar.</p>
+          <div id="setkaMissedList"></div>
+          <div class="setka-empty" id="setkaMissedEmpty" style="display:none">Nimic ratat momentan.</div>
+        </div>
+
+        <div id="setkaPaneHistory" style="display:none">
+          <p class="muted" style="font-size:12.5px; margin:0 0 12px">Ultimele notificări aplicate. Poți anula doar cele mai recente 5 (~25h de acoperire, la un ciclu de 5h).</p>
+          <div id="setkaHistoryList"></div>
+          <div class="setka-empty" id="setkaHistoryEmpty" style="display:none">Niciun istoric momentan.</div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" id="closeSetkaSyncBtn">Închide</button>
+        <button class="btn btn-gold" id="setkaAcceptAllBtn" style="display:none">Acceptă tot ce e vizibil</button>
+      </div>
+    </div>
+  </div>
+
 <script>
 (function(){
   'use strict';
@@ -1245,6 +1313,7 @@
       document.getElementById('userChip').textContent = session.user.email;
       await loadStaticData();
       await loadPeriod();
+      setkaSyncCheckOnLogin();
     } else {
       appEl.classList.remove('show');
       if (deniedAccessMessage) {
@@ -2805,6 +2874,10 @@
 
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
+    if (typeof setkaSyncModal !== 'undefined' && setkaSyncModal.classList.contains('show')) {
+      setkaSyncModal.classList.remove('show');
+      return;
+    }
     if (exportConfirmModal.classList.contains('show')) {
       closeExportConfirmation();
       return;
@@ -2840,6 +2913,253 @@
     if (listModal.classList.contains('show')) {
       listModal.classList.remove('show');
     }
+  });
+
+  // ══════════ Sincronizare Setka Cup ══════════
+  const setkaSyncModal = document.getElementById('setkaSyncModal');
+  const setkaSyncBtn = document.getElementById('openSetkaSyncBtn');
+  let setkaStudios = [];
+  let setkaCurrentItems = [];   // pending items on presented, not-yet-expired batches
+  let setkaMissedItemsCache = [];
+  let setkaHistoryRows = [];    // accepted/edited/reverted items, most recent first
+  let setkaRevertableBatchIds = new Set();
+  let setkaActiveTab = 'current';
+  let setkaCountdownTimer = null;
+
+  const SETKA_FIELD_LABELS = {
+    tournament_day: 'Turneu · zi', tournament_night: 'Turneu · noapte',
+    matches_day: 'Meciuri câștigate · zi', matches_night: 'Meciuri câștigate · noapte',
+    place1_day: 'Locul I · zi', place1_night: 'Locul I · noapte',
+    place3_day: 'Locul III · zi', place3_night: 'Locul III · noapte',
+  };
+
+  function setkaRefName(id){
+    const r = referees.find(x => x.id === id);
+    return r ? `${r.last_name} ${r.first_name}` : '—';
+  }
+  function setkaStudioName(id){
+    const s = setkaStudios.find(x => x.id === id);
+    return s ? s.name : '—';
+  }
+  function setkaPeriodLabel(period){
+    const d = new Date(period);
+    return MONTH_NAMES[d.getMonth()] + ' ' + d.getFullYear();
+  }
+
+  async function setkaEnsureStudios(){
+    if (setkaStudios.length) return;
+    const { data } = await db.from('studios').select('id, name');
+    setkaStudios = data || [];
+  }
+
+  // Called once per session after login: presents the oldest un-shown batch (starts its 72h
+  // countdown) and refreshes the notification dot. Does NOT force the modal open every visit —
+  // only when there's something new to show that hasn't been presented before.
+  async function setkaSyncCheckOnLogin(){
+    try {
+      await setkaEnsureStudios();
+      const { data: newlyPresentedBatchId } = await db.rpc('setka_sync_present_pending');
+      await setkaSyncRefreshAll();
+      const hasActionable = setkaCurrentItems.length > 0 || setkaMissedItemsCache.length > 0;
+      setkaSyncBtn.classList.toggle('has-notice', hasActionable);
+      if (newlyPresentedBatchId) {
+        setkaOpenModal('current');
+      }
+    } catch (e) {
+      console.error('setka sync check failed', e);
+    }
+  }
+
+  async function setkaSyncRefreshAll(){
+    const nowIso = new Date().toISOString();
+    const [{ data: current }, { data: missed }, { data: history }, { data: revertable }] = await Promise.all([
+      db.from('setka_sync_items').select('*, setka_sync_batches!inner(status, accept_deadline, presented_at)')
+        .eq('status', 'pending').eq('setka_sync_batches.status', 'presented')
+        .gt('setka_sync_batches.accept_deadline', nowIso),
+      db.from('setka_sync_items').select('*').eq('status', 'missed').order('created_at', { ascending:false }),
+      db.from('setka_sync_items').select('*').in('status', ['accepted','edited','reverted']).order('actioned_at', { ascending:false }).limit(200),
+      db.from('setka_sync_batches').select('id').in('status', ['presented','resolved']).order('presented_at', { ascending:false, nullsFirst:false }).limit(5),
+    ]);
+    setkaCurrentItems = current || [];
+    setkaMissedItemsCache = missed || [];
+    setkaHistoryRows = history || [];
+    setkaRevertableBatchIds = new Set((revertable||[]).map(b => b.id));
+  }
+
+  function setkaDiffHtml(it){
+    const val = it.status === 'edited' && it.edited_value != null ? it.edited_value : it.new_value;
+    const delta = val - it.old_value;
+    const sign = delta > 0 ? '+' : '';
+    const cls = delta >= 0 ? 'pos' : 'neg';
+    return `<span class="delta ${cls}">${sign}${delta}</span>`;
+  }
+
+  function setkaRenderCurrent(){
+    const list = document.getElementById('setkaCurrentList');
+    const empty = document.getElementById('setkaCurrentEmpty');
+    document.getElementById('setkaTabCountCurrent').textContent = setkaCurrentItems.length ? `(${setkaCurrentItems.length})` : '';
+    document.getElementById('setkaAcceptAllBtn').style.display = setkaCurrentItems.length ? '' : 'none';
+    if (!setkaCurrentItems.length) {
+      list.innerHTML = ''; empty.style.display = ''; document.getElementById('setkaCountdown').style.display = 'none';
+      return;
+    }
+    empty.style.display = 'none';
+    const soonest = setkaCurrentItems.reduce((min, it) => {
+      const dl = new Date(it.setka_sync_batches.accept_deadline);
+      return (!min || dl < min) ? dl : min;
+    }, null);
+    const cd = document.getElementById('setkaCountdown');
+    cd.style.display = '';
+    setkaStartCountdown(soonest);
+
+    list.innerHTML = setkaCurrentItems.map(it => `
+      <div class="setka-item" data-item-id="${it.id}">
+        <div class="setka-who">
+          <div class="name">${escapeHtml(setkaRefName(it.referee_id))}</div>
+          <div class="meta">${escapeHtml(setkaStudioName(it.studio_id))} · ${escapeHtml(setkaPeriodLabel(it.period))} · <span class="field-tag">${SETKA_FIELD_LABELS[it.field]}</span></div>
+        </div>
+        <div class="setka-diff">${setkaDiffHtml(it)}</div>
+        <div class="setka-actions">
+          <input type="number" class="setka-edit-input" style="display:none" value="${it.new_value}" min="0">
+          <button type="button" class="btn btn-sm btn-ghost setka-edit-btn">Editează</button>
+          <button type="button" class="btn btn-sm btn-gold setka-accept-btn">Acceptă</button>
+          <button type="button" class="btn btn-sm btn-danger setka-delete-btn">Șterge</button>
+        </div>
+      </div>`).join('');
+
+    list.querySelectorAll('.setka-item').forEach(row => {
+      const id = row.dataset.itemId;
+      const input = row.querySelector('.setka-edit-input');
+      row.querySelector('.setka-edit-btn').addEventListener('click', () => {
+        input.style.display = input.style.display === 'none' ? '' : 'none';
+      });
+      row.querySelector('.setka-accept-btn').addEventListener('click', async () => {
+        const editing = input.style.display !== 'none';
+        const val = editing ? parseInt(input.value, 10) : null;
+        if (editing && (isNaN(val) || val < 0)) return;
+        await db.rpc('setka_sync_accept_item', { p_item_id: id, p_value: val });
+        await setkaSyncRefreshAll(); setkaRenderActive();
+        await loadPeriod();
+      });
+      row.querySelector('.setka-delete-btn').addEventListener('click', async () => {
+        await db.rpc('setka_sync_delete_item', { p_item_id: id });
+        await setkaSyncRefreshAll(); setkaRenderActive();
+      });
+    });
+  }
+
+  function setkaStartCountdown(deadline){
+    if (setkaCountdownTimer) clearInterval(setkaCountdownTimer);
+    const el = document.getElementById('setkaCountdown');
+    const tick = () => {
+      const ms = deadline - new Date();
+      if (ms <= 0) { el.innerHTML = 'Termenul de 72h a expirat pentru unele modificări — verifică fila „Modificări ratate”.'; clearInterval(setkaCountdownTimer); return; }
+      const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000);
+      el.innerHTML = `Ai <b>${h}h ${m}m</b> să accepți, editezi sau ștergi aceste modificări înainte să treacă în „Modificări ratate”.`;
+    };
+    tick();
+    setkaCountdownTimer = setInterval(tick, 60000);
+  }
+
+  function setkaRenderMissed(){
+    const list = document.getElementById('setkaMissedList');
+    const empty = document.getElementById('setkaMissedEmpty');
+    document.getElementById('setkaTabCountMissed').textContent = setkaMissedItemsCache.length ? `(${setkaMissedItemsCache.length})` : '';
+    if (!setkaMissedItemsCache.length) { list.innerHTML=''; empty.style.display=''; return; }
+    empty.style.display = 'none';
+    list.innerHTML = setkaMissedItemsCache.map(it => `
+      <div class="setka-item" data-item-id="${it.id}">
+        <div class="setka-who">
+          <div class="name">${escapeHtml(setkaRefName(it.referee_id))}</div>
+          <div class="meta">${escapeHtml(setkaStudioName(it.studio_id))} · ${escapeHtml(setkaPeriodLabel(it.period))} · <span class="field-tag">${SETKA_FIELD_LABELS[it.field]}</span></div>
+        </div>
+        <div class="setka-diff">${setkaDiffHtml(it)}</div>
+        <div class="setka-actions">
+          <button type="button" class="btn btn-sm btn-gold setka-accept-btn">Acceptă totuși</button>
+          <button type="button" class="btn btn-sm btn-danger setka-delete-btn">Șterge</button>
+        </div>
+      </div>`).join('');
+    list.querySelectorAll('.setka-item').forEach(row => {
+      const id = row.dataset.itemId;
+      row.querySelector('.setka-accept-btn').addEventListener('click', async () => {
+        await db.rpc('setka_sync_accept_item', { p_item_id: id, p_value: null });
+        await setkaSyncRefreshAll(); setkaRenderActive();
+        await loadPeriod();
+      });
+      row.querySelector('.setka-delete-btn').addEventListener('click', async () => {
+        await db.rpc('setka_sync_delete_item', { p_item_id: id });
+        await setkaSyncRefreshAll(); setkaRenderActive();
+      });
+    });
+  }
+
+  function setkaRenderHistory(){
+    const list = document.getElementById('setkaHistoryList');
+    const empty = document.getElementById('setkaHistoryEmpty');
+    if (!setkaHistoryRows.length) { list.innerHTML=''; empty.style.display=''; return; }
+    empty.style.display = 'none';
+    list.innerHTML = setkaHistoryRows.map(it => {
+      const canRevert = it.status !== 'reverted' && setkaRevertableBatchIds.has(it.batch_id);
+      const when = it.actioned_at ? new Date(it.actioned_at).toLocaleString('ro-RO') : '';
+      const statusLabel = it.status === 'reverted' ? ' <em>(anulat)</em>' : '';
+      return `
+      <div class="setka-log-row" data-item-id="${it.id}" data-batch-id="${it.batch_id}">
+        <div class="setka-who" style="flex:1 1 220px">
+          <div class="name">${escapeHtml(setkaRefName(it.referee_id))}</div>
+          <div class="meta">${escapeHtml(setkaStudioName(it.studio_id))} · ${escapeHtml(setkaPeriodLabel(it.period))} · <span class="field-tag">${SETKA_FIELD_LABELS[it.field]}</span>${statusLabel}</div>
+        </div>
+        <div class="setka-diff">${setkaDiffHtml(it)}</div>
+        ${canRevert ? '<button type="button" class="btn btn-sm btn-ghost setka-revert-btn">Anulează</button>' : ''}
+        <span class="setka-log-when">${when}</span>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('.setka-revert-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const row = btn.closest('.setka-log-row');
+        if (!confirm('Anulezi această notificare aplicată? Valorile revin la ce erau înainte.')) return;
+        await db.rpc('setka_sync_revert_batch', { p_batch_id: row.dataset.batchId });
+        await setkaSyncRefreshAll(); setkaRenderActive();
+        await loadPeriod();
+      });
+    });
+  }
+
+  function setkaRenderActive(){
+    if (setkaActiveTab === 'current') setkaRenderCurrent();
+    else if (setkaActiveTab === 'missed') setkaRenderMissed();
+    else setkaRenderHistory();
+    setkaSyncBtn.classList.toggle('has-notice', setkaCurrentItems.length > 0 || setkaMissedItemsCache.length > 0);
+  }
+
+  function setkaSwitchTab(tab){
+    setkaActiveTab = tab;
+    document.querySelectorAll('.setka-tab').forEach(b => b.classList.toggle('active', b.dataset.setkaTab === tab));
+    document.getElementById('setkaPaneCurrent').style.display = tab === 'current' ? '' : 'none';
+    document.getElementById('setkaPaneMissed').style.display = tab === 'missed' ? '' : 'none';
+    document.getElementById('setkaPaneHistory').style.display = tab === 'history' ? '' : 'none';
+    document.getElementById('setkaAcceptAllBtn').style.display = (tab === 'current' && setkaCurrentItems.length) ? '' : 'none';
+    setkaRenderActive();
+  }
+
+  async function setkaOpenModal(tab){
+    await setkaEnsureStudios();
+    await setkaSyncRefreshAll();
+    setkaSwitchTab(tab || 'current');
+    setkaSyncModal.classList.add('show');
+  }
+
+  setkaSyncBtn.addEventListener('click', () => setkaOpenModal('current'));
+  document.getElementById('closeSetkaSync').addEventListener('click', () => setkaSyncModal.classList.remove('show'));
+  document.getElementById('closeSetkaSyncBtn').addEventListener('click', () => setkaSyncModal.classList.remove('show'));
+  document.querySelectorAll('.setka-tab').forEach(b => b.addEventListener('click', () => setkaSwitchTab(b.dataset.setkaTab)));
+  document.getElementById('setkaAcceptAllBtn').addEventListener('click', async () => {
+    if (!setkaCurrentItems.length) return;
+    if (!confirm(`Accepți toate cele ${setkaCurrentItems.length} modificări vizibile?`)) return;
+    for (const it of setkaCurrentItems) {
+      await db.rpc('setka_sync_accept_item', { p_item_id: it.id, p_value: null });
+    }
+    await setkaSyncRefreshAll(); setkaRenderActive();
+    await loadPeriod();
   });
 
 })();
