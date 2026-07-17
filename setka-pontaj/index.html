@@ -101,6 +101,7 @@
   .brand{ display:flex; align-items:baseline; gap:9px; margin-right:auto; }
   .brand .wordmark{ font-size:19px; }
   .brand small{ font-weight:500; font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; }
+  .topbar-actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
   .month-nav{ display:flex; align-items:center; gap:6px; }
   .month-nav button{
     width:28px; height:28px; border-radius:6px; border:1px solid var(--border); background:var(--bg);
@@ -562,7 +563,9 @@
     .recon-grid{ grid-template-columns:1fr 1fr; }
     header.topbar{ padding:10px 14px; row-gap:8px; }
     .brand{ margin-right:auto; order:1; flex-basis:100%; }
-    #manageRefereesBtn, #openStudioTableBtn, #openArchiveBtn, #openStatsOverviewBtn, #openSetkaSyncBtn, #langToggle, #logoutBtn{ order:2; flex:1 1 auto; }
+    .topbar-actions{ order:2; flex-basis:100%; }
+    #manageRefereesBtn, #openStudioTableBtn, #openArchiveBtn, #openStatsOverviewBtn, #openSetkaSyncBtn, #langToggle{ flex:1 1 auto; }
+    #logoutBtn{ order:2; flex:1 1 auto; }
     .month-nav{ order:3; flex-basis:100%; justify-content:center; }
     .user-chip{ order:4; flex-basis:100%; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     main{ padding:12px 12px 70px; }
@@ -784,14 +787,16 @@
           <span id="lockMonthLabel">Blochează luna</span>
         </button>
       </div>
-      <button class="btn btn-sm btn-gold" id="manageRefereesBtn">Participanți</button>
-      <button class="btn btn-sm btn-gold" id="openStudioTableBtn">Tabel date</button>
-      <button class="btn btn-sm btn-gold" id="openArchiveBtn">Arhivă acte</button>
-      <button class="btn btn-sm btn-gold" id="openStatsOverviewBtn">Statistici</button>
-      <button class="btn btn-sm btn-gold setka-btn" id="openSetkaSyncBtn">Setka<span class="setka-dot"></span></button>
-      <div class="stats-scope-toggle" id="langToggle" role="group" aria-label="Limba interfeței">
-        <button type="button" class="stats-scope-btn" data-lang="ro">RO</button>
-        <button type="button" class="stats-scope-btn" data-lang="ru">RU</button>
+      <div class="topbar-actions">
+        <button class="btn btn-sm btn-gold" id="manageRefereesBtn">Participanți</button>
+        <button class="btn btn-sm btn-gold" id="openStudioTableBtn">Tabel date</button>
+        <button class="btn btn-sm btn-gold" id="openArchiveBtn">Arhivă acte</button>
+        <button class="btn btn-sm btn-gold" id="openStatsOverviewBtn">Statistici</button>
+        <button class="btn btn-sm btn-gold setka-btn" id="openSetkaSyncBtn">Setka<span class="setka-dot"></span></button>
+        <div class="stats-scope-toggle" id="langToggle" role="group" aria-label="Limba interfeței">
+          <button type="button" class="stats-scope-btn" data-lang="ro">RO</button>
+          <button type="button" class="stats-scope-btn" data-lang="ru">RU</button>
+        </div>
       </div>
       <span class="user-chip" id="userChip"></span>
       <button class="btn btn-ghost btn-sm" id="logoutBtn">Ieși</button>
@@ -1292,8 +1297,8 @@
     'Doar activi luna asta': 'Только активные в этом месяце',
     'Fără activitate luna asta': 'Без активности в этом месяце',
     'Sortează participanții': 'Сортировка участников',
-    '↕ Nume A–Z': '↕ Имя А–Я',
-    '↕ Nume Z–A': '↕ Имя Я–А',
+    '↕ Nume A–Z': '↕ Имя A–Z',
+    '↕ Nume Z–A': '↕ Имя Z–A',
     '↕ Categorie': '↕ Категория',
     '↕ Cea mai multă activitate': '↕ Больше всего активности',
     '↕ Cea mai puțină activitate': '↕ Меньше всего активности',
