@@ -570,23 +570,22 @@
 
   @media print{
     @page{ size:A4 portrait; margin:9mm; }
-    /* The modal chain (html/body/#app/.modal-backdrop) uses fixed heights and
-       overflow:auto for the on-screen layout — left as-is, Chrome's print
-       engine paginates the scrollable area's full height instead of just the
-       content, producing dozens of near-blank pages. Reset the whole chain
-       to static, auto-height, visible-overflow so the act prints as one
-       normal flowing document instead of a clipped scroll viewport. */
+    /* #actModal's siblings (#app — the full header + participant table — and
+       every other modal-backdrop) must be removed from the print layout with
+       display:none, not just hidden with visibility:hidden. visibility:hidden
+       still reserves an element's full layout height, so #app's own (very
+       tall) content was pushing the act down the page and producing dozens
+       of blank pages before it. display:none takes it out of flow entirely. */
     html,body{ height:auto !important; overflow:visible !important; background:#fff; }
-    body *{ visibility:hidden; }
-    #actModal, #actModal *{ visibility:visible; }
-    #app{ display:block !important; min-height:0; overflow:visible; }
+    body > *{ display:none !important; }
+    body > #actModal{ display:block !important; }
     #actModal{
-      position:static !important; inset:auto; display:block !important;
+      position:static !important; inset:auto;
       background:#fff; padding:0; margin:0; height:auto !important; overflow:visible !important;
     }
-    #actModal .modal{ box-shadow:none; max-width:none; width:auto; background:#fff; border:0; }
-    #actModal .modal-head, #actModal .modal-foot{ display:none; }
-    #actModal .modal-body{ padding:0; background:#fff; overflow:visible !important; max-height:none !important; height:auto !important; }
+    #actModal .modal{ box-shadow:none; max-width:none; width:auto; background:#fff; border:0; display:block !important; }
+    #actModal .modal-head, #actModal .modal-foot{ display:none !important; }
+    #actModal .modal-body{ padding:0; background:#fff; overflow:visible !important; max-height:none !important; height:auto !important; display:block !important; }
     .act-edit-hint, .archived-banner{ display:none; }
     .act-doc{ width:190mm; max-width:none; margin:0 auto; padding:8mm 10mm; border:1px solid #c8cdd3; box-shadow:none; color:#000; }
     .act-edit-btn{ display:none; }
