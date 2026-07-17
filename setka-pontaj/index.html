@@ -2982,6 +2982,7 @@
     const target = event.target;
     if (!(target instanceof HTMLElement) || !target.matches('input:not([disabled]), select:not([disabled])')) return;
     event.preventDefault();
+    target.blur();
     const saveButton = document.getElementById('saveDetail');
     if (!saveButton.disabled) await saveDetailChanges({ closeModal: false });
   });
