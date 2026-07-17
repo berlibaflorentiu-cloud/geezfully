@@ -2952,7 +2952,7 @@
   document.getElementById('closeDetail').addEventListener('click', () => detailModal.classList.remove('show'));
   document.getElementById('cancelDetail').addEventListener('click', () => detailModal.classList.remove('show'));
 
-  document.getElementById('saveDetail').addEventListener('click', async () => {
+  async function saveDetailChanges({ closeModal = true } = {}) {
     if (periodLocked) return;
     const refId = detailRefId;
     const entry = entries[refId] || (entries[refId] = emptyEntry(refId));
@@ -2971,17 +2971,19 @@
     }));
     await db.from('international_bonuses').upsert(bonusRows, { onConflict: 'referee_id,period,label' });
     bonusesByRef[refId] = bonusRows.filter(b => b.amount !== 0);
-    detailModal.classList.remove('show');
+    if (closeModal) detailModal.classList.remove('show');
     renderRows();
-  });
+  }
 
-  detailModal.addEventListener('keydown', (event) => {
+  document.getElementById('saveDetail').addEventListener('click', () => saveDetailChanges());
+
+  detailModal.addEventListener('keydown', async (event) => {
     if (event.key !== 'Enter' || event.isComposing || event.repeat || event.shiftKey) return;
     const target = event.target;
     if (!(target instanceof HTMLElement) || !target.matches('input:not([disabled]), select:not([disabled])')) return;
     event.preventDefault();
     const saveButton = document.getElementById('saveDetail');
-    if (!saveButton.disabled) saveButton.click();
+    if (!saveButton.disabled) await saveDetailChanges({ closeModal: false });
   });
 
   // ══ REFEREE ROSTER MANAGER ══
