@@ -984,7 +984,7 @@
       </div>
       <div class="modal-foot">
         <button class="btn btn-ghost" id="cancelDetail">Anulează</button>
-        <button class="btn btn-ghost" id="downloadDetailBtn">
+        <button class="btn btn-gold" id="downloadDetailBtn">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v9M6.5 9.5 10 13l3.5-3.5"/><path d="M4 15v2h12v-2"/></svg>
           Descarcă detalii
         </button>
@@ -2001,17 +2001,15 @@
       'Turneu zi','Turneu noapte','Meciuri zi','Meciuri noapte',
       'Locul I zi','Locul I noapte','Locul III zi','Locul III noapte',
       'Arbitraj zi','Arbitraj noapte','Taxi (MDL)','Regiune','Km',
-      'Onorariu (MDL)','Bonusuri total (MDL)',
-      'Total cu bonusuri (MDL)','Impozit (%)','Impozit (MDL)',
+      'Onorariu (MDL)','Impozit (%)','Impozit (MDL)','Total cu impozit (MDL)',
       'Achitat (MDL)','Conform calculului','Rest','Notițe','Ultima actualizare'
     ];
     const rows = referees.slice()
       .sort((a, b) => (a.last_name + ' ' + a.first_name).localeCompare(b.last_name + ' ' + b.first_name, 'ro', { sensitivity:'base' }))
       .map(ref => {
         const entry = entries[ref.id] || emptyEntry(ref.id);
-        const bonuses = Object.fromEntries((bonusesByRef[ref.id] || []).map(b => [b.label, Number(b.amount) || 0]));
-        const bonusTotal = BONUS_LABELS.reduce((sum, label) => sum + (bonuses[label] || 0), 0);
         const fee = computeFee(ref, entry);
+        const tax = fee * (globalRates.tax_rate || 0);
         const conform = entry.conform_calcul === null || entry.conform_calcul === undefined || entry.conform_calcul === '' ? null : Number(entry.conform_calcul);
         const rest = conform === null ? '' : (Number(entry.paid_amount) || 0) - conform;
         return [
@@ -2021,8 +2019,7 @@
           entry.tournament_day || 0, entry.tournament_night || 0, entry.matches_day || 0, entry.matches_night || 0,
           entry.place1_day || 0, entry.place1_night || 0, entry.place3_day || 0, entry.place3_night || 0,
           entry.arbitraj_day || 0, entry.arbitraj_night || 0, exportNumber(entry.taxi || 0), entry.region || '', exportNumber(entry.km || 0),
-          exportNumber(fee), exportNumber(bonusTotal),
-          exportNumber(fee + bonusTotal), exportNumber((globalRates.tax_rate || 0) * 100), exportNumber(fee * (globalRates.tax_rate || 0)),
+          exportNumber(fee), exportNumber((globalRates.tax_rate || 0) * 100), exportNumber(tax), exportNumber(fee - tax),
           exportNumber(entry.paid_amount || 0), conform === null ? '' : exportNumber(conform), rest === '' ? '' : exportNumber(rest),
           entry.notes || '', entry.updated_at || ''
         ];
@@ -2976,6 +2973,15 @@
     bonusesByRef[refId] = bonusRows.filter(b => b.amount !== 0);
     detailModal.classList.remove('show');
     renderRows();
+  });
+
+  detailModal.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' || event.isComposing || event.repeat || event.shiftKey) return;
+    const target = event.target;
+    if (!(target instanceof HTMLElement) || !target.matches('input:not([disabled]), select:not([disabled])')) return;
+    event.preventDefault();
+    const saveButton = document.getElementById('saveDetail');
+    if (!saveButton.disabled) saveButton.click();
   });
 
   // ══ REFEREE ROSTER MANAGER ══
