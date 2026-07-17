@@ -2055,9 +2055,10 @@
         const conform = entry.conform_calcul === null || entry.conform_calcul === undefined || entry.conform_calcul === '' ? null : Number(entry.conform_calcul);
         const rest = conform === null ? '' : (Number(entry.paid_amount) || 0) - conform;
         return [
-          periodKey(currentPeriod).slice(0, 7), ref.last_name, ref.first_name, entry.category || ref.category,
+          periodKey(currentPeriod).slice(0, 7), entry.last_name || ref.last_name, entry.first_name || ref.first_name, entry.category || ref.category,
           ref.active === false ? 'Ascuns' : 'Vizibil', hasActivity(entry) ? 'Da' : 'Nu',
-          ref.fiscal_code || '', ref.iban || '', ref.bank_name || '', ref.contract_number || '', localizeRomanianDate(ref.contract_date || ''),
+          entry.fiscal_code || ref.fiscal_code || '', entry.iban || ref.iban || '', entry.bank_name || ref.bank_name || '',
+          entry.contract_number || ref.contract_number || '', localizeRomanianDate(entry.contract_date || ref.contract_date || ''),
           entry.tournament_day || 0, entry.tournament_night || 0, entry.matches_day || 0, entry.matches_night || 0,
           entry.place1_day || 0, entry.place1_night || 0, entry.place3_day || 0, entry.place3_night || 0,
           entry.arbitraj_day || 0, entry.arbitraj_night || 0, exportNumber(entry.taxi || 0), entry.region || '', exportNumber(entry.km || 0),
@@ -3297,7 +3298,18 @@
     const ref = referees.find(r => r.id === refId);
     const entry = entries[refId] || emptyEntry(refId);
     const category = entry.category || ref.category;
-    _actState = { refId, ref, category, period: currentPeriod, total: 0, tax: 0, viewOnly: false };
+    // Snapshot fields locked to this month — never the live referee record —
+    // so reprinting an old Act always shows what was true back then.
+    const snap = {
+      last_name: entry.last_name || ref.last_name,
+      first_name: entry.first_name || ref.first_name,
+      fiscal_code: entry.fiscal_code || ref.fiscal_code,
+      iban: entry.iban || ref.iban,
+      bank_name: entry.bank_name || ref.bank_name,
+      contract_number: entry.contract_number || ref.contract_number,
+      contract_date: entry.contract_date || ref.contract_date,
+    };
+    _actState = { refId, ref, snap, category, period: currentPeriod, total: 0, tax: 0, viewOnly: false };
     setActEditable(true);
     let total = 0;
     const rows = ITEM_ROWS.map(([key,label], index) => {
@@ -3316,7 +3328,7 @@
     const totalIncludingTax = total + tax;
     const monthLabel = `${MONTH_NAMES_RO[currentPeriod.getMonth()]} ${currentPeriod.getFullYear()}`;
     const taxPercent = fmtMoney(ACT_TAX_RATE * 100);
-    const participantBic = bicForParticipant(ref);
+    const participantBic = bicForParticipant(snap);
     document.getElementById('actDoc').innerHTML = `
       <div class="act-title">
         <span class="act-title-line"></span>
@@ -3332,9 +3344,9 @@
         <div class="act-section-body">
           <div>1. Prezentul act este întocmit în temeiul Contractului de prestări servicii sportive nr.</div>
           <div class="act-contract-grid">
-            <span class="act-doc-value">${escapeHtml(ref.contract_number||'—')}</span>
+            <span class="act-doc-value">${escapeHtml(snap.contract_number||'—')}</span>
             <span>din</span>
-            <span class="act-doc-value">${escapeHtml(localizeRomanianDate(ref.contract_date)||'—')}</span>
+            <span class="act-doc-value">${escapeHtml(localizeRomanianDate(snap.contract_date)||'—')}</span>
             <span>și</span>
             <b>Anexei nr. 1 la contract</b>
           </div>
@@ -3395,10 +3407,10 @@
           <div class="act-section-body act-party">
             <div class="act-party-title">Prestator:</div>
             <div class="act-provider-row"><span></span><b>Antreprenor individual</b></div>
-            <div class="act-provider-row"><span>cod fiscal</span><span class="act-provider-value act-doc-value">${escapeHtml(ref.fiscal_code||'—')}</span></div>
+            <div class="act-provider-row"><span>cod fiscal</span><span class="act-provider-value act-doc-value">${escapeHtml(snap.fiscal_code||'—')}</span></div>
             <div class="act-provider-row"><span>BIC:</span><span class="act-provider-value">${escapeHtml(participantBic)}</span></div>
-            <div class="act-provider-row"><span>IBAN:</span><span class="act-provider-value act-doc-value">${escapeHtml(ref.iban||'—')}</span></div>
-            <div class="act-provider-name"><span>${escapeHtml(ref.last_name||'—')}</span><span>${escapeHtml(ref.first_name||'—')}</span></div>
+            <div class="act-provider-row"><span>IBAN:</span><span class="act-provider-value act-doc-value">${escapeHtml(snap.iban||'—')}</span></div>
+            <div class="act-provider-name"><span>${escapeHtml(snap.last_name||'—')}</span><span>${escapeHtml(snap.first_name||'—')}</span></div>
           </div>
         </section>
       </div>`;
@@ -3829,7 +3841,9 @@
   async function downloadDetailPdf(){
     const ref = referees.find(r => r.id === detailRefId);
     if (!ref) return;
-    const category = (entries[detailRefId] || {}).category || ref.category;
+    const detailEntry = entries[detailRefId] || {};
+    const category = detailEntry.category || ref.category;
+    const snapName = `${detailEntry.last_name || ref.last_name} ${detailEntry.first_name || ref.first_name}`;
     const btn = document.getElementById('downloadDetailBtn');
     const monthLabel = `${MONTH_NAMES_RO[currentPeriod.getMonth()]} ${currentPeriod.getFullYear()}`;
     const taxi = Number(document.getElementById('dTaxi').value) || 0;
@@ -3844,7 +3858,7 @@
     report.className = 'detail-pdf-report';
     report.innerHTML = `
       <h1>Detalii participant</h1>
-      <p class="detail-pdf-subtitle"><strong>${escapeHtml(`${ref.last_name} ${ref.first_name}`)}</strong> · ${escapeHtml(category || '—')} · ${escapeHtml(monthLabel)}</p>
+      <p class="detail-pdf-subtitle"><strong>${escapeHtml(snapName)}</strong> · ${escapeHtml(category || '—')} · ${escapeHtml(monthLabel)}</p>
 
       <div class="detail-pdf-section">
         <h2>Deplasare și decontare</h2>
@@ -3921,14 +3935,14 @@
     const btn = document.getElementById('saveActBtn');
     btn.disabled = true;
     btn.innerHTML = 'Se salvează…';
-    const { refId, ref, category, period, total, tax } = _actState;
+    const { refId, ref, snap, category, period, total, tax } = _actState;
     const { data, error } = await db.from('saved_acts').insert([{
       referee_id: refId,
-      referee_name: `${ref.last_name} ${ref.first_name}`,
+      referee_name: `${snap.last_name} ${snap.first_name}`,
       category: category || ref.category,
       period: periodKey(period),
-      contract_number: ref.contract_number || null,
-      contract_date: localizeRomanianDate(ref.contract_date) || null,
+      contract_number: snap.contract_number || null,
+      contract_date: localizeRomanianDate(snap.contract_date) || null,
       total, tax,
       document_html: sanitizeStoredActHtml(document.getElementById('actDoc').innerHTML),
       created_by: session.user.id,
