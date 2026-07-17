@@ -519,7 +519,7 @@
   .act-party-title{ font-style:italic; }
   .act-party b{ font-weight:700; }
   .act-beneficiary{ min-height:160px; }
-  .act-beneficiary-mark{ display:block; width:285px; max-width:100%; margin:-2px 0 -7px 5px; mix-blend-mode:multiply; }
+  .act-beneficiary-mark{ display:block; width:285px; max-width:100%; margin:2px 0 -11px 5px; mix-blend-mode:multiply; }
   .act-provider-row{ display:grid; grid-template-columns:64px 1fr; min-height:22px; align-items:center; border-bottom:1px solid #aaa; }
   .act-provider-row:last-of-type{ border-bottom:0; }
   .act-provider-name{ display:grid; grid-template-columns:1fr 1fr; gap:8px; text-align:center; font-weight:700; padding-top:5px; }
@@ -3708,7 +3708,7 @@
 
     const mark = root.querySelector('.act-beneficiary-mark');
     if (mark?.src) {
-      pdf.addImage(mark.src, 'PNG', beneficiaryX + 3, partiesY + 30, 65, 27, 'beneficiary-mark', 'FAST');
+      pdf.addImage(mark.src, 'PNG', beneficiaryX + 3, partiesY + 32, 65, 27, 'beneficiary-mark', 'FAST');
     }
 
     const providerRows = Array.from(root.querySelectorAll('.act-party:not(.act-beneficiary) .act-provider-row'));
