@@ -2185,7 +2185,7 @@
       nameTd.className = 'name-cell';
       const initials = `${ref.first_name?.[0] || ''}${ref.last_name?.[0] || ''}`.toUpperCase();
       nameTd.innerHTML = `<div class="participant-identity"><span class="participant-avatar" data-row-avatar="${ref.id}">${escapeHtml(initials)}</span><div class="participant-copy"><div class="name-line"><div class="full">${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}</div><button type="button" class="quick-edit-btn" data-quick-edit-ref="${ref.id}" title="Informații participant" aria-label="${tName('Informații despre ', 'Информация о ', escapeHtml(ref.last_name) + ' ' + escapeHtml(ref.first_name))}"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7.5"/><path d="M10 13v-4M10 7h.01" stroke-linecap="round"/></svg></button><button type="button" class="quick-edit-btn" data-stats-ref="${ref.id}" title="Statistici participant" aria-label="${tName('Statistici pentru ', 'Статистика для ', escapeHtml(ref.last_name) + ' ' + escapeHtml(ref.first_name))}"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 15V9M10 15V5M15 15v-3"/></svg></button></div>
-        <span class="cat-badge cat-${safeClassToken(ref.category)}">${escapeHtml(ref.category)}</span>${ref.active === false ? ' <span class="detail-chip">Ascuns</span>' : ''}${missingProfilePreview(ref)}</div></div>`;
+        <span class="cat-badge cat-${safeClassToken(entry.category || ref.category)}">${escapeHtml(entry.category || ref.category)}</span>${ref.active === false ? ' <span class="detail-chip">Ascuns</span>' : ''}${missingProfilePreview(ref)}</div></div>`;
       tr.appendChild(nameTd);
 
       ALL_KEYS.forEach(key => {
@@ -2810,10 +2810,10 @@
     const studioClass = name => String(name).toLowerCase() === 'rio' ? 'studio-rio' : String(name).toLowerCase() === 'mexico' ? 'studio-mexico' : '';
     head.innerHTML = `<tr><th rowspan="2">Participant</th>${metrics.map(([key,label]) => `<th colspan="${places.length}" class="grp metric-start ${key.endsWith('_night') ? 'metric-night' : ''}">${label}</th>`).join('')}</tr><tr>${metrics.map(() => places.map((s, i) => `<th class="${i === 0 ? 'metric-start' : ''} ${studioClass(s.name)}">${escapeHtml(s.name)}</th>`).join('')).join('')}</tr>`;
     const lookup = new Map((studioEntries || []).map(e => [`${e.referee_id}:${e.studio_id}`, e]));
-    body.innerHTML = referees.filter(r => r.active !== false).map(ref => `<tr><td class="name-cell"><div class="full">${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}</div><span class="cat-badge cat-${safeClassToken(ref.category)}">${escapeHtml(ref.category)}</span></td>${metrics.map(([key]) => places.map((studio, i) => {
+    body.innerHTML = referees.filter(r => r.active !== false).map(ref => { const cat = (entries[ref.id] || {}).category || ref.category; return `<tr><td class="name-cell"><div class="full">${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}</div><span class="cat-badge cat-${safeClassToken(cat)}">${escapeHtml(cat)}</span></td>${metrics.map(([key]) => places.map((studio, i) => {
       const value = Number((lookup.get(`${ref.id}:${studio.id}`) || {})[key] || 0);
       return `<td class="num-cell num ${i === 0 ? 'metric-start' : ''} ${studioClass(studio.name)}"><input type="number" min="0" step="1" value="${value}" data-studio-ref="${ref.id}" data-studio-id="${studio.id}" data-studio-key="${key}" aria-label="${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}, ${escapeHtml(studio.name)}, ${escapeHtml(KEY_LABELS[key])}" ${periodLocked ? 'disabled' : ''}></td>`;
-    }).join('')).join('')}</tr>`).join('');
+    }).join('')).join('')}</tr>`; }).join('');
     body.querySelectorAll('input[data-studio-ref]').forEach(input => {
       input.dataset.savedValue = input.value;
       input.addEventListener('focus', () => input.select());
