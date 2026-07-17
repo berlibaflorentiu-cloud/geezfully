@@ -2054,7 +2054,7 @@
         const conform = entry.conform_calcul === null || entry.conform_calcul === undefined || entry.conform_calcul === '' ? null : Number(entry.conform_calcul);
         const rest = conform === null ? '' : (Number(entry.paid_amount) || 0) - conform;
         return [
-          periodKey(currentPeriod).slice(0, 7), ref.last_name, ref.first_name, ref.category,
+          periodKey(currentPeriod).slice(0, 7), ref.last_name, ref.first_name, entry.category || ref.category,
           ref.active === false ? 'Ascuns' : 'Vizibil', hasActivity(entry) ? 'Da' : 'Nu',
           ref.fiscal_code || '', ref.iban || '', ref.bank_name || '', ref.contract_number || '', localizeRomanianDate(ref.contract_date || ''),
           entry.tournament_day || 0, entry.tournament_night || 0, entry.matches_day || 0, entry.matches_night || 0,
@@ -2655,7 +2655,10 @@
     const rankRows = Object.entries(byRef)
       .map(([refId, total]) => {
         const person = totals.find(r => r.referee_id === refId);
-        return { refId, total, name: person ? `${person.last_name} ${person.first_name}` : '—', category: person ? person.category : '' };
+        const liveRef = referees.find(r => r.id === refId);
+        // This row aggregates fees across the whole year, so there's no single
+        // "correct" month's category to show — use the referee's current one.
+        return { refId, total, name: person ? `${person.last_name} ${person.first_name}` : '—', category: liveRef ? liveRef.category : '' };
       })
       .filter(r => r.total > 0)
       .sort((a, b) => b.total - a.total);
@@ -2739,9 +2742,11 @@
       ? ovData.entries.filter(e => e.period === monthValue)
       : ovData.entries.filter(e => e.period.startsWith(year));
     const byRef = {};
+    const categoryByRef = {}; // only meaningful when scope is a single month (per-period category)
     entries.forEach(e => {
       const row = byRef[e.referee_id] ||= { tournament_day:0, tournament_night:0, matches_day:0, matches_night:0, arbitraj_day:0, arbitraj_night:0 };
       Object.keys(row).forEach(key => row[key] += Number(e[key] || 0));
+      categoryByRef[e.referee_id] = e.category;
     });
     const ratio = (wins, tournaments) => tournaments > 0 ? wins / tournaments * 100 : 0;
     const ranked = referees.map(ref => {
@@ -2750,14 +2755,17 @@
       if (metric === 'win_rate_day') value = ratio(v.matches_day, v.tournament_day);
       if (metric === 'win_rate_night') value = ratio(v.matches_night, v.tournament_night);
       if (metric === 'win_rate_total') value = ratio(v.matches_day + v.matches_night, v.tournament_day + v.tournament_night);
-      return { ref, value };
+      // A single month has one real category; a whole year is an aggregate
+      // with no single correct one, so fall back to the live category then.
+      const category = statsMetricScope === 'month' ? (categoryByRef[ref.id] || ref.category) : ref.category;
+      return { ref, value, category };
     }).filter(r => r.value > 0).sort((a,b) => b.value - a.value || `${a.ref.last_name} ${a.ref.first_name}`.localeCompare(`${b.ref.last_name} ${b.ref.first_name}`, 'ro'));
     const isRate = metric.startsWith('win_rate_');
     const emptyLabel = statsMetricScope === 'month' ? 'Nu există date pentru luna selectată.' : 'Nu există date pentru anul selectat.';
     document.getElementById('ovMetricRankBody').innerHTML = ranked.slice(0, 20).map((r, i) => `<tr>
       <td><span class="stats-rank-num">${i + 1}</span></td>
       <td>${escapeHtml(r.ref.last_name)} ${escapeHtml(r.ref.first_name)}</td>
-      <td><span class="cat-badge cat-${safeClassToken(r.ref.category)}">${escapeHtml(r.ref.category)}</span></td>
+      <td><span class="cat-badge cat-${safeClassToken(r.category)}">${escapeHtml(r.category)}</span></td>
       <td class="r num ${isRate ? 'coefficient' : ''}"><span class="metric-value"><span class="metric-number">${isRate ? r.value.toLocaleString('ro-RO', { maximumFractionDigits:1 }) + '%' : r.value.toLocaleString('ro-RO')}</span>${isRate ? '' : `<span class="metric-unit">${METRIC_LABELS[metric]}</span>`}</span></td>
       <td class="metric-action-spacer" aria-hidden="true"></td>
     </tr>`).join('') || `<tr><td colspan="5"><p class="stats-empty">${emptyLabel}</p></td></tr>`;
