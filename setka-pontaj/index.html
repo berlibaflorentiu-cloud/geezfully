@@ -171,6 +171,7 @@
     #openArchiveBtn{ width:125px; flex:0 0 125px; }
     #openStatsOverviewBtn{ width:105px; flex:0 0 105px; }
     #openSetkaSyncBtn{ width:68px; flex:0 0 68px; }
+    #openCategoryReclassBtn{ width:112px; flex:0 0 112px; }
   }
   @media (min-width:1100px){
     .toolbar{
@@ -604,7 +605,7 @@
     header.topbar{ padding:10px 14px; row-gap:8px; }
     .brand{ margin-right:auto; order:1; flex-basis:100%; }
     .topbar-actions{ order:2; flex-basis:100%; }
-    #manageRefereesBtn, #openStudioTableBtn, #openArchiveBtn, #openStatsOverviewBtn, #openSetkaSyncBtn, #langToggle{ flex:1 1 auto; }
+    #manageRefereesBtn, #openStudioTableBtn, #openArchiveBtn, #openStatsOverviewBtn, #openSetkaSyncBtn, #openCategoryReclassBtn, #langToggle{ flex:1 1 auto; }
     #logoutBtn{ order:2; flex:1 1 auto; }
     .month-nav{ order:3; flex-basis:100%; justify-content:center; }
     .user-chip{ order:4; flex-basis:100%; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -772,6 +773,8 @@
   .setka-item .setka-diff .base{ color:var(--muted); font-weight:400; font-size:11.5px; margin-left:5px; }
   .setka-item .setka-actions{ display:flex; gap:6px; flex:0 0 auto; align-items:center; }
   .setka-item .setka-edit-input{ width:56px; padding:5px 6px; border-radius:6px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-size:13px; text-align:center; }
+  .setka-item .reclass-select{ width:66px; padding:5px 6px; border-radius:6px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-size:13px; }
+  .setka-item .field-tag .cat-arrow{ color:var(--muted); font-weight:400; margin:0 3px; }
   .setka-empty{ padding:30px; text-align:center; color:var(--muted); font-size:13px; }
   .setka-log-row{ display:flex; align-items:center; gap:12px; padding:10px 12px; border-bottom:1px solid var(--line-2); font-size:12.5px; }
   .setka-log-row .setka-log-when{ color:var(--muted); font-size:11.5px; white-space:nowrap; margin-left:auto; }
@@ -833,6 +836,7 @@
         <button class="btn btn-sm btn-gold" id="openArchiveBtn">Arhivă acte</button>
         <button class="btn btn-sm btn-gold" id="openStatsOverviewBtn">Statistici</button>
         <button class="btn btn-sm btn-gold setka-btn" id="openSetkaSyncBtn">Setka<span class="setka-dot"></span></button>
+        <button class="btn btn-sm btn-gold setka-btn" id="openCategoryReclassBtn">Categorii<span class="setka-dot"></span></button>
         <div class="stats-scope-toggle" id="langToggle" role="group" aria-label="Limba interfeței">
           <button type="button" class="stats-scope-btn" data-lang="ro">RO</button>
           <button type="button" class="stats-scope-btn" data-lang="ru">RU</button>
@@ -1264,6 +1268,24 @@
     </div>
   </div>
 
+  <!-- ══ Reclasificare categorii (rating Setka Cup, propuneri lunare) ══ -->
+  <div class="modal-backdrop" id="categoryReclassModal">
+    <div class="modal" style="max-width:720px">
+      <div class="modal-head">
+        <div><h2 style="margin:0">Reclasificare categorii</h2><p class="muted" style="margin:3px 0 0">Pe baza ratingului Setka Cup, calculat automat pe 1 ale lunii. Nu se aplică nimic fără acceptare.</p></div>
+        <button class="icon-btn" id="closeCategoryReclass" aria-label="Închide">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="reclassList"></div>
+        <div class="setka-empty" id="reclassEmpty" style="display:none">Nicio propunere de reclasificare momentan.</div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" id="closeCategoryReclassBtn">Închide</button>
+        <button class="btn btn-gold" id="reclassAcceptAllBtn" style="display:none">Acceptă tot</button>
+      </div>
+    </div>
+  </div>
+
 <script>
 (function(){
   'use strict';
@@ -1553,6 +1575,15 @@
     'Termenul de 72h a expirat pentru unele modificări — verifică fila „Modificări ratate”.':
       'Срок 72ч истёк для некоторых изменений — проверьте вкладку «Пропущенные изменения».',
     'Anulezi această notificare aplicată? Valorile revin la ce erau înainte.': 'Отменить это применённое уведомление? Значения вернутся к прежним.',
+
+    // Category reclassification modal
+    'Categorii': 'Категории',
+    'Reclasificare categorii': 'Реклассификация категорий',
+    'Pe baza ratingului Setka Cup, calculat automat pe 1 ale lunii. Nu se aplică nimic fără acceptare.':
+      'На основе рейтинга Setka Cup, рассчитывается автоматически 1 числа месяца. Ничего не применяется без подтверждения.',
+    'Nicio propunere de reclasificare momentan.': 'Сейчас нет предложений по реклассификации.',
+    'Respinge': 'Отклонить',
+    'Acceptă tot': 'Принять всё',
 
     // Misc alert/error messages
     'Nu s-a putut debloca luna: ': 'Не удалось разблокировать месяц: ',
@@ -1863,6 +1894,7 @@
       await loadStaticData();
       await loadPeriod();
       setkaSyncCheckOnLogin();
+      reclassCheckOnLogin();
     } else {
       appEl.classList.remove('show');
       if (deniedAccessMessage) {
@@ -2039,7 +2071,7 @@
   // ══ FEE CALC — mirrors the entry_totals SQL view exactly ══
   function computeFee(referee, entry){
     if (!entry) return 0;
-    const rc = rateCategories[referee.category] || {};
+    const rc = rateCategories[entry.category || referee.category] || {};
     let total = 0;
     total += (entry.tournament_day||0)   * (rc.tournament_day||0);
     total += (entry.tournament_night||0) * (rc.tournament_night||0);
@@ -2389,7 +2421,7 @@
 
     const [totalsRes, entriesRes, actsRes, actsCountRes] = await Promise.all([
       db.from('entry_totals').select('period, total_fee, bonus_total').eq('referee_id', refId),
-      db.from('monthly_entries').select('period, tournament_day, tournament_night, matches_day, matches_night, place1_day, place1_night, place3_day, place3_night, arbitraj_day, arbitraj_night')
+      db.from('monthly_entries').select('period, category, tournament_day, tournament_night, matches_day, matches_night, place1_day, place1_night, place3_day, place3_night, arbitraj_day, arbitraj_night')
         .eq('referee_id', refId).gte('period', `${year}-01-01`).lte('period', `${year}-12-31`),
       db.from('saved_acts').select('id, period, total, created_at').eq('referee_id', refId).order('created_at', { ascending:false }).limit(5),
       db.from('saved_acts').select('id', { count:'exact', head:true }).eq('referee_id', refId),
@@ -2426,11 +2458,13 @@
     renderStatsChart(months);
 
     const entries = entriesRes.data || [];
-    const rc = rateCategories[ref.category] || {};
     const breakdown = STATS_ACTIVITY_GROUPS.map(g => {
-      const rateDay = g.useGlobal ? Number(globalRates.arbitraj_day || 0) : Number(rc[g.day] || 0);
-      const rateNight = g.useGlobal ? Number(globalRates.arbitraj_night || 0) : Number(rc[g.night] || 0);
-      const total = entries.reduce((s, e) => s + Number(e[g.day] || 0) * rateDay + Number(e[g.night] || 0) * rateNight, 0);
+      const total = entries.reduce((s, e) => {
+        const rc = rateCategories[e.category || ref.category] || {};
+        const rateDay = g.useGlobal ? Number(globalRates.arbitraj_day || 0) : Number(rc[g.day] || 0);
+        const rateNight = g.useGlobal ? Number(globalRates.arbitraj_night || 0) : Number(rc[g.night] || 0);
+        return s + Number(e[g.day] || 0) * rateDay + Number(e[g.night] || 0) * rateNight;
+      }, 0);
       return { ...g, total };
     });
     renderStatsBreakdown(breakdown);
@@ -2534,7 +2568,7 @@
       document.getElementById('ovKpis').innerHTML = '<p class="stats-empty">Se încarcă…</p>';
       const [totalsRes, entriesRes, actsRes] = await Promise.all([
         db.from('entry_totals').select('referee_id, period, total_fee, bonus_total, last_name, first_name, category'),
-        db.from('monthly_entries').select('referee_id, period, tournament_day, tournament_night, matches_day, matches_night, place1_day, place1_night, place3_day, place3_night, arbitraj_day, arbitraj_night'),
+        db.from('monthly_entries').select('referee_id, period, category, tournament_day, tournament_night, matches_day, matches_night, place1_day, place1_night, place3_day, place3_night, arbitraj_day, arbitraj_night'),
         db.from('saved_acts').select('period, total'),
       ]);
       ovData = { totals: totalsRes.data || [], entries: entriesRes.data || [], acts: actsRes.data || [] };
@@ -2597,7 +2631,7 @@
     const activityGroups = STATS_ACTIVITY_GROUPS.map(g => {
       let total = 0;
       entries.forEach(e => {
-        const rc = rateCategories[refCategoryMap[e.referee_id]] || {};
+        const rc = rateCategories[e.category || refCategoryMap[e.referee_id]] || {};
         const rateDay = g.useGlobal ? Number(globalRates.arbitraj_day || 0) : Number(rc[g.day] || 0);
         const rateNight = g.useGlobal ? Number(globalRates.arbitraj_night || 0) : Number(rc[g.night] || 0);
         total += Number(e[g.day] || 0) * rateDay + Number(e[g.night] || 0) * rateNight;
@@ -3226,9 +3260,9 @@
     ['place3_day','Locul III turneu zi'], ['place3_night','Locul III turneu noapte'],
     ['arbitraj_day','Arbitraj turnee zi'], ['arbitraj_night','Arbitraj turnee noapte'],
   ];
-  function rateFor(ref, key){
+  function rateFor(category, key){
     if (key.startsWith('arbitraj')) return key.endsWith('day') ? globalRates.arbitraj_day : globalRates.arbitraj_night;
-    return (rateCategories[ref.category] || {})[key] || 0;
+    return (rateCategories[category] || {})[key] || 0;
   }
   function bicForParticipant(ref){
     const bank = String(ref.bank_name || '').trim();
@@ -3244,11 +3278,12 @@
   function openAct(refId){
     const ref = referees.find(r => r.id === refId);
     const entry = entries[refId] || emptyEntry(refId);
-    _actState = { refId, ref, period: currentPeriod, total: 0, tax: 0, viewOnly: false };
+    const category = entry.category || ref.category;
+    _actState = { refId, ref, category, period: currentPeriod, total: 0, tax: 0, viewOnly: false };
     setActEditable(true);
     let total = 0;
     const rows = ITEM_ROWS.map(([key,label], index) => {
-      const rate = rateFor(ref, key);
+      const rate = rateFor(category, key);
       const vol = entry[key] || 0;
       const fee = rate * vol;
       total += fee;
@@ -3294,7 +3329,7 @@
           <p class="act-period-text">Prestatorul a prestat servicii sportive în cadrul turneelor organizate de Beneficiar în perioada:</p>
           <div class="act-period-grid">
             <div class="act-value-box act-doc-value">${escapeHtml(monthLabel)}</div>
-            <div class="act-value-box act-doc-value">${escapeHtml(ref.category||'—')}</div>
+            <div class="act-value-box act-doc-value">${escapeHtml(category||'—')}</div>
           </div>
         </div>
       </section>
@@ -3471,6 +3506,7 @@
   async function downloadDetailPdf(){
     const ref = referees.find(r => r.id === detailRefId);
     if (!ref) return;
+    const category = (entries[detailRefId] || {}).category || ref.category;
     const btn = document.getElementById('downloadDetailBtn');
     const monthLabel = `${MONTH_NAMES_RO[currentPeriod.getMonth()]} ${currentPeriod.getFullYear()}`;
     const taxi = Number(document.getElementById('dTaxi').value) || 0;
@@ -3485,7 +3521,7 @@
     report.className = 'detail-pdf-report';
     report.innerHTML = `
       <h1>Detalii participant</h1>
-      <p class="detail-pdf-subtitle"><strong>${escapeHtml(`${ref.last_name} ${ref.first_name}`)}</strong> · ${escapeHtml(ref.category || '—')} · ${escapeHtml(monthLabel)}</p>
+      <p class="detail-pdf-subtitle"><strong>${escapeHtml(`${ref.last_name} ${ref.first_name}`)}</strong> · ${escapeHtml(category || '—')} · ${escapeHtml(monthLabel)}</p>
 
       <div class="detail-pdf-section">
         <h2>Deplasare și decontare</h2>
@@ -3561,11 +3597,11 @@
     const btn = document.getElementById('saveActBtn');
     btn.disabled = true;
     btn.innerHTML = 'Se salvează…';
-    const { refId, ref, period, total, tax } = _actState;
+    const { refId, ref, category, period, total, tax } = _actState;
     const { data, error } = await db.from('saved_acts').insert([{
       referee_id: refId,
       referee_name: `${ref.last_name} ${ref.first_name}`,
-      category: ref.category,
+      category: category || ref.category,
       period: periodKey(period),
       contract_number: ref.contract_number || null,
       contract_date: localizeRomanianDate(ref.contract_date) || null,
@@ -3982,6 +4018,83 @@
     }
     await setkaSyncRefreshAll(); setkaRenderActive();
     await loadPeriod();
+  });
+
+  // ══════════ Reclasificare categorii (rating Setka Cup) ══════════
+  // Propunerile sunt calculate automat pe 1 ale lunii de un job în Postgres
+  // (category_reclass_cron_tick), pe baza ratingului live din Setka Cup.
+  // Nimic nu se aplică fără acceptare aici — vezi category_reclass_accept/_reject.
+  const categoryReclassModal = document.getElementById('categoryReclassModal');
+  const categoryReclassBtn = document.getElementById('openCategoryReclassBtn');
+  let reclassItems = [];
+
+  async function reclassRefresh(){
+    const { data } = await db.from('category_reclass_proposals').select('*').eq('status', 'pending').order('created_at', { ascending:true });
+    reclassItems = data || [];
+    categoryReclassBtn.classList.toggle('has-notice', reclassItems.length > 0);
+  }
+
+  async function reclassCheckOnLogin(){
+    try { await reclassRefresh(); }
+    catch (e) { console.error('category reclass check failed', e); }
+  }
+
+  function reclassRender(){
+    const list = document.getElementById('reclassList');
+    const empty = document.getElementById('reclassEmpty');
+    document.getElementById('reclassAcceptAllBtn').style.display = reclassItems.length ? '' : 'none';
+    if (!reclassItems.length) { list.innerHTML = ''; empty.style.display = ''; return; }
+    empty.style.display = 'none';
+    list.innerHTML = reclassItems.map(it => `
+      <div class="setka-item" data-item-id="${it.id}">
+        <div class="setka-who">
+          <div class="name">${escapeHtml(setkaRefName(it.referee_id))}</div>
+          <div class="meta">${currentLang === 'ru' ? 'Рейтинг' : 'Rating'} ${it.rating != null ? fmtMoney(it.rating) : '—'} · <span class="field-tag">${escapeHtml(it.old_category)}<span class="cat-arrow">→</span>${escapeHtml(it.new_category)}</span></div>
+        </div>
+        <div class="setka-actions">
+          <select class="reclass-select" style="display:none">
+            ${['TOP','I','II','III'].map(c => `<option value="${c}" ${c === it.new_category ? 'selected' : ''}>${c}</option>`).join('')}
+          </select>
+          <button type="button" class="btn btn-sm btn-ghost reclass-edit-btn">${t('Editează')}</button>
+          <button type="button" class="btn btn-sm btn-gold reclass-accept-btn">${t('Acceptă')}</button>
+          <button type="button" class="btn btn-sm btn-danger reclass-reject-btn">${t('Respinge')}</button>
+        </div>
+      </div>`).join('');
+
+    list.querySelectorAll('.setka-item').forEach(row => {
+      const id = row.dataset.itemId;
+      const select = row.querySelector('.reclass-select');
+      row.querySelector('.reclass-edit-btn').addEventListener('click', () => {
+        select.style.display = select.style.display === 'none' ? '' : 'none';
+      });
+      row.querySelector('.reclass-accept-btn').addEventListener('click', async () => {
+        const editing = select.style.display !== 'none';
+        await db.rpc('category_reclass_accept', { p_id: id, p_category: editing ? select.value : null });
+        await reclassRefresh(); reclassRender();
+        await loadStaticData(); await loadPeriod();
+      });
+      row.querySelector('.reclass-reject-btn').addEventListener('click', async () => {
+        await db.rpc('category_reclass_reject', { p_id: id });
+        await reclassRefresh(); reclassRender();
+      });
+    });
+  }
+
+  categoryReclassBtn.addEventListener('click', async () => {
+    await reclassRefresh();
+    reclassRender();
+    categoryReclassModal.classList.add('show');
+  });
+  document.getElementById('closeCategoryReclass').addEventListener('click', () => categoryReclassModal.classList.remove('show'));
+  document.getElementById('closeCategoryReclassBtn').addEventListener('click', () => categoryReclassModal.classList.remove('show'));
+  document.getElementById('reclassAcceptAllBtn').addEventListener('click', async () => {
+    if (!reclassItems.length) return;
+    if (!confirm(currentLang === 'ru' ? `Принять все ${reclassItems.length} предложения?` : `Accepți toate cele ${reclassItems.length} propuneri?`)) return;
+    for (const it of reclassItems) {
+      await db.rpc('category_reclass_accept', { p_id: it.id, p_category: null });
+    }
+    await reclassRefresh(); reclassRender();
+    await loadStaticData(); await loadPeriod();
   });
 
 })();
