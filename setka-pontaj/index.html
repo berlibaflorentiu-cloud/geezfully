@@ -6,7 +6,7 @@
 <title>Pontaj — SETKA-PRO</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://ufkeqoeyrhwvvvtiopyt.supabase.co wss://ufkeqoeyrhwvvvtiopyt.supabase.co; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; media-src 'none'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://ufkeqoeyrhwvvvtiopyt.supabase.co wss://ufkeqoeyrhwvvvtiopyt.supabase.co https://bghrgacqcqwdiqegkowd.supabase.co; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; media-src 'none'; upgrade-insecure-requests">
 <link rel="icon" type="image/png" href="../pontaj/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
@@ -186,6 +186,15 @@
   .actions-head, td.actions-cell{ padding-left:28px; }
   .name-cell{ min-width:170px; }
   .name-cell .full{ font-weight:600; white-space:nowrap; color:var(--text); }
+  .participant-identity{ display:flex; align-items:flex-start; gap:9px; min-width:0; }
+  .participant-copy{ min-width:0; }
+  .participant-avatar{
+    width:34px; height:34px; flex:0 0 34px; border-radius:50%; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+    border:1px solid rgba(200,169,110,.35); background:linear-gradient(145deg,#252C34,#10151B);
+    color:var(--gold-hi); font-family:'Cormorant Garamond',serif; font-size:13px; font-weight:600;
+  }
+  .participant-avatar img{ width:100%; height:100%; display:block; object-fit:cover; object-position:center top; }
   .name-line{ display:flex; align-items:center; gap:6px; }
   .quick-edit-btn{ width:25px; height:25px; flex:0 0 auto; padding:0; border:1px solid rgba(88,166,255,.25); border-radius:50%; background:rgba(88,166,255,.05); color:#8FA7BE; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:.15s ease; }
   .quick-edit-btn svg{ width:15px; height:15px; }
@@ -255,6 +264,29 @@
   .modal-foot{ padding:16px 28px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
   .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .form-grid .field.full{ grid-column:1/-1; }
+  #refModal .modal{ max-width:900px; }
+  .ref-profile-layout{ display:grid; grid-template-columns:220px minmax(0,1fr); gap:28px; align-items:start; }
+  .ref-profile-layout.no-profile{ display:block; }
+  .ref-player-card{ text-align:center; min-width:0; }
+  .ref-player-avatar{
+    width:184px; height:184px; margin:0 auto 16px; border-radius:50%;
+    overflow:hidden; display:flex; align-items:center; justify-content:center;
+    border:1px solid rgba(200,169,110,.28); background:linear-gradient(145deg,#20262D,#0D1117);
+    color:var(--gold-hi); font-family:'Cormorant Garamond',serif; font-size:54px; font-weight:600;
+    box-shadow:0 14px 35px rgba(0,0,0,.32);
+  }
+  .ref-player-avatar img{ width:100%; height:100%; display:block; object-fit:cover; object-position:center top; }
+  .ref-player-location{ color:var(--muted); font-size:13px; min-height:20px; }
+  .ref-player-rating{ margin:18px 0 14px; color:var(--gold-hi); font-size:24px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .ref-player-rating small{ color:var(--muted); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; }
+  .ref-player-stats{ display:grid; grid-template-columns:1fr 1fr; gap:8px; text-align:left; }
+  .ref-player-stat{ padding:10px 11px; border:1px solid var(--border); border-radius:8px; background:var(--bg); }
+  .ref-player-stat b{ display:block; color:var(--text); font-size:16px; line-height:1.2; font-variant-numeric:tabular-nums; }
+  .ref-player-stat span{ color:var(--muted); font-size:10px; line-height:1.25; }
+  .ref-player-places{ display:flex; justify-content:center; gap:14px; margin-top:14px; color:var(--muted); font-size:11px; }
+  .ref-player-places b{ display:block; color:var(--text); font-size:15px; font-variant-numeric:tabular-nums; }
+  .ref-player-status{ color:var(--muted); font-size:12px; line-height:1.45; padding:10px 4px; }
+  .ref-player-source{ margin-top:12px; color:var(--muted); font-size:9.5px; opacity:.75; }
   .section-label{
     font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.1em; color:var(--gold);
     margin:22px 0 10px;
@@ -341,6 +373,20 @@
   #studioTable tbody tr:hover td{ background:rgba(88,166,255,.07); }
   #studioTable tbody td{ height:58px; padding:9px 10px; border-bottom:1px solid rgba(139,148,158,.13); font-size:14px; }
   #studioTable tbody td.num-cell{ color:#D7DEE6; font-weight:600; font-variant-numeric:tabular-nums; }
+  #studioTable tbody td.num-cell input{
+    width:100%; min-width:54px; height:38px; padding:6px 8px;
+    border:1px solid transparent; border-radius:7px; outline:none;
+    color:inherit; background:transparent; text-align:center;
+    font:inherit; font-variant-numeric:tabular-nums;
+    transition:border-color .15s, background .15s, box-shadow .15s, opacity .15s;
+  }
+  #studioTable tbody td.num-cell input:hover:not(:disabled){ border-color:rgba(200,169,110,.28); background:rgba(255,255,255,.035); }
+  #studioTable tbody td.num-cell input:focus{ border-color:var(--gold); background:#0D131A; box-shadow:0 0 0 2px rgba(200,169,110,.14); }
+  #studioTable tbody td.num-cell input.is-saving{ opacity:.55; }
+  #studioTable tbody td.num-cell input.is-saved{ border-color:rgba(46,160,67,.55); background:rgba(46,160,67,.08); }
+  #studioTable tbody td.num-cell input.is-error{ border-color:rgba(248,81,73,.75); background:rgba(248,81,73,.08); }
+  #studioTable tbody td.num-cell input:disabled{ cursor:not-allowed; opacity:.58; }
+  #studioTable tbody td.num-cell input::-webkit-inner-spin-button{ opacity:.35; }
   #studioTable thead tr:first-child > th:first-child, #studioTable tbody td:first-child{ position:sticky; left:0; z-index:8; width:250px; min-width:250px; border-right:2px solid rgba(200,169,110,.3); background:#171D24; background-clip:padding-box; box-shadow:8px 0 18px rgba(0,0,0,.28); }
   #studioTable thead tr:first-child > th:first-child{ z-index:10; overflow:hidden; }
   #studioTable tbody tr:nth-child(even) td:first-child{ background:#1A2027; }
@@ -510,6 +556,9 @@
 
   @media (max-width:760px){
     .form-grid{ grid-template-columns:1fr; }
+    .ref-profile-layout{ grid-template-columns:1fr; }
+    .ref-player-card{ max-width:360px; margin:0 auto 8px; }
+    .ref-player-avatar{ width:140px; height:140px; }
     .recon-grid{ grid-template-columns:1fr 1fr; }
     header.topbar{ padding:10px 14px; row-gap:8px; }
     .brand{ margin-right:auto; order:1; flex-basis:100%; }
@@ -931,25 +980,28 @@
         <button class="icon-btn" id="closeRef" aria-label="Închide">✕</button>
       </div>
       <div class="modal-body">
-        <div class="form-grid">
-          <div class="field"><label>Nume</label><input type="text" id="rLastName" required></div>
-          <div class="field"><label>Prenume</label><input type="text" id="rFirstName" required></div>
-          <div class="field"><label>Categorie</label>
-            <select id="rCategory">
-              <option value="TOP">TOP</option><option value="I">I</option><option value="II">II</option>
-              <option value="III">III</option><option value="Referee">Referee</option>
-            </select>
-          </div>
-          <div class="field"><label>Bancă</label><input type="text" id="rBank"></div>
-          <div class="field"><label>Cod fiscal</label><input type="text" id="rFiscal"></div>
-          <div class="field"><label>IBAN</label><input type="text" id="rIban"></div>
-          <div class="field"><label>Nr. contract</label><input type="text" id="rContractNo"></div>
-          <div class="field"><label>Data contract</label><input type="text" id="rContractDate" placeholder="ex: 25 mart"></div>
-          <div class="field full">
-            <label class="visibility-setting">
-              <span class="visibility-copy"><strong>Ascunde din lista principală</strong><small>Participantul rămâne disponibil în filtrul „Participanți ascunși”.</small></span>
-              <span class="switch"><input type="checkbox" id="rHidden"><span class="switch-track"></span></span>
-            </label>
+        <div class="ref-profile-layout no-profile" id="refProfileLayout">
+          <aside class="ref-player-card" id="refPlayerCard" hidden></aside>
+          <div class="form-grid">
+            <div class="field"><label>Nume</label><input type="text" id="rLastName" required></div>
+            <div class="field"><label>Prenume</label><input type="text" id="rFirstName" required></div>
+            <div class="field"><label>Categorie</label>
+              <select id="rCategory">
+                <option value="TOP">TOP</option><option value="I">I</option><option value="II">II</option>
+                <option value="III">III</option><option value="Referee">Referee</option>
+              </select>
+            </div>
+            <div class="field"><label>Bancă</label><input type="text" id="rBank"></div>
+            <div class="field"><label>Cod fiscal</label><input type="text" id="rFiscal"></div>
+            <div class="field"><label>IBAN</label><input type="text" id="rIban"></div>
+            <div class="field"><label>Nr. contract</label><input type="text" id="rContractNo"></div>
+            <div class="field"><label>Data contract</label><input type="text" id="rContractDate" placeholder="ex: 25 mart"></div>
+            <div class="field full">
+              <label class="visibility-setting">
+                <span class="visibility-copy"><strong>Ascunde din lista principală</strong><small>Participantul rămâne disponibil în filtrul „Participanți ascunși”.</small></span>
+                <span class="switch"><input type="checkbox" id="rHidden"><span class="switch-track"></span></span>
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -1175,6 +1227,12 @@
   const db = supabase.createClient(SUPA_URL, SUPA_KEY, {
     auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:false }
   });
+  // Public, read-only ATTP client used solely for player profile statistics.
+  const ATTP_URL = 'https://bghrgacqcqwdiqegkowd.supabase.co';
+  const ATTP_KEY = 'sb_publishable_-Sj5r66svI88A0Hm9nTvIA_hiEHqay7';
+  const attpDb = supabase.createClient(ATTP_URL, ATTP_KEY, {
+    auth: { persistSession:false, autoRefreshToken:false, detectSessionInUrl:false }
+  });
 
   const ITEM_KEYS = [
     ['tournament_day','tournament_night'],
@@ -1234,6 +1292,9 @@
   let saveTimers = {};
   let periodLoadId = 0;
   let _actState = null;
+  const rowAvatarCache = new Map();
+  let rowAvatarLoadPromise = null;
+  let rowAvatarsLoaded = false;
   let savedActs = [];
   let archiveLoaded = false;
   let archiveRefFilter = '';
@@ -1334,6 +1395,8 @@
       db.from('global_rates').select('*').eq('id', 1).single(),
     ]);
     referees = refs || [];
+    rowAvatarCache.clear();
+    rowAvatarsLoaded = false;
     rateCategories = {};
     (rc || []).forEach(r => rateCategories[r.category] = r);
     if (gr) globalRates = gr;
@@ -1585,8 +1648,9 @@
 
       const nameTd = document.createElement('td');
       nameTd.className = 'name-cell';
-      nameTd.innerHTML = `<div class="name-line"><div class="full">${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}</div><button type="button" class="quick-edit-btn" data-quick-edit-ref="${ref.id}" title="Informații participant" aria-label="Informații despre ${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7.5"/><path d="M10 13v-4M10 7h.01" stroke-linecap="round"/></svg></button><button type="button" class="quick-edit-btn" data-stats-ref="${ref.id}" title="Statistici participant" aria-label="Statistici pentru ${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 15V9M10 15V5M15 15v-3"/></svg></button></div>
-        <span class="cat-badge cat-${safeClassToken(ref.category)}">${escapeHtml(ref.category)}</span>${ref.active === false ? ' <span class="detail-chip">Ascuns</span>' : ''}${missingProfilePreview(ref)}`;
+      const initials = `${ref.first_name?.[0] || ''}${ref.last_name?.[0] || ''}`.toUpperCase();
+      nameTd.innerHTML = `<div class="participant-identity"><span class="participant-avatar" data-row-avatar="${ref.id}">${escapeHtml(initials)}</span><div class="participant-copy"><div class="name-line"><div class="full">${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}</div><button type="button" class="quick-edit-btn" data-quick-edit-ref="${ref.id}" title="Informații participant" aria-label="Informații despre ${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7.5"/><path d="M10 13v-4M10 7h.01" stroke-linecap="round"/></svg></button><button type="button" class="quick-edit-btn" data-stats-ref="${ref.id}" title="Statistici participant" aria-label="Statistici pentru ${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 15V9M10 15V5M15 15v-3"/></svg></button></div>
+        <span class="cat-badge cat-${safeClassToken(ref.category)}">${escapeHtml(ref.category)}</span>${ref.active === false ? ' <span class="detail-chip">Ascuns</span>' : ''}${missingProfilePreview(ref)}</div></div>`;
       tr.appendChild(nameTd);
 
       ALL_KEYS.forEach(key => {
@@ -1649,6 +1713,7 @@
     document.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => openAct(b.dataset.act)));
     document.querySelectorAll('[data-quick-edit-ref]').forEach(b => b.addEventListener('click', () => openRefModal(b.dataset.quickEditRef, false)));
     document.querySelectorAll('[data-stats-ref]').forEach(b => b.addEventListener('click', () => openStats(b.dataset.statsRef)));
+    hydrateRowAvatars();
 
     document.getElementById('sumActive').textContent = activeCount;
     document.getElementById('sumFee').textContent = fmtMoney(sumFee);
@@ -2180,9 +2245,75 @@
     const studioClass = name => String(name).toLowerCase() === 'rio' ? 'studio-rio' : String(name).toLowerCase() === 'mexico' ? 'studio-mexico' : '';
     head.innerHTML = `<tr><th rowspan="2">Participant</th>${metrics.map(([key,label]) => `<th colspan="${places.length}" class="grp metric-start ${key.endsWith('_night') ? 'metric-night' : ''}">${label}</th>`).join('')}</tr><tr>${metrics.map(() => places.map((s, i) => `<th class="${i === 0 ? 'metric-start' : ''} ${studioClass(s.name)}">${escapeHtml(s.name)}</th>`).join('')).join('')}</tr>`;
     const lookup = new Map((studioEntries || []).map(e => [`${e.referee_id}:${e.studio_id}`, e]));
-    body.innerHTML = referees.filter(r => r.active !== false).map(ref => `<tr><td class="name-cell"><div class="full">${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}</div><span class="cat-badge cat-${safeClassToken(ref.category)}">${escapeHtml(ref.category)}</span></td>${metrics.map(([key]) => places.map((studio, i) => `<td class="num-cell num ${i === 0 ? 'metric-start' : ''} ${studioClass(studio.name)}">${Number((lookup.get(`${ref.id}:${studio.id}`) || {})[key] || 0)}</td>`).join('')).join('')}</tr>`).join('');
-    message.textContent = places.length ? 'Datele sunt afișate pentru luna selectată; totalurile lor alimentează tabelul principal.' : 'Nu există platouri active.';
+    body.innerHTML = referees.filter(r => r.active !== false).map(ref => `<tr><td class="name-cell"><div class="full">${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}</div><span class="cat-badge cat-${safeClassToken(ref.category)}">${escapeHtml(ref.category)}</span></td>${metrics.map(([key]) => places.map((studio, i) => {
+      const value = Number((lookup.get(`${ref.id}:${studio.id}`) || {})[key] || 0);
+      return `<td class="num-cell num ${i === 0 ? 'metric-start' : ''} ${studioClass(studio.name)}"><input type="number" min="0" step="1" value="${value}" data-studio-ref="${ref.id}" data-studio-id="${studio.id}" data-studio-key="${key}" aria-label="${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}, ${escapeHtml(studio.name)}, ${escapeHtml(KEY_LABELS[key])}" ${periodLocked ? 'disabled' : ''}></td>`;
+    }).join('')).join('')}</tr>`).join('');
+    body.querySelectorAll('input[data-studio-ref]').forEach(input => {
+      input.dataset.savedValue = input.value;
+      input.addEventListener('focus', () => input.select());
+      input.addEventListener('click', () => input.select());
+      input.addEventListener('keydown', event => {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        input.blur();
+      });
+      input.addEventListener('change', () => saveStudioCell(input));
+    });
+    message.textContent = places.length
+      ? (periodLocked ? 'Luna este blocată. Deblocheaz-o pentru a modifica valorile.' : 'Editează o valoare și apasă Enter sau ieși din câmp. RIO și MEXICO se adună automat în categoria corespunzătoare din tabelul principal.')
+      : 'Nu există platouri active.';
     downloadBtn.disabled = !places.length;
+  }
+
+  async function saveStudioCell(input){
+    if (periodLocked || input.disabled) return;
+    const refId = input.dataset.studioRef;
+    const studioId = input.dataset.studioId;
+    const metric = input.dataset.studioKey;
+    const previousValue = Number(input.dataset.savedValue || 0);
+    const value = Math.max(0, Math.trunc(Number(input.value) || 0));
+    input.value = value;
+    if (value === previousValue) return;
+
+    input.disabled = true;
+    input.classList.remove('is-saved','is-error');
+    input.classList.add('is-saving');
+    try {
+      const payload = {
+        referee_id: refId,
+        studio_id: studioId,
+        period: periodKey(currentPeriod),
+        [metric]: value,
+        updated_by: session.user.id,
+        updated_at: new Date().toISOString(),
+      };
+      const { error: saveError } = await db.from('studio_entries')
+        .upsert(payload, { onConflict: 'referee_id,studio_id,period' });
+      if (saveError) throw saveError;
+
+      // The database trigger groups every studio into monthly_entries. Read that
+      // synchronized row back so the main spreadsheet updates immediately.
+      const { data: monthlyEntry, error: monthlyError } = await db.from('monthly_entries')
+        .select('*')
+        .eq('referee_id', refId)
+        .eq('period', periodKey(currentPeriod))
+        .single();
+      if (monthlyError) throw monthlyError;
+      entries[refId] = monthlyEntry;
+      input.dataset.savedValue = String(value);
+      input.classList.add('is-saved');
+      renderRows();
+      setTimeout(() => input.classList.remove('is-saved'), 1200);
+    } catch (error) {
+      console.error('Studio value save failed', error);
+      input.value = previousValue;
+      input.classList.add('is-error');
+      alert('Valoarea nu a putut fi salvată: ' + (error.message || error));
+    } finally {
+      input.classList.remove('is-saving');
+      input.disabled = periodLocked;
+    }
   }
 
   async function downloadStudioTablePdf(){
@@ -2211,7 +2342,7 @@
       const rows = Array.from(document.querySelectorAll('#studioTableBody tr')).map(tr => ({
         name: tr.querySelector('.name-cell .full')?.textContent.trim() || '',
         category: tr.querySelector('.name-cell .cat-badge')?.textContent.trim() || '',
-        values: Array.from(tr.querySelectorAll('td:not(:first-child)')).map(td => td.textContent.trim()),
+        values: Array.from(tr.querySelectorAll('td:not(:first-child)')).map(td => td.querySelector('input')?.value ?? td.textContent.trim()),
       }));
       const safeText = value => String(value).replace(/[șş]/gi, c => c === c.toUpperCase() ? 'S' : 's').replace(/[țţ]/gi, c => c === c.toUpperCase() ? 'T' : 't');
       const drawCell = (x, y, width, height, fill) => {
@@ -2327,6 +2458,7 @@
   const refModal = document.getElementById('refModal');
   let editingRefId = null;
   let refModalReturnToList = false;
+  const playerProfileCache = new Map();
 
   document.getElementById('manageRefereesBtn').addEventListener('click', () => { renderRefList(); listModal.classList.add('show'); });
   document.getElementById('closeList').addEventListener('click', () => listModal.classList.remove('show'));
@@ -2346,6 +2478,144 @@
   }
 
   document.getElementById('addRefBtn').addEventListener('click', () => openRefModal(null));
+  function playerImageSlug(player){
+    return `${player.first_name || ''}-${player.last_name || ''}`
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/ș/g, 's').replace(/ț/g, 't')
+      .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
+
+  function participantImagePath(player){
+    const root = location.protocol === 'file:' ? '../geezfully/attp/images/players' : '../attp/images/players';
+    return `${root}/${playerImageSlug(player)}.webp`;
+  }
+
+  function paintRowAvatars(){
+    document.querySelectorAll('[data-row-avatar]').forEach(avatar => {
+      const player = rowAvatarCache.get(avatar.dataset.rowAvatar);
+      if (!player) return;
+      const initials = avatar.textContent.trim();
+      avatar.innerHTML = `<img src="${participantImagePath(player)}" alt="" loading="lazy" onerror="this.parentElement.textContent='${escapeHtml(initials)}'">`;
+    });
+  }
+
+  async function hydrateRowAvatars(){
+    paintRowAvatars();
+    if (rowAvatarsLoaded || rowAvatarLoadPromise || !referees.length) return rowAvatarLoadPromise;
+    rowAvatarLoadPromise = (async () => {
+      try {
+        const refereeIds = referees.map(ref => ref.id);
+        const { data: links, error: linksError } = await db.from('setka_referee_links')
+          .select('referee_id,setka_player_id')
+          .eq('match_status', 'confirmed')
+          .in('referee_id', refereeIds);
+        if (linksError) throw linksError;
+        const playerIds = [...new Set((links || []).map(link => link.setka_player_id).filter(Boolean))];
+        if (!playerIds.length) {
+          rowAvatarsLoaded = true;
+          return;
+        }
+        const { data: players, error: playersError } = await attpDb.from('players')
+          .select('first_name,last_name,setka_cup_player_id')
+          .in('setka_cup_player_id', playerIds);
+        if (playersError) throw playersError;
+        const playersBySetkaId = new Map((players || []).map(player => [player.setka_cup_player_id, player]));
+        (links || []).forEach(link => {
+          const player = playersBySetkaId.get(link.setka_player_id);
+          if (player) rowAvatarCache.set(link.referee_id, player);
+        });
+        rowAvatarsLoaded = true;
+        paintRowAvatars();
+      } catch (error) {
+        console.error('Participant avatars could not be loaded', error);
+      } finally {
+        rowAvatarLoadPromise = null;
+      }
+    })();
+    return rowAvatarLoadPromise;
+  }
+
+  function renderPlayerProfile(card, ref, player){
+    if (!player) {
+      const initials = `${ref.first_name?.[0] || ''}${ref.last_name?.[0] || ''}`.toUpperCase();
+      card.innerHTML = `<div class="ref-player-avatar">${escapeHtml(initials)}</div>
+        <div class="ref-player-status"><strong>Profil sportiv indisponibil</strong><br>ATTP nu conține momentan statistici sau fotografie pentru ${escapeHtml(ref.first_name)} ${escapeHtml(ref.last_name)}.</div>
+        <div class="ref-player-source">Căutare după ID Setka Cup și nume</div>`;
+      return;
+    }
+    const stats = player.setka_cup_cache;
+    const finished = Array.isArray(stats?.tournament_stats)
+      ? stats.tournament_stats.filter(row => row && row.status === 'finished')
+      : [];
+    const placeCount = place => finished.filter(row => Number(row.position) === place).length;
+    const wins = Number(stats?.wins || 0);
+    const matches = Number(stats?.total_matches || 0);
+    const winRate = matches ? Math.round((wins / matches) * 100) : 0;
+    const initials = `${player.first_name?.[0] || ''}${player.last_name?.[0] || ''}`.toUpperCase();
+    const imagePath = participantImagePath(player);
+    card.innerHTML = `<div class="ref-player-avatar"><img src="${imagePath}" alt="${escapeHtml(player.first_name)} ${escapeHtml(player.last_name)}" onerror="this.parentElement.textContent='${escapeHtml(initials)}'"></div>
+      <div class="ref-player-location">${escapeHtml(player.city || 'Localitate nespecificată')}</div>
+      <div class="ref-player-rating"><small>Rating</small> ${stats?.rating_sc ?? '—'}</div>
+      <div class="ref-player-stats">
+        <div class="ref-player-stat"><b>${Number(stats?.total_tournaments || 0).toLocaleString('ro-RO')}</b><span>Turnee jucate</span></div>
+        <div class="ref-player-stat"><b>${matches.toLocaleString('ro-RO')}</b><span>Meciuri jucate</span></div>
+        <div class="ref-player-stat"><b>${wins.toLocaleString('ro-RO')}</b><span>Victorii</span></div>
+        <div class="ref-player-stat"><b>${winRate}%</b><span>Rată de victorie</span></div>
+      </div>
+      <div class="ref-player-places">
+        <span><b>${placeCount(1)}</b>Locul I</span>
+        <span><b>${placeCount(2)}</b>Locul II</span>
+        <span><b>${placeCount(3)}</b>Locul III</span>
+      </div>
+      <div class="ref-player-source">Date Setka Cup prin ATTP</div>`;
+  }
+
+  async function loadPlayerProfile(refId, ref, card){
+    if (playerProfileCache.has(refId)) {
+      renderPlayerProfile(card, ref, playerProfileCache.get(refId));
+      return;
+    }
+    try {
+      const playerSelect = 'first_name,last_name,city,setka_cup_player_id,setka_cup_cache(rating_sc,total_tournaments,total_matches,wins,losses,tournament_stats)';
+      // Both calls are reads. The shared Setka player ID is the only value used
+      // to connect the pontaj participant with the public ATTP player profile.
+      const { data: link, error: linkError } = await db.from('setka_referee_links')
+        .select('setka_player_id, match_status')
+        .eq('referee_id', refId)
+        .maybeSingle();
+      if (linkError) throw linkError;
+
+      let player = null;
+      if (link?.match_status === 'confirmed' && link.setka_player_id) {
+        const { data, error } = await attpDb.from('players')
+          .select(playerSelect)
+          .eq('setka_cup_player_id', link.setka_player_id)
+          .maybeSingle();
+        if (error) throw error;
+        player = data;
+      }
+
+      // Some pontaj rows are still unlinked even though the same person already
+      // exists in ATTP. An exact, case-insensitive name match recovers those
+      // profiles without changing either database or accepting a fuzzy match.
+      if (!player) {
+        const { data, error } = await attpDb.from('players')
+          .select(playerSelect)
+          .ilike('first_name', ref.first_name)
+          .ilike('last_name', ref.last_name)
+          .limit(2);
+        if (error) throw error;
+        if (data?.length === 1) player = data[0];
+      }
+
+      playerProfileCache.set(refId, player || null);
+      renderPlayerProfile(card, ref, player || null);
+    } catch (error) {
+      console.error('Player profile load failed', error);
+      card.innerHTML = '<div class="ref-player-status">Statisticile nu au putut fi încărcate momentan.</div>';
+    }
+  }
+
   function openRefModal(refId, returnToList = listModal.classList.contains('show')){
     editingRefId = refId;
     refModalReturnToList = returnToList;
@@ -2361,6 +2631,14 @@
     document.getElementById('rContractDate').value = localizeRomanianDate(ref.contract_date || '');
     document.getElementById('rHidden').checked = ref.active === false;
     document.getElementById('deleteRefBtn').style.display = refId ? '' : 'none';
+    const profileLayout = document.getElementById('refProfileLayout');
+    const playerCard = document.getElementById('refPlayerCard');
+    profileLayout.classList.toggle('no-profile', !refId);
+    playerCard.hidden = !refId;
+    if (refId) {
+      playerCard.innerHTML = '<div class="ref-player-status">Se încarcă profilul sportiv…</div>';
+      loadPlayerProfile(refId, ref, playerCard);
+    }
     listModal.classList.remove('show');   // drill-down from the roster list — don't stack modals
     refModal.classList.add('show');
   }
