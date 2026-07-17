@@ -3477,8 +3477,9 @@
       throw new Error('Librăriile PDF nu s-au încărcat.');
     }
     const canvas = await window.html2canvas(element, {
-      // About 135 DPI on A4: crisp for text/printing without a heavy, laggy PDF.
-      scale: 1.4,
+      // Roughly 195–200 DPI on the fitted A4 page: sharp text without creating
+      // the oversized canvases that make browser PDF viewers sluggish.
+      scale: 2,
       useCORS: false,
       allowTaint: false,
       backgroundColor: '#ffffff',
@@ -3501,8 +3502,8 @@
       imageWidth = canvas.width * imageHeight / canvas.height;
     }
     const x = (pageWidth - imageWidth) / 2;
-    const imageData = canvas.toDataURL('image/jpeg', 0.86);
-    pdf.addImage(imageData, 'JPEG', x, margin, imageWidth, imageHeight, undefined, 'FAST');
+    const imageData = canvas.toDataURL('image/jpeg', 0.92);
+    pdf.addImage(imageData, 'JPEG', x, margin, imageWidth, imageHeight);
     if (filename) pdf.save(filename);
     return pdf;
   }
