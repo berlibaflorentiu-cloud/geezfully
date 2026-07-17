@@ -562,7 +562,7 @@
     .recon-grid{ grid-template-columns:1fr 1fr; }
     header.topbar{ padding:10px 14px; row-gap:8px; }
     .brand{ margin-right:auto; order:1; flex-basis:100%; }
-    #manageRefereesBtn, #openStudioTableBtn, #openArchiveBtn, #openStatsOverviewBtn, #openSetkaSyncBtn, #logoutBtn{ order:2; flex:1 1 auto; }
+    #manageRefereesBtn, #openStudioTableBtn, #openArchiveBtn, #openStatsOverviewBtn, #openSetkaSyncBtn, #langToggle, #logoutBtn{ order:2; flex:1 1 auto; }
     .month-nav{ order:3; flex-basis:100%; justify-content:center; }
     .user-chip{ order:4; flex-basis:100%; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     main{ padding:12px 12px 70px; }
@@ -789,6 +789,10 @@
       <button class="btn btn-sm btn-gold" id="openArchiveBtn">Arhivă acte</button>
       <button class="btn btn-sm btn-gold" id="openStatsOverviewBtn">Statistici</button>
       <button class="btn btn-sm btn-gold setka-btn" id="openSetkaSyncBtn">Setka<span class="setka-dot"></span></button>
+      <div class="stats-scope-toggle" id="langToggle" role="group" aria-label="Limba interfeței">
+        <button type="button" class="stats-scope-btn" data-lang="ro">RO</button>
+        <button type="button" class="stats-scope-btn" data-lang="ru">RU</button>
+      </div>
       <span class="user-chip" id="userChip"></span>
       <button class="btn btn-ghost btn-sm" id="logoutBtn">Ieși</button>
     </header>
@@ -1234,6 +1238,427 @@
     auth: { persistSession:false, autoRefreshToken:false, detectSessionInUrl:false }
   });
 
+  // ══════════ i18n (RO source / RU translation) ══════════
+  // The printed/downloaded "Act de prestare" document (and its PDF export) is
+  // never translated — it's an official document, not app chrome. Everything
+  // else is translated by walking the live DOM and swapping any text node or
+  // placeholder/title/aria-label attribute that matches a dictionary entry.
+  // This covers both the static HTML and every dynamically-rendered view
+  // (table rows, modals, etc.) without needing to touch each render function.
+  let currentLang = localStorage.getItem('pontaj_lang') === 'ru' ? 'ru' : 'ro';
+  const I18N_TRANSLATE_ATTRS = ['placeholder', 'title', 'aria-label'];
+  const I18N_EXCLUDE_IDS = new Set(['actDoc']);
+  const I18N_EXCLUDE_CLASSES = ['act-export-doc'];
+  // ── RU_DICT_START ── Romanian source string -> Russian translation.
+  const RU_DICT = {
+    // Login / auth
+    'SETKA-PRO': 'SETKA-PRO',
+    'Acces intern — introducere date participanți': 'Внутренний доступ — ввод данных участников',
+    'Parolă': 'Пароль',
+    'Intră în cont': 'Войти',
+    'Conturile se creează doar din Supabase — cere unui administrator un cont.': 'Аккаунты создаются только через Supabase — попросите администратора создать вам аккаунт.',
+    'Acces neaprobat': 'Доступ не подтверждён',
+    'Acest cont nu are acces aprobat.': 'Этот аккаунт не имеет подтверждённого доступа.',
+    'Înapoi la autentificare': 'Назад к входу',
+    'Email sau parolă incorectă.': 'Неверный email или пароль.',
+    'Accesul nu a putut fi verificat. Sesiunea a fost închisă în siguranță; încearcă din nou.': 'Не удалось проверить доступ. Сессия была безопасно закрыта; попробуйте снова.',
+
+    // Header / nav
+    'SETKA-PRO · participanți': 'SETKA-PRO · участники',
+    'Luna precedentă': 'Предыдущий месяц',
+    'Luna următoare': 'Следующий месяц',
+    'Blochează luna': 'Заблокировать месяц',
+    'Deblochează luna': 'Разблокировать месяц',
+    'Participanți': 'Участники',
+    'Tabel date': 'Таблица данных',
+    'Arhivă acte': 'Архив актов',
+    'Statistici': 'Статистика',
+    'Ieși': 'Выйти',
+    'Luna este blocată — datele nu pot fi editate. Deblocheaz-o din butonul de lângă navigarea lunilor pentru a face modificări.':
+      'Месяц заблокирован — данные нельзя редактировать. Разблокируйте его кнопкой рядом с навигацией по месяцам, чтобы вносить изменения.',
+
+    // Toolbar / filters
+    'Caută…': 'Поиск…',
+    'Filtrează după categorie': 'Фильтр по категории',
+    'Categorii participanți': 'Категории участников',
+    'Participanți ascunși': 'Скрытые участники',
+    'TOP': 'TOP',
+    'Categoria I': 'Категория I',
+    'Categoria II': 'Категория II',
+    'Categoria III': 'Категория III',
+    'Referee': 'Referee',
+    'Filtrează după activitatea lunară': 'Фильтр по активности за месяц',
+    'Perioada activității': 'Период активности',
+    'Doar activi luna asta': 'Только активные в этом месяце',
+    'Fără activitate luna asta': 'Без активности в этом месяце',
+    'Sortează participanții': 'Сортировка участников',
+    '↕ Nume A–Z': '↕ Имя А–Я',
+    '↕ Nume Z–A': '↕ Имя Я–А',
+    '↕ Categorie': '↕ Категория',
+    '↕ Cea mai multă activitate': '↕ Больше всего активности',
+    '↕ Cea mai puțină activitate': '↕ Меньше всего активности',
+    '↕ Onorariu: mare–mic': '↕ Гонорар: больше–меньше',
+    '↕ Onorariu: mic–mare': '↕ Гонорар: меньше–больше',
+    'Resetează': 'Сбросить',
+    'Descarcă toate datele lunii selectate': 'Скачать все данные выбранного месяца',
+    'Descarcă luna': 'Скачать месяц',
+    'Activi:': 'Активных:',
+    'Total onorarii:': 'Всего гонораров:',
+    'Impozit 15%:': 'Налог 15%:',
+
+    // Main table
+    'Participant': 'Участник',
+    'Turneu': 'Турнир',
+    'Meciuri': 'Матчи',
+    'Locul I': '1 место',
+    'Locul III': '3 место',
+    'Arbitraj': 'Судейство',
+    'Onorariu': 'Гонорар',
+    'Impozit': 'Налог',
+    'Acțiuni și detalii': 'Действия и детали',
+    'zi': 'день',
+    'noapte': 'ночь',
+    'Niciun participant găsit.': 'Участники не найдены.',
+    'Informații participant': 'Информация об участнике',
+    'Statistici participant': 'Статистика участника',
+    'Ascuns': 'Скрыт',
+    'Deschide detalii și bonusuri': 'Открыть детали и бонусы',
+    'Detalii': 'Детали',
+    'Deschide actul pentru imprimare': 'Открыть акт для печати',
+    'Act / Print': 'Act / Print',
+    'Nicio informație suplimentară': 'Нет дополнительной информации',
+
+    // Export confirm modal
+    'Descarcă datele lunii?': 'Скачать данные месяца?',
+    'Închide': 'Закрыть',
+    'Se va descărca fișierul complet pentru': 'Будет скачан полный файл за',
+    ', cu datele tuturor participanților.': ', с данными всех участников.',
+    'Anulează': 'Отмена',
+    'Descarcă': 'Скачать',
+
+    // Detail modal
+    'Detalii participant': 'Детали участника',
+    'Total încasat în': 'Всего получено в',
+    'Deplasare / decontare': 'Поездки / расчёт',
+    'Deplasare': 'Поездки',
+    'Regiune': 'Регион',
+    'Taxi (MDL)': 'Такси (MDL)',
+    'Distanță (km)': 'Расстояние (км)',
+    'Decontare': 'Расчёт',
+    'Achitat (MDL)': 'Оплачено (MDL)',
+    'Conform calculului': 'По расчёту',
+    'Rest': 'Остаток',
+    'Scoruri manuale (opțional)': 'Ручные баллы (необязательно)',
+    'Mexico': 'Mexico',
+    'Rio': 'Rio',
+    'Notă (opțional)': 'Заметка (необязательно)',
+    'Adaugă o notă…': 'Добавить заметку…',
+    'Descarcă detalii': 'Скачать детали',
+    'Salvează': 'Сохранить',
+    'Luna este blocată': 'Месяц заблокирован',
+
+    // Participant stats modal
+    'Înapoi': 'Назад',
+    'Onorarii lunare (ultimele 12 luni)': 'Гонорары по месяцам (последние 12 месяцев)',
+    'Repartizare pe tip de activitate (anul curent)': 'Разбивка по типу активности (текущий год)',
+    'Acte generate recent': 'Недавно созданные акты',
+    'Niciun act salvat în arhivă.': 'В архиве нет сохранённых актов.',
+    'Nicio activitate în ultimele 12 luni.': 'Нет активности за последние 12 месяцев.',
+    'Grafic cu valori în MDL': 'График значений в MDL',
+    'MDL': 'MDL',
+    'mil.': 'млн',
+    'mii': 'тыс',
+
+    // Referee roster / list
+    'Listă participanți': 'Список участников',
+    '+ Participant nou': '+ Новый участник',
+
+    // Referee edit modal
+    'Participant nou': 'Новый участник',
+    'Editează participant': 'Редактировать участника',
+    'Nume': 'Фамилия',
+    'Prenume': 'Имя',
+    'Categorie': 'Категория',
+    'I': 'I',
+    'II': 'II',
+    'III': 'III',
+    'Bancă': 'Банк',
+    'Cod fiscal': 'Фискальный код',
+    'IBAN': 'IBAN',
+    'Nr. contract': 'Номер договора',
+    'Data contract': 'Дата договора',
+    'ex: 25 mart': 'напр.: 25 mart',
+    'Ascunde din lista principală': 'Скрыть из основного списка',
+    'Participantul rămâne disponibil în filtrul „Participanți ascunși”.': 'Участник останется доступен в фильтре «Скрытые участники».',
+    'Șterge': 'Удалить',
+    'Profil sportiv indisponibil': 'Спортивный профиль недоступен',
+    'Căutare după ID Setka Cup și nume': 'Поиск по ID Setka Cup и имени',
+    'Localitate nespecificată': 'Город не указан',
+    'Rating': 'Рейтинг',
+    'Turnee jucate': 'Сыграно турниров',
+    'Meciuri jucate': 'Сыграно матчей',
+    'Victorii': 'Побед',
+    'Rată de victorie': 'Процент побед',
+    'Locul II': '2 место',
+    'Date Setka Cup prin ATTP': 'Данные Setka Cup через ATTP',
+    'Se încarcă profilul sportiv…': 'Загрузка спортивного профиля…',
+    'Statisticile nu au putut fi încărcate momentan.': 'Не удалось загрузить статистику.',
+    'Nume și prenume sunt obligatorii.': 'Фамилия и имя обязательны.',
+    'Sigur ștergi acest participant? Se șterg și toate înregistrările lui.': 'Точно удалить этого участника? Все его записи тоже будут удалены.',
+
+    // Act modal chrome (document body itself stays untranslated)
+    'Act de prestare a serviciilor sportive': 'Act de prestare a serviciilor sportive',
+    'Acest act e salvat în arhivă — se afișează varianta salvată.': 'Этот акт сохранён в архиве — показана сохранённая версия.',
+    'Folosește butonul ✎ pentru a modifica regimul de calcul sau volumul. Schimbările se aplică doar acestui act.':
+      'Используйте кнопку ✎, чтобы изменить ставку расчёта или объём. Изменения применяются только к этому акту.',
+    'Printează': 'Печать',
+    'Descarcă PDF': 'Скачать PDF',
+    'Salvează în arhivă': 'Сохранить в архив',
+    'Se salvează…': 'Сохранение…',
+    'Salvat în arhivă': 'Сохранено в архив',
+
+    // Archive modal
+    'Filtrează după participant': 'Фильтр по участнику',
+    'Toți participanții': 'Все участники',
+    'Perioadă': 'Период',
+    'Salvat la': 'Сохранено',
+    'Total (mdl)': 'Всего (mdl)',
+    'Niciun act salvat momentan. Actele apar aici după ce apeși „Salvează în arhivă“ pe un act deschis.':
+      'Пока нет сохранённых актов. Акты появятся здесь после нажатия «Сохранить в архив» на открытом акте.',
+    'Vizualizează': 'Просмотр',
+    'Șterge din arhivă': 'Удалить из архива',
+    'Ștergi definitiv acest act din arhivă?': 'Удалить этот акт из архива навсегда?',
+
+    // Studio table modal
+    'Tabel date pe platouri': 'Таблица данных по студиям',
+    'RIO, MEXICO și orice platou adăugat ulterior': 'RIO, MEXICO и любая студия, добавленная позже',
+    'Se încarcă…': 'Загрузка…',
+    'Structura pentru platouri nu este încă instalată în baza de date. Rulează migrarea studio_schema.sql, apoi redeschide tabelul.':
+      'Структура для студий ещё не установлена в базе данных. Выполните миграцию studio_schema.sql, затем откройте таблицу снова.',
+    'Editează o valoare și apasă Enter sau ieși din câmp. RIO și MEXICO se adună automat în categoria corespunzătoare din tabelul principal.':
+      'Измените значение и нажмите Enter или выйдите из поля. RIO и MEXICO автоматически суммируются в соответствующую категорию основной таблицы.',
+    'Nu există platouri active.': 'Нет активных студий.',
+    'Se generează…': 'Формирование…',
+
+    // Stats overview modal
+    'Statistici generale': 'Общая статистика',
+    'Anul de referință': 'Отчётный год',
+    'Onorarii lunare — organizație (anul selectat)': 'Гонорары по месяцам — организация (выбранный год)',
+    'Pe categorie': 'По категории',
+    'Pe tip de activitate': 'По типу активности',
+    'Clasament pe activitate și coeficienți': 'Рейтинг по активности и коэффициентам',
+    'Indicator': 'Показатель',
+    'Turneu zi': 'Турнир день',
+    'Turneu noapte': 'Турнир ночь',
+    'Arbitraj zi': 'Судейство день',
+    'Arbitraj noapte': 'Судейство ночь',
+    'Meciuri câștigate zi': 'Матчи выиграно день',
+    'Meciuri câștigate noapte': 'Матчи выиграно ночь',
+    // Studio table column groups (shorter labels than the ones above)
+    'Meciuri zi': 'Матчи день',
+    'Meciuri noapte': 'Матчи ночь',
+    'Locul I zi': '1 место день',
+    'Locul I noapte': '1 место ночь',
+    'Locul III zi': '3 место день',
+    'Locul III noapte': '3 место ночь',
+    'Coeficient câștiguri zi': 'Коэффициент побед день',
+    'Coeficient câștiguri noapte': 'Коэффициент побед ночь',
+    'Coeficient general câștiguri': 'Общий коэффициент побед',
+    'Perioadă clasament': 'Период рейтинга',
+    'An': 'Год',
+    'Lună': 'Месяц',
+    'Luna de referință': 'Отчётный месяц',
+    '#': '#',
+    'Valoare': 'Значение',
+    'Clasament — cei mai plătiți participanți': 'Рейтинг — самые оплачиваемые участники',
+    'Fără activitate în anul selectat': 'Без активности за выбранный год',
+    'Igiena datelor': 'Полнота данных',
+    'Profiluri incomplete': 'Неполные профили',
+    'Total tot timpul': 'Всего за всё время',
+    'Acte generate': 'Актов создано',
+    'Statistici individuale': 'Индивидуальная статистика',
+    'Nu există date pentru luna selectată.': 'Нет данных за выбранный месяц.',
+    'Nu există date pentru anul selectat.': 'Нет данных за выбранный год.',
+    'turnee zi': 'турниры день', 'turnee noapte': 'турниры ночь',
+    'arbitrări zi': 'судейство день', 'arbitrări noapte': 'судейство ночь',
+    'meciuri câștigate zi': 'матчи выиграно день', 'meciuri câștigate noapte': 'матчи выиграно ночь',
+    'coeficient câștiguri zi': 'коэффициент побед день', 'coeficient câștiguri noapte': 'коэффициент побед ночь',
+    'coeficient general câștiguri': 'общий коэффициент побед',
+
+    // Setka sync modal
+    'Sincronizare Setka Cup': 'Синхронизация Setka Cup',
+    'Turneu, meciuri câștigate, Locul I/III — verificate automat contra Setka Cup. Arbitrajul nu e disponibil acolo, rămâne manual.':
+      'Турнир, выигранные матчи, 1/3 место — автоматически сверяется с Setka Cup. Судейство там недоступно, остаётся вручную.',
+    'Notificare curentă': 'Текущее уведомление',
+    'Modificări ratate': 'Пропущенные изменения',
+    'Istoric & anulare': 'История и отмена',
+    'Nicio modificare propusă momentan. Datele se extrag din Setka Cup la fiecare 5 ore.':
+      'Сейчас нет предложенных изменений. Данные забираются из Setka Cup каждые 5 часов.',
+    'Modificări care nu au fost aprobate în 72h de la afișare. Rămân disponibile aici încă 7 zile, apoi dispar.':
+      'Изменения, не подтверждённые в течение 72ч с момента показа. Остаются здесь ещё 7 дней, затем исчезают.',
+    'Nimic ratat momentan.': 'Сейчас ничего не пропущено.',
+    'Ultimele notificări aplicate. Poți anula doar cele mai recente 5 (~25h de acoperire, la un ciclu de 5h).':
+      'Последние применённые уведомления. Можно отменить только 5 последних (~25ч охвата при цикле в 5ч).',
+    'Niciun istoric momentan.': 'Пока нет истории.',
+    'Acceptă tot ce e vizibil': 'Принять всё видимое',
+    'Editează': 'Изменить',
+    'Acceptă': 'Принять',
+    'Acceptă totuși': 'Всё равно принять',
+    '(anulat)': '(отменено)',
+    'Termenul de 72h a expirat pentru unele modificări — verifică fila „Modificări ratate”.':
+      'Срок 72ч истёк для некоторых изменений — проверьте вкладку «Пропущенные изменения».',
+    'Anulezi această notificare aplicată? Valorile revin la ce erau înainte.': 'Отменить это применённое уведомление? Значения вернутся к прежним.',
+
+    // Misc alert/error messages
+    'Nu s-a putut debloca luna: ': 'Не удалось разблокировать месяц: ',
+    'Nu s-a putut bloca luna: ': 'Не удалось заблокировать месяц: ',
+    'Nu s-a putut salva: ': 'Не удалось сохранить: ',
+    'Valoarea nu a putut fi salvată: ': 'Не удалось сохранить значение: ',
+    'Nume și prenume sunt obligatorii.': 'Фамилия и имя обязательны.',
+    'PDF-ul nu a putut fi generat. Reîncarcă pagina și încearcă din nou.': 'Не удалось создать PDF. Перезагрузите страницу и попробуйте снова.',
+    'PDF-ul cu detalii nu a putut fi generat. Reîncarcă pagina și încearcă din nou.': 'Не удалось создать PDF с деталями. Перезагрузите страницу и попробуйте снова.',
+    'Nu s-a putut salva actul în arhivă: ': 'Не удалось сохранить акт в архив: ',
+    'Ștergi definitiv acest act din arhivă?': 'Удалить этот акт из архива навсегда?',
+    'Nu s-a putut șterge actul: ': 'Не удалось удалить акт: ',
+  };
+  // ── RU_DICT_END ──
+  // Auto-derived inverse (Russian -> Romanian) so the toggle can switch back
+  // instantly without a reload or a second hand-written dictionary.
+  const RO_DICT = Object.fromEntries(Object.entries(RU_DICT).map(([ro, ru]) => [ru, ro]));
+  function activeDict(){ return currentLang === 'ru' ? RU_DICT : RO_DICT; }
+
+  function t(str){
+    if (currentLang !== 'ru') return str;
+    const translated = RU_DICT[str];
+    return translated === undefined ? str : translated;
+  }
+  // For phrases that embed a proper name (referee/participant), which is never
+  // translated — only the RO/RU wording around it switches.
+  function tName(ro, ru, name){ return (currentLang === 'ru' ? ru : ro) + name; }
+
+  function i18nTranslateString(str){
+    if (!str) return str;
+    const match = str.match(/^(\s*)([\s\S]*?)(\s*)$/);
+    const [, lead, core, trail] = match;
+    if (!core) return str;
+    const translated = activeDict()[core];
+    return translated === undefined ? str : lead + translated + trail;
+  }
+
+  function i18nIsExcluded(el){
+    let node = el;
+    while (node && node.nodeType === 1) {
+      if (I18N_EXCLUDE_IDS.has(node.id)) return true;
+      if (node.classList && I18N_EXCLUDE_CLASSES.some(c => node.classList.contains(c))) return true;
+      if (node.tagName === 'SCRIPT' || node.tagName === 'STYLE') return true;
+      node = node.parentElement;
+    }
+    return false;
+  }
+
+  function i18nTranslateNode(node){
+    if (!node) return;
+    if (node.nodeType === 3) { // text node
+      if (i18nIsExcluded(node.parentElement)) return;
+      const translated = i18nTranslateString(node.nodeValue);
+      if (translated !== node.nodeValue) node.nodeValue = translated;
+      return;
+    }
+    if (node.nodeType !== 1) return; // element only beyond this point
+    if (node.tagName === 'SCRIPT' || node.tagName === 'STYLE') return;
+    if (I18N_EXCLUDE_IDS.has(node.id)) return;
+    if (node.classList && I18N_EXCLUDE_CLASSES.some(c => node.classList.contains(c))) return;
+    I18N_TRANSLATE_ATTRS.forEach(attr => {
+      if (node.hasAttribute && node.hasAttribute(attr)) {
+        const val = node.getAttribute(attr);
+        const translated = i18nTranslateString(val);
+        if (translated !== val) node.setAttribute(attr, translated);
+      }
+    });
+    node.childNodes.forEach(i18nTranslateNode);
+  }
+
+  // Runs on every DOM mutation so any freshly-rendered content (table rows,
+  // modal bodies, etc.) picks up the current language automatically —
+  // this is what lets the toggle avoid a page reload.
+  const i18nObserver = new MutationObserver(mutations => {
+    mutations.forEach(m => {
+      if (m.type === 'childList') {
+        m.addedNodes.forEach(i18nTranslateNode);
+      } else if (m.type === 'characterData') {
+        i18nTranslateNode(m.target);
+      } else if (m.type === 'attributes' && I18N_TRANSLATE_ATTRS.includes(m.attributeName)) {
+        i18nTranslateNode(m.target);
+      }
+    });
+  });
+  function i18nStart(){
+    i18nTranslateNode(document.body);
+    i18nObserver.observe(document.body, {
+      childList: true, subtree: true, characterData: true,
+      attributes: true, attributeFilter: I18N_TRANSLATE_ATTRS,
+    });
+  }
+
+  // These vocab objects are computed once from currentLang at declaration
+  // time (see computeKeyLabels/computeMonthNames/etc. further down), then
+  // re-assigned here whenever the language toggles.
+  function i18nRecomputeVocabulary(){
+    KEY_LABELS = computeKeyLabels();
+    MONTH_NAMES = computeMonthNames();
+    STATS_ACTIVITY_GROUPS = computeStatsActivityGroups();
+    METRIC_LABELS = computeMetricLabels();
+    SETKA_FIELD_LABELS = computeSetkaFieldLabels();
+  }
+
+  // Re-renders whatever's currently on screen from data already in memory —
+  // no refetch, no reload — so template strings built from live values
+  // (month labels, KPI headers, chips, etc.) regenerate in the new language.
+  // Modals with in-progress unsaved edits (detail, referee edit) only get
+  // their title/labels patched, never a full data reload.
+  function i18nRerenderVisible(){
+    i18nRecomputeVocabulary();
+    if (typeof currentPeriod !== 'undefined') {
+      document.getElementById('monthLabel').textContent = MONTH_NAMES[currentPeriod.getMonth()] + ' ' + currentPeriod.getFullYear();
+    }
+    renderRows();
+    if (typeof listModal !== 'undefined' && listModal.classList.contains('show')) renderRefList();
+    if (typeof archiveModal !== 'undefined' && archiveModal.classList.contains('show')) renderArchive();
+    if (typeof detailModal !== 'undefined' && detailModal.classList.contains('show') && detailRefId) {
+      const ref = referees.find(r => r.id === detailRefId);
+      if (ref) document.getElementById('detailTitle').textContent = `${ref.last_name} ${ref.first_name} — ${currentLang === 'ru' ? 'детали' : 'detalii'}`;
+    }
+    if (typeof statsModal !== 'undefined' && statsModal.classList.contains('show') && statsRefId) {
+      const ref = referees.find(r => r.id === statsRefId);
+      if (ref) document.getElementById('statsTitle').textContent = `${ref.last_name} ${ref.first_name} — ${currentLang === 'ru' ? 'статистика' : 'statistici'}`;
+    }
+    if (typeof refModal !== 'undefined' && refModal.classList.contains('show') && editingRefId) {
+      const ref = referees.find(r => r.id === editingRefId);
+      if (ref && playerProfileCache.has(editingRefId)) {
+        renderPlayerProfile(document.getElementById('refPlayerCard'), ref, playerProfileCache.get(editingRefId) || null);
+      }
+    }
+    if (typeof studioTableModal !== 'undefined' && studioTableModal.classList.contains('show')) openStudioTable();
+    if (typeof statsOverviewModal !== 'undefined' && statsOverviewModal.classList.contains('show') && ovData) {
+      renderStatsOverviewForYear(document.getElementById('statsYearSelect').value);
+    }
+    if (typeof setkaSyncModal !== 'undefined' && setkaSyncModal.classList.contains('show')) setkaRenderActive();
+  }
+
+  function i18nSetLang(lang){
+    if (lang === currentLang) return;
+    currentLang = lang;
+    localStorage.setItem('pontaj_lang', lang);
+    i18nTranslateNode(document.body);
+    i18nRerenderVisible();
+    document.querySelectorAll('#langToggle .stats-scope-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+  }
+  i18nStart();
+  document.querySelectorAll('#langToggle .stats-scope-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === currentLang);
+    btn.addEventListener('click', () => i18nSetLang(btn.dataset.lang));
+  });
+
   const ITEM_KEYS = [
     ['tournament_day','tournament_night'],
     ['matches_day','matches_night'],
@@ -1243,19 +1668,37 @@
   ];
   const ALL_KEYS = ITEM_KEYS.flat();
   // Compact "group · zi/noapte" labels, shown as the field caption in the mobile card layout only.
-  const KEY_LABELS = {
-    tournament_day: 'Turneu · zi', tournament_night: 'Turneu · noapte',
-    matches_day: 'Meciuri · zi', matches_night: 'Meciuri · noapte',
-    place1_day: 'Locul I · zi', place1_night: 'Locul I · noapte',
-    place3_day: 'Locul III · zi', place3_night: 'Locul III · noapte',
-    arbitraj_day: 'Arbitraj · zi', arbitraj_night: 'Arbitraj · noapte',
-  };
+  function computeKeyLabels(){
+    return currentLang === 'ru' ? {
+      tournament_day: 'Турнир · день', tournament_night: 'Турнир · ночь',
+      matches_day: 'Матчи · день', matches_night: 'Матчи · ночь',
+      place1_day: '1 место · день', place1_night: '1 место · ночь',
+      place3_day: '3 место · день', place3_night: '3 место · ночь',
+      arbitraj_day: 'Судейство · день', arbitraj_night: 'Судейство · ночь',
+    } : {
+      tournament_day: 'Turneu · zi', tournament_night: 'Turneu · noapte',
+      matches_day: 'Meciuri · zi', matches_night: 'Meciuri · noapte',
+      place1_day: 'Locul I · zi', place1_night: 'Locul I · noapte',
+      place3_day: 'Locul III · zi', place3_night: 'Locul III · noapte',
+      arbitraj_day: 'Arbitraj · zi', arbitraj_night: 'Arbitraj · noapte',
+    };
+  }
+  let KEY_LABELS = computeKeyLabels();
   const BONUS_LABELS = [
     'MEXICO (T)','MEXICO (WM)','MEXICO (I)','MEXICO (III)',
     'RIO (T)','RIO (WM)','RIO (I)','RIO (III)',
     'REFF MEX DAY','REFF MEX NIGHT','REFF RIO'
   ];
-  const MONTH_NAMES = ['ianuarie','februarie','martie','aprilie','mai','iunie','iulie','august','septembrie','octombrie','noiembrie','decembrie'];
+  function computeMonthNames(){
+    return currentLang === 'ru'
+      ? ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь']
+      : ['ianuarie','februarie','martie','aprilie','mai','iunie','iulie','august','septembrie','octombrie','noiembrie','decembrie'];
+  }
+  let MONTH_NAMES = computeMonthNames();
+  // Fixed Romanian month names for anything that ends up inside a printed/
+  // downloaded document (the Act, its PDF, the studio-table PDF, the detail
+  // PDF report) — those never translate, regardless of the UI language.
+  const MONTH_NAMES_RO = ['ianuarie','februarie','martie','aprilie','mai','iunie','iulie','august','septembrie','octombrie','noiembrie','decembrie'];
 
   function localizeRomanianDate(value){
     let text = String(value || '').trim();
@@ -1438,12 +1881,14 @@
     const key = periodKey(currentPeriod);
     if (periodLocked) {
       const { error } = await db.from('locked_periods').delete().eq('period', key);
-      if (error) { alert('Nu s-a putut debloca luna: ' + error.message); btn.disabled = false; return; }
+      if (error) { alert(t('Nu s-a putut debloca luna: ') + error.message); btn.disabled = false; return; }
       periodLocked = false;
     } else {
-      if (!confirm(`Blochezi ${MONTH_NAMES[currentPeriod.getMonth()]} ${currentPeriod.getFullYear()}? Datele acestei luni nu vor mai putea fi editate până o deblochezi.`)) { btn.disabled = false; return; }
+      if (!confirm(currentLang === 'ru'
+        ? `Заблокировать ${MONTH_NAMES[currentPeriod.getMonth()]} ${currentPeriod.getFullYear()}? Данные этого месяца нельзя будет редактировать, пока вы его не разблокируете.`
+        : `Blochezi ${MONTH_NAMES[currentPeriod.getMonth()]} ${currentPeriod.getFullYear()}? Datele acestei luni nu vor mai putea fi editate până o deblochezi.`)) { btn.disabled = false; return; }
       const { error } = await db.from('locked_periods').insert({ period: key, locked_by: session.user.id });
-      if (error) { alert('Nu s-a putut bloca luna: ' + error.message); btn.disabled = false; return; }
+      if (error) { alert(t('Nu s-a putut bloca luna: ') + error.message); btn.disabled = false; return; }
       periodLocked = true;
     }
     renderLockUi();
@@ -1595,7 +2040,13 @@
   }
 
   function missingProfilePreview(ref){
-    const fields = [
+    const fields = currentLang === 'ru' ? [
+      ['bank_name', 'банк'],
+      ['fiscal_code', 'фискальный код'],
+      ['iban', 'IBAN'],
+      ['contract_number', 'номер договора'],
+      ['contract_date', 'дата договора'],
+    ] : [
       ['bank_name', 'banca'],
       ['fiscal_code', 'codul fiscal'],
       ['iban', 'IBAN-ul'],
@@ -1603,7 +2054,8 @@
       ['contract_date', 'data contractului'],
     ];
     const missing = fields.filter(([key]) => !String(ref[key] || '').trim()).map(([, label]) => label);
-    return missing.length ? `<div class="profile-missing">Lipsesc: ${missing.join(', ')}</div>` : '';
+    const prefix = currentLang === 'ru' ? 'Не указано: ' : 'Lipsesc: ';
+    return missing.length ? `<div class="profile-missing">${prefix}${missing.join(', ')}</div>` : '';
   }
 
   // ══ ROWS RENDER ══
@@ -1649,7 +2101,7 @@
       const nameTd = document.createElement('td');
       nameTd.className = 'name-cell';
       const initials = `${ref.first_name?.[0] || ''}${ref.last_name?.[0] || ''}`.toUpperCase();
-      nameTd.innerHTML = `<div class="participant-identity"><span class="participant-avatar" data-row-avatar="${ref.id}">${escapeHtml(initials)}</span><div class="participant-copy"><div class="name-line"><div class="full">${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}</div><button type="button" class="quick-edit-btn" data-quick-edit-ref="${ref.id}" title="Informații participant" aria-label="Informații despre ${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7.5"/><path d="M10 13v-4M10 7h.01" stroke-linecap="round"/></svg></button><button type="button" class="quick-edit-btn" data-stats-ref="${ref.id}" title="Statistici participant" aria-label="Statistici pentru ${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 15V9M10 15V5M15 15v-3"/></svg></button></div>
+      nameTd.innerHTML = `<div class="participant-identity"><span class="participant-avatar" data-row-avatar="${ref.id}">${escapeHtml(initials)}</span><div class="participant-copy"><div class="name-line"><div class="full">${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}</div><button type="button" class="quick-edit-btn" data-quick-edit-ref="${ref.id}" title="Informații participant" aria-label="${tName('Informații despre ', 'Информация о ', escapeHtml(ref.last_name) + ' ' + escapeHtml(ref.first_name))}"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7.5"/><path d="M10 13v-4M10 7h.01" stroke-linecap="round"/></svg></button><button type="button" class="quick-edit-btn" data-stats-ref="${ref.id}" title="Statistici participant" aria-label="${tName('Statistici pentru ', 'Статистика для ', escapeHtml(ref.last_name) + ' ' + escapeHtml(ref.first_name))}"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 15V9M10 15V5M15 15v-3"/></svg></button></div>
         <span class="cat-badge cat-${safeClassToken(ref.category)}">${escapeHtml(ref.category)}</span>${ref.active === false ? ' <span class="detail-chip">Ascuns</span>' : ''}${missingProfilePreview(ref)}</div></div>`;
       tr.appendChild(nameTd);
 
@@ -1769,7 +2221,7 @@
     } catch (err) {
       console.error(err);
       if (dot) { dot.classList.add('show','err'); }
-      alert('Nu s-a putut salva: ' + (err.message || err));
+      alert(t('Nu s-a putut salva: ') + (err.message || err));
     }
   }
 
@@ -1806,7 +2258,7 @@
     detailRefId = refId;
     const ref = referees.find(r => r.id === refId);
     const entry = entries[refId] || emptyEntry(refId);
-    document.getElementById('detailTitle').textContent = `${ref.last_name} ${ref.first_name} — detalii`;
+    document.getElementById('detailTitle').textContent = tName(`${ref.last_name} ${ref.first_name} — `, `${ref.last_name} ${ref.first_name} — `, currentLang === 'ru' ? 'детали' : 'detalii');
     document.getElementById('dTaxi').value = entry.taxi || 0;
     document.getElementById('dRegion').value = entry.region || '';
     document.getElementById('dKm').value = entry.km || 0;
@@ -1862,19 +2314,28 @@
   }
 
   // ══ PARTICIPANT STATS ══
-  const STATS_ACTIVITY_GROUPS = [
-    { key:'Turneu', day:'tournament_day', night:'tournament_night', color:'#AD8620' },
-    { key:'Meciuri', day:'matches_day', night:'matches_night', color:'#2EA043' },
-    { key:'Locul I', day:'place1_day', night:'place1_night', color:'#A371F7' },
-    { key:'Locul III', day:'place3_day', night:'place3_night', color:'#F85149' },
-    { key:'Arbitraj', day:'arbitraj_day', night:'arbitraj_night', color:'#388BFD', useGlobal:true },
-  ];
+  function computeStatsActivityGroups(){
+    return currentLang === 'ru' ? [
+      { key:'Турнир', day:'tournament_day', night:'tournament_night', color:'#AD8620' },
+      { key:'Матчи', day:'matches_day', night:'matches_night', color:'#2EA043' },
+      { key:'1 место', day:'place1_day', night:'place1_night', color:'#A371F7' },
+      { key:'3 место', day:'place3_day', night:'place3_night', color:'#F85149' },
+      { key:'Судейство', day:'arbitraj_day', night:'arbitraj_night', color:'#388BFD', useGlobal:true },
+    ] : [
+      { key:'Turneu', day:'tournament_day', night:'tournament_night', color:'#AD8620' },
+      { key:'Meciuri', day:'matches_day', night:'matches_night', color:'#2EA043' },
+      { key:'Locul I', day:'place1_day', night:'place1_night', color:'#A371F7' },
+      { key:'Locul III', day:'place3_day', night:'place3_night', color:'#F85149' },
+      { key:'Arbitraj', day:'arbitraj_day', night:'arbitraj_night', color:'#388BFD', useGlobal:true },
+    ];
+  }
+  let STATS_ACTIVITY_GROUPS = computeStatsActivityGroups();
   async function openStats(refId, returnToOverview = false){
     statsReturnToOverview = returnToOverview;
     const ref = referees.find(r => r.id === refId);
     if (!ref) return;
     statsRefId = refId;
-    document.getElementById('statsTitle').textContent = `${ref.last_name} ${ref.first_name} — statistici`;
+    document.getElementById('statsTitle').textContent = `${ref.last_name} ${ref.first_name} — ${currentLang === 'ru' ? 'статистика' : 'statistici'}`;
     document.getElementById('statsKpis').innerHTML = '';
     document.getElementById('statsChart').innerHTML = '<p class="stats-chart-empty">Se încarcă…</p>';
     document.getElementById('statsBreakdown').innerHTML = '';
@@ -1903,10 +2364,10 @@
     const actsTotal = actsCountRes.count || 0;
 
     document.getElementById('statsKpis').innerHTML = `
-      <div class="stats-kpi gold"><div class="stats-kpi-label">Total ${year}</div><div class="stats-kpi-value">${fmtMoney(ytdTotal)} MDL</div></div>
-      <div class="stats-kpi"><div class="stats-kpi-label">Total tot timpul</div><div class="stats-kpi-value">${fmtMoney(allTimeTotal)} MDL</div></div>
-      <div class="stats-kpi"><div class="stats-kpi-label">Medie lunară ${year}</div><div class="stats-kpi-value">${fmtMoney(avgMonthly)} MDL</div></div>
-      <div class="stats-kpi"><div class="stats-kpi-label">Acte generate</div><div class="stats-kpi-value">${actsTotal}</div></div>
+      <div class="stats-kpi gold"><div class="stats-kpi-label">${withYear('Total', 'Всего за', year)}</div><div class="stats-kpi-value">${fmtMoney(ytdTotal)} MDL</div></div>
+      <div class="stats-kpi"><div class="stats-kpi-label">${t('Total tot timpul')}</div><div class="stats-kpi-value">${fmtMoney(allTimeTotal)} MDL</div></div>
+      <div class="stats-kpi"><div class="stats-kpi-label">${withYear('Medie lunară', 'Среднее в месяц', year)}</div><div class="stats-kpi-value">${fmtMoney(avgMonthly)} MDL</div></div>
+      <div class="stats-kpi"><div class="stats-kpi-label">${t('Acte generate')}</div><div class="stats-kpi-value">${actsTotal}</div></div>
     `;
 
     const monthMap = {};
@@ -1954,8 +2415,8 @@
     const tickStep = niceFactor * magnitude;
     const axisMax = tickStep * Math.ceil(max / tickStep);
     const axisLabel = value => value >= 1000000
-      ? `${(value / 1000000).toLocaleString('ro-RO', { maximumFractionDigits:1 })} mil.`
-      : value >= 1000 ? `${(value / 1000).toLocaleString('ro-RO', { maximumFractionDigits:1 })} mii` : value.toLocaleString('ro-RO');
+      ? `${(value / 1000000).toLocaleString('ro-RO', { maximumFractionDigits:1 })} ${currentLang === 'ru' ? 'млн' : 'mil.'}`
+      : value >= 1000 ? `${(value / 1000).toLocaleString('ro-RO', { maximumFractionDigits:1 })} ${currentLang === 'ru' ? 'тыс' : 'mii'}` : value.toLocaleString('ro-RO');
     const ticks = Array.from({ length:5 }, (_, i) => i * axisMax / 4);
     const grid = ticks.map(value => {
       const y = padTop + plotHeight - (value / axisMax) * plotHeight;
@@ -1991,7 +2452,7 @@
   function renderStatsBreakdown(groups, containerId, emptyText){
     const el = document.getElementById(containerId || 'statsBreakdown');
     const max = Math.max(...groups.map(g => g.total), 0);
-    if (max <= 0) { el.innerHTML = `<p class="stats-empty">${emptyText || 'Nicio activitate plătită în acest an.'}</p>`; return; }
+    if (max <= 0) { el.innerHTML = `<p class="stats-empty">${emptyText || noActivityText()}</p>`; return; }
     el.innerHTML = groups.map(g => `
       <div class="stats-breakdown-row">
         <span class="stats-breakdown-swatch" style="background:${g.color}"></span>
@@ -2014,6 +2475,11 @@
   document.getElementById('closeStatsBtn').addEventListener('click', goBackFromStats);
 
   // ══ STATISTICI GENERALE (org-wide overview) ══
+  function withYear(ro, ru, year){ return (currentLang === 'ru' ? ru : ro) + ' ' + year; }
+  function noActivityText(year){
+    if (currentLang === 'ru') return year ? `Нет оплаченной активности в ${year} году.` : 'Нет оплаченной активности в этом году.';
+    return year ? `Nicio activitate plătită în ${year}.` : 'Nicio activitate plătită în acest an.';
+  }
   const CATEGORY_COLORS = { TOP:'#B8863A', I:'#3B7DDE', II:'#A257B0', III:'#2F9E5C', Referee:'#B8415A' };
   const CATEGORY_ORDER = ['TOP','I','II','III','Referee'];
   let ovData = null; // cached across year switches — refetched only when the modal is reopened fresh
@@ -2056,11 +2522,11 @@
     const incompleteCount = referees.filter(r => !r.bank_name || !r.fiscal_code || !r.iban || !r.contract_number || !r.contract_date).length;
 
     document.getElementById('ovKpis').innerHTML = `
-      <div class="stats-kpi gold"><div class="stats-kpi-label">Total plătit ${year}</div><div class="stats-kpi-value">${fmtMoney(totalPaid)} MDL</div></div>
-      <div class="stats-kpi"><div class="stats-kpi-label">Participanți activi ${year}</div><div class="stats-kpi-value">${activeCount} / ${referees.length}</div></div>
-      <div class="stats-kpi"><div class="stats-kpi-label">Medie lunară ${year}</div><div class="stats-kpi-value">${fmtMoney(avgMonthly)} MDL</div></div>
-      <div class="stats-kpi"><div class="stats-kpi-label">Acte generate ${year}</div><div class="stats-kpi-value">${actsThisYear}</div></div>
-      <div class="stats-kpi"><div class="stats-kpi-label">Profiluri incomplete</div><div class="stats-kpi-value">${incompleteCount}</div></div>
+      <div class="stats-kpi gold"><div class="stats-kpi-label">${withYear('Total plătit', 'Всего выплачено', year)}</div><div class="stats-kpi-value">${fmtMoney(totalPaid)} MDL</div></div>
+      <div class="stats-kpi"><div class="stats-kpi-label">${withYear('Participanți activi', 'Активных участников', year)}</div><div class="stats-kpi-value">${activeCount} / ${referees.length}</div></div>
+      <div class="stats-kpi"><div class="stats-kpi-label">${withYear('Medie lunară', 'Среднее в месяц', year)}</div><div class="stats-kpi-value">${fmtMoney(avgMonthly)} MDL</div></div>
+      <div class="stats-kpi"><div class="stats-kpi-label">${withYear('Acte generate', 'Актов создано', year)}</div><div class="stats-kpi-value">${actsThisYear}</div></div>
+      <div class="stats-kpi"><div class="stats-kpi-label">${t('Profiluri incomplete')}</div><div class="stats-kpi-value">${incompleteCount}</div></div>
     `;
 
     const monthMap = {};
@@ -2070,7 +2536,7 @@
       const key = `${year}-${String(m + 1).padStart(2, '0')}-01`;
       months.push({ label: MONTH_NAMES[m].slice(0, 3), full: `${MONTH_NAMES[m]} ${year}`, value: monthMap[key] || 0 });
     }
-    renderStatsChart(months, 'ovChart', `Nicio activitate plătită în ${year}.`);
+    renderStatsChart(months, 'ovChart', noActivityText(year));
 
     const catTotals = {};
     totals.forEach(r => { catTotals[r.category] = (catTotals[r.category] || 0) + rowTotal(r); });
@@ -2081,7 +2547,7 @@
       color: CATEGORY_COLORS[c],
       total: catTotals[c] || 0,
     }));
-    renderStatsBreakdown(catGroups, 'ovCategoryBreakdown', `Nicio activitate plătită în ${year}.`);
+    renderStatsBreakdown(catGroups, 'ovCategoryBreakdown', noActivityText(year));
 
     const entries = ovData.entries.filter(e => e.period.startsWith(year));
     const refCategoryMap = {};
@@ -2096,7 +2562,7 @@
       });
       return { ...g, total };
     });
-    renderStatsBreakdown(activityGroups, 'ovActivityBreakdown', `Nicio activitate plătită în ${year}.`);
+    renderStatsBreakdown(activityGroups, 'ovActivityBreakdown', noActivityText(year));
 
     populateStatsMetricMonthSelect(year);
     renderMetricRanking();
@@ -2116,12 +2582,14 @@
         <td>${escapeHtml(r.name)}</td>
         <td><span class="cat-badge cat-${safeClassToken(r.category)}">${escapeHtml(r.category || '—')}</span></td>
         <td class="r num">${fmtMoney(r.total)}</td>
-        <td><button class="icon-btn" data-ov-stats-ref="${r.refId}" aria-label="Statistici pentru ${escapeHtml(r.name)}" title="Statistici individuale"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 15V9M10 15V5M15 15v-3"/></svg></button></td>
-      </tr>`).join('') || '<tr><td colspan="5"><p class="stats-empty">Nicio activitate plătită în acest an.</p></td></tr>';
+        <td><button class="icon-btn" data-ov-stats-ref="${r.refId}" aria-label="${currentLang === 'ru' ? 'Статистика для ' + escapeHtml(r.name) : 'Statistici pentru ' + escapeHtml(r.name)}" title="${t('Statistici individuale')}"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 15V9M10 15V5M15 15v-3"/></svg></button></td>
+      </tr>`).join('') || `<tr><td colspan="5"><p class="stats-empty">${noActivityText()}</p></td></tr>`;
     const ovRankMore = document.getElementById('ovRankMore');
     if (rankRows.length > TOP_N) {
       ovRankMore.style.display = 'block';
-      ovRankMore.textContent = `+ încă ${rankRows.length - TOP_N} participanți cu activitate în ${year}.`;
+      ovRankMore.textContent = currentLang === 'ru'
+        ? `+ ещё ${rankRows.length - TOP_N} участников с активностью в ${year} году.`
+        : `+ încă ${rankRows.length - TOP_N} participanți cu activitate în ${year}.`;
     } else {
       ovRankMore.style.display = 'none';
     }
@@ -2134,24 +2602,36 @@
     const inactive = referees.filter(r => r.active !== false && !activeRefIds.has(r.id));
     document.getElementById('ovInactive').innerHTML = inactive.length
       ? `<div class="stats-inactive-list">${inactive.map(r => `<span class="detail-chip">${escapeHtml(r.last_name)} ${escapeHtml(r.first_name)}</span>`).join('')}</div>`
-      : `<p class="stats-empty">Toți participanții activi au avut activitate plătită în ${year}.</p>`;
+      : `<p class="stats-empty">${currentLang === 'ru' ? `Ни у одного активного участника не было оплаченной активности в ${year}.` : `Toți participanții activi au avut activitate plătită în ${year}.`}</p>`;
 
-    const missingFields = [
+    const missingFields = currentLang === 'ru' ? [
+      ['bank_name', 'банка'], ['fiscal_code', 'фискальный код'], ['iban', 'IBAN'], ['contract_number', 'номер договора'], ['contract_date', 'дата договора'],
+    ] : [
       ['bank_name', 'bancă'], ['fiscal_code', 'cod fiscal'], ['iban', 'IBAN'], ['contract_number', 'nr. contract'], ['contract_date', 'data contract'],
     ];
     document.getElementById('ovDataHygiene').innerHTML = missingFields.map(([field, label]) => {
       const count = referees.filter(r => !String(r[field] || '').trim()).length;
-      return `<div class="stats-hygiene-row"><span>Fără ${label}</span><b>${count} / ${referees.length}</b></div>`;
+      const rowLabel = currentLang === 'ru' ? `Без поля «${label}»` : `Fără ${label}`;
+      return `<div class="stats-hygiene-row"><span>${rowLabel}</span><b>${count} / ${referees.length}</b></div>`;
     }).join('');
   }
 
-  const METRIC_LABELS = {
-    tournament_day:'turnee zi', tournament_night:'turnee noapte',
-    arbitraj_day:'arbitrări zi', arbitraj_night:'arbitrări noapte',
-    matches_day:'meciuri câștigate zi', matches_night:'meciuri câștigate noapte',
-    win_rate_day:'coeficient câștiguri zi', win_rate_night:'coeficient câștiguri noapte',
-    win_rate_total:'coeficient general câștiguri',
-  };
+  function computeMetricLabels(){
+    return currentLang === 'ru' ? {
+      tournament_day:'турниры день', tournament_night:'турниры ночь',
+      arbitraj_day:'судейство день', arbitraj_night:'судейство ночь',
+      matches_day:'матчи выиграно день', matches_night:'матчи выиграно ночь',
+      win_rate_day:'коэффициент побед день', win_rate_night:'коэффициент побед ночь',
+      win_rate_total:'общий коэффициент побед',
+    } : {
+      tournament_day:'turnee zi', tournament_night:'turnee noapte',
+      arbitraj_day:'arbitrări zi', arbitraj_night:'arbitrări noapte',
+      matches_day:'meciuri câștigate zi', matches_night:'meciuri câștigate noapte',
+      win_rate_day:'coeficient câștiguri zi', win_rate_night:'coeficient câștiguri noapte',
+      win_rate_total:'coeficient general câștiguri',
+    };
+  }
+  let METRIC_LABELS = computeMetricLabels();
   function populateStatsMetricMonthSelect(year){
     const sel = document.getElementById('statsMetricMonthSelect');
     const prevValue = sel.value;
@@ -2309,7 +2789,7 @@
       console.error('Studio value save failed', error);
       input.value = previousValue;
       input.classList.add('is-error');
-      alert('Valoarea nu a putut fi salvată: ' + (error.message || error));
+      alert(t('Valoarea nu a putut fi salvată: ') + (error.message || error));
     } finally {
       input.classList.remove('is-saving');
       input.disabled = periodLocked;
@@ -2358,7 +2838,7 @@
         pdf.setFont('helvetica', 'normal');
         pdf.setFontSize(8);
         pdf.setTextColor(90, 97, 105);
-        pdf.text(`${safeText(MONTH_NAMES[currentPeriod.getMonth()])} ${currentPeriod.getFullYear()}  ·  Pagina ${pageNumber}`, pageWidth - margin, margin + 5, { align:'right' });
+        pdf.text(`${safeText(MONTH_NAMES_RO[currentPeriod.getMonth()])} ${currentPeriod.getFullYear()}  ·  Pagina ${pageNumber}`, pageWidth - margin, margin + 5, { align:'right' });
         const y = margin + titleHeight;
         drawCell(margin, y, firstColumnWidth, headerRowHeight * 2, [235, 238, 241]);
         pdf.setFont('helvetica', 'bold');
@@ -2411,7 +2891,7 @@
       pdf.save(`tabel-date-platouri-${dateSlug}.pdf`);
     } catch (error) {
       console.error('Studio table PDF export failed', error);
-      alert('PDF-ul nu a putut fi generat. Reîncarcă pagina și încearcă din nou.');
+      alert(t('PDF-ul nu a putut fi generat. Reîncarcă pagina și încearcă din nou.'));
     } finally {
       btn.innerHTML = originalLabel;
       btn.disabled = false;
@@ -2539,7 +3019,7 @@
     if (!player) {
       const initials = `${ref.first_name?.[0] || ''}${ref.last_name?.[0] || ''}`.toUpperCase();
       card.innerHTML = `<div class="ref-player-avatar">${escapeHtml(initials)}</div>
-        <div class="ref-player-status"><strong>Profil sportiv indisponibil</strong><br>ATTP nu conține momentan statistici sau fotografie pentru ${escapeHtml(ref.first_name)} ${escapeHtml(ref.last_name)}.</div>
+        <div class="ref-player-status"><strong>${t('Profil sportiv indisponibil')}</strong><br>${tName('ATTP nu conține momentan statistici sau fotografie pentru ', 'ATTP пока не содержит статистику или фото для ', escapeHtml(ref.first_name) + ' ' + escapeHtml(ref.last_name))}.</div>
         <div class="ref-player-source">Căutare după ID Setka Cup și nume</div>`;
       return;
     }
@@ -2661,7 +3141,7 @@
       contract_date: localizeRomanianDate(document.getElementById('rContractDate').value) || null,
       active: !document.getElementById('rHidden').checked,
     };
-    if (!payload.last_name || !payload.first_name) { alert('Nume și prenume sunt obligatorii.'); return; }
+    if (!payload.last_name || !payload.first_name) { alert(t('Nume și prenume sunt obligatorii.')); return; }
     if (editingRefId) {
       await db.from('referees').update(payload).eq('id', editingRefId);
     } else {
@@ -2675,7 +3155,7 @@
 
   document.getElementById('deleteRefBtn').addEventListener('click', async () => {
     if (!editingRefId) return;
-    if (!confirm('Sigur ștergi acest participant? Se șterg și toate înregistrările lui.')) return;
+    if (!confirm(t('Sigur ștergi acest participant? Se șterg și toate înregistrările lui.'))) return;
     await db.from('referees').delete().eq('id', editingRefId);
     await loadStaticData();
     await loadPeriod();
@@ -2727,7 +3207,7 @@
     }).join('');
     const tax = total * ACT_TAX_RATE;
     const totalIncludingTax = total + tax;
-    const monthLabel = `${MONTH_NAMES[currentPeriod.getMonth()]} ${currentPeriod.getFullYear()}`;
+    const monthLabel = `${MONTH_NAMES_RO[currentPeriod.getMonth()]} ${currentPeriod.getFullYear()}`;
     const taxPercent = fmtMoney(ACT_TAX_RATE * 100);
     const participantBic = bicForParticipant(ref);
     document.getElementById('actDoc').innerHTML = `
@@ -2938,7 +3418,7 @@
     const ref = referees.find(r => r.id === detailRefId);
     if (!ref) return;
     const btn = document.getElementById('downloadDetailBtn');
-    const monthLabel = `${MONTH_NAMES[currentPeriod.getMonth()]} ${currentPeriod.getFullYear()}`;
+    const monthLabel = `${MONTH_NAMES_RO[currentPeriod.getMonth()]} ${currentPeriod.getFullYear()}`;
     const taxi = Number(document.getElementById('dTaxi').value) || 0;
     const region = document.getElementById('dRegion').value.trim() || '—';
     const km = Number(document.getElementById('dKm').value) || 0;
@@ -2993,7 +3473,7 @@
       await saveActElementAsPdf(report, `detalii-${slug || 'participant'}-${dateSlug}.pdf`);
     } catch (error) {
       console.error('Detail PDF export failed', error);
-      alert('PDF-ul cu detalii nu a putut fi generat. Reîncarcă pagina și încearcă din nou.');
+      alert(t('PDF-ul cu detalii nu a putut fi generat. Reîncarcă pagina și încearcă din nou.'));
     } finally {
       if (report.isConnected) document.body.removeChild(report);
       btn.disabled = false;
@@ -3014,7 +3494,7 @@
       await saveActElementAsPdf(clone, `act-${slug}-${dateSlug}.pdf`);
     } catch (error) {
       console.error('PDF export failed', error);
-      alert('PDF-ul nu a putut fi generat. Reîncarcă pagina și încearcă din nou.');
+      alert(t('PDF-ul nu a putut fi generat. Reîncarcă pagina și încearcă din nou.'));
     } finally {
       if (clone.isConnected) document.body.removeChild(clone);
       btn.disabled = false;
@@ -3041,7 +3521,7 @@
     }]).select().single();
     if (error) {
       resetSaveActBtn();
-      alert('Nu s-a putut salva actul în arhivă: ' + error.message);
+      alert(t('Nu s-a putut salva actul în arhivă: ') + error.message);
       return;
     }
     savedActs.unshift(data);
@@ -3084,7 +3564,7 @@
     const body = document.getElementById('archiveBody');
     body.innerHTML = '';
     document.getElementById('archiveEmpty').style.display = list.length ? 'none' : 'block';
-    document.getElementById('archiveCount').textContent = list.length ? `${list.length} act(e)` : '';
+    document.getElementById('archiveCount').textContent = list.length ? (currentLang === 'ru' ? `${list.length} акт(ов)` : `${list.length} act(e)`) : '';
     list.forEach(act => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
@@ -3095,13 +3575,13 @@
         <td class="r num">${fmtMoney(act.total)}</td>
         <td>
           <div class="archive-actions">
-            <button class="icon-btn" data-view-act="${act.id}" aria-label="Vizualizează actul lui ${escapeHtml(act.referee_name)}" title="Vizualizează">
+            <button class="icon-btn" data-view-act="${act.id}" aria-label="${tName('Vizualizează actul lui ', 'Просмотреть акт — ', escapeHtml(act.referee_name))}" title="${t('Vizualizează')}">
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 10s3-5.5 8-5.5 8 5.5 8 5.5-3 5.5-8 5.5-8-5.5-8-5.5Z"/><circle cx="10" cy="10" r="2.2"/></svg>
             </button>
-            <button class="icon-btn" data-download-act="${act.id}" aria-label="Descarcă PDF pentru ${escapeHtml(act.referee_name)}" title="Descarcă PDF">
+            <button class="icon-btn" data-download-act="${act.id}" aria-label="${tName('Descarcă PDF pentru ', 'Скачать PDF — ', escapeHtml(act.referee_name))}" title="${t('Descarcă PDF')}">
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v9m0 0l-3.2-3.2M10 12l3.2-3.2"/><path d="M3.5 14.5v1.2a1.3 1.3 0 0 0 1.3 1.3h10.4a1.3 1.3 0 0 0 1.3-1.3v-1.2"/></svg>
             </button>
-            <button class="icon-btn" data-delete-act="${act.id}" aria-label="Șterge actul lui ${escapeHtml(act.referee_name)} din arhivă" title="Șterge din arhivă">
+            <button class="icon-btn" data-delete-act="${act.id}" aria-label="${tName('Șterge actul lui ', 'Удалить акт — ', escapeHtml(act.referee_name) + (currentLang === 'ru' ? ' из архива' : ' din arhivă'))}" title="${t('Șterge din arhivă')}">
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h12M8 5.5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M5.5 5.5l.6 10a1.3 1.3 0 0 0 1.3 1.2h5.2a1.3 1.3 0 0 0 1.3-1.2l.6-10"/></svg>
             </button>
           </div>
@@ -3136,9 +3616,9 @@
     }
   }
   async function deleteArchivedAct(actId){
-    if (!confirm('Ștergi definitiv acest act din arhivă?')) return;
+    if (!confirm(t('Ștergi definitiv acest act din arhivă?'))) return;
     const { error } = await db.from('saved_acts').delete().eq('id', actId);
-    if (error) { alert('Nu s-a putut șterge actul: ' + error.message); return; }
+    if (error) { alert(t('Nu s-a putut șterge actul: ') + error.message); return; }
     savedActs = savedActs.filter(a => a.id !== actId);
     renderArchive();
   }
@@ -3204,12 +3684,20 @@
   let setkaActiveTab = 'current';
   let setkaCountdownTimer = null;
 
-  const SETKA_FIELD_LABELS = {
-    tournament_day: 'Turneu · zi', tournament_night: 'Turneu · noapte',
-    matches_day: 'Meciuri câștigate · zi', matches_night: 'Meciuri câștigate · noapte',
-    place1_day: 'Locul I · zi', place1_night: 'Locul I · noapte',
-    place3_day: 'Locul III · zi', place3_night: 'Locul III · noapte',
-  };
+  function computeSetkaFieldLabels(){
+    return currentLang === 'ru' ? {
+      tournament_day: 'Турнир · день', tournament_night: 'Турнир · ночь',
+      matches_day: 'Матчи выиграно · день', matches_night: 'Матчи выиграно · ночь',
+      place1_day: '1 место · день', place1_night: '1 место · ночь',
+      place3_day: '3 место · день', place3_night: '3 место · ночь',
+    } : {
+      tournament_day: 'Turneu · zi', tournament_night: 'Turneu · noapte',
+      matches_day: 'Meciuri câștigate · zi', matches_night: 'Meciuri câștigate · noapte',
+      place1_day: 'Locul I · zi', place1_night: 'Locul I · noapte',
+      place3_day: 'Locul III · zi', place3_night: 'Locul III · noapte',
+    };
+  }
+  let SETKA_FIELD_LABELS = computeSetkaFieldLabels();
 
   function setkaRefName(id){
     const r = referees.find(x => x.id === id);
@@ -3333,7 +3821,9 @@
       const ms = deadline - new Date();
       if (ms <= 0) { el.innerHTML = 'Termenul de 72h a expirat pentru unele modificări — verifică fila „Modificări ratate”.'; clearInterval(setkaCountdownTimer); return; }
       const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000);
-      el.innerHTML = `Ai <b>${h}h ${m}m</b> să accepți, editezi sau ștergi aceste modificări înainte să treacă în „Modificări ratate”.`;
+      el.innerHTML = currentLang === 'ru'
+        ? `У вас есть <b>${h}ч ${m}м</b>, чтобы принять, изменить или удалить эти изменения, прежде чем они перейдут в «Пропущенные изменения».`
+        : `Ai <b>${h}h ${m}m</b> să accepți, editezi sau ștergi aceste modificări înainte să treacă în „Modificări ratate”.`;
     };
     tick();
     setkaCountdownTimer = setInterval(tick, 60000);
@@ -3394,7 +3884,7 @@
     list.querySelectorAll('.setka-revert-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const row = btn.closest('.setka-log-row');
-        if (!confirm('Anulezi această notificare aplicată? Valorile revin la ce erau înainte.')) return;
+        if (!confirm(t('Anulezi această notificare aplicată? Valorile revin la ce erau înainte.'))) return;
         await db.rpc('setka_sync_revert_batch', { p_batch_id: row.dataset.batchId });
         await setkaSyncRefreshAll(); setkaRenderActive();
         await loadPeriod();
@@ -3432,7 +3922,7 @@
   document.querySelectorAll('.setka-tab').forEach(b => b.addEventListener('click', () => setkaSwitchTab(b.dataset.setkaTab)));
   document.getElementById('setkaAcceptAllBtn').addEventListener('click', async () => {
     if (!setkaCurrentItems.length) return;
-    if (!confirm(`Accepți toate cele ${setkaCurrentItems.length} modificări vizibile?`)) return;
+    if (!confirm(currentLang === 'ru' ? `Принять все ${setkaCurrentItems.length} видимых изменения?` : `Accepți toate cele ${setkaCurrentItems.length} modificări vizibile?`)) return;
     for (const it of setkaCurrentItems) {
       await db.rpc('setka_sync_accept_item', { p_item_id: it.id, p_value: null });
     }
