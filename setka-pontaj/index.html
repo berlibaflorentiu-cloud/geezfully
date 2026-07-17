@@ -3453,7 +3453,7 @@
   }
   document.getElementById('closeAct').addEventListener('click', () => actModal.classList.remove('show'));
   document.getElementById('closeActBtn').addEventListener('click', () => actModal.classList.remove('show'));
-  document.getElementById('printActBtn').addEventListener('click', () => window.print());
+  document.getElementById('printActBtn').addEventListener('click', printActPdf);
 
   function buildPrintableActClone(html){
     const wrap = document.createElement('div');
@@ -3503,7 +3503,45 @@
     const x = (pageWidth - imageWidth) / 2;
     const imageData = canvas.toDataURL('image/jpeg', 0.86);
     pdf.addImage(imageData, 'JPEG', x, margin, imageWidth, imageHeight, undefined, 'FAST');
-    pdf.save(filename);
+    if (filename) pdf.save(filename);
+    return pdf;
+  }
+  async function printActPdf(){
+    const btn = document.getElementById('printActBtn');
+    const clone = buildPrintableActClone(document.getElementById('actDoc').innerHTML);
+    btn.disabled = true;
+    try {
+      await waitForActImages(clone);
+      const pdf = await saveActElementAsPdf(clone);
+      const pdfUrl = URL.createObjectURL(pdf.output('blob'));
+      const frame = document.createElement('iframe');
+      frame.setAttribute('aria-hidden', 'true');
+      frame.style.cssText = 'position:fixed; width:1px; height:1px; right:0; bottom:0; border:0; opacity:0; pointer-events:none;';
+      const cleanup = () => {
+        if (frame.isConnected) frame.remove();
+        URL.revokeObjectURL(pdfUrl);
+      };
+      frame.addEventListener('load', () => {
+        window.setTimeout(() => {
+          try {
+            frame.contentWindow.focus();
+            frame.contentWindow.print();
+          } catch (error) {
+            console.error('PDF print dialog failed', error);
+            window.open(pdfUrl, '_blank', 'noopener');
+          }
+        }, 350);
+        window.setTimeout(cleanup, 60000);
+      }, { once:true });
+      frame.src = pdfUrl;
+      document.body.appendChild(frame);
+    } catch (error) {
+      console.error('PDF print failed', error);
+      alert(t('PDF-ul nu a putut fi generat. Reîncarcă pagina și încearcă din nou.'));
+    } finally {
+      if (clone.isConnected) clone.remove();
+      btn.disabled = false;
+    }
   }
   function detailRowsForPdf(containerId){
     return Array.from(document.querySelectorAll(`#${containerId} .bonus-row`)).map(row => {
