@@ -570,13 +570,23 @@
 
   @media print{
     @page{ size:A4 portrait; margin:9mm; }
-    body{ background:#fff; }
+    /* The modal chain (html/body/#app/.modal-backdrop) uses fixed heights and
+       overflow:auto for the on-screen layout — left as-is, Chrome's print
+       engine paginates the scrollable area's full height instead of just the
+       content, producing dozens of near-blank pages. Reset the whole chain
+       to static, auto-height, visible-overflow so the act prints as one
+       normal flowing document instead of a clipped scroll viewport. */
+    html,body{ height:auto !important; overflow:visible !important; background:#fff; }
     body *{ visibility:hidden; }
     #actModal, #actModal *{ visibility:visible; }
-    #actModal{ position:absolute; inset:0; background:#fff; padding:0; }
-    #actModal .modal{ box-shadow:none; max-width:none; background:#fff; border:0; }
+    #app{ display:block !important; min-height:0; overflow:visible; }
+    #actModal{
+      position:static !important; inset:auto; display:block !important;
+      background:#fff; padding:0; margin:0; height:auto !important; overflow:visible !important;
+    }
+    #actModal .modal{ box-shadow:none; max-width:none; width:auto; background:#fff; border:0; }
     #actModal .modal-head, #actModal .modal-foot{ display:none; }
-    #actModal .modal-body{ padding:0; background:#fff; overflow:visible; }
+    #actModal .modal-body{ padding:0; background:#fff; overflow:visible !important; max-height:none !important; height:auto !important; }
     .act-edit-hint, .archived-banner{ display:none; }
     .act-doc{ width:190mm; max-width:none; margin:0 auto; padding:8mm 10mm; border:1px solid #c8cdd3; box-shadow:none; color:#000; }
     .act-edit-btn{ display:none; }
