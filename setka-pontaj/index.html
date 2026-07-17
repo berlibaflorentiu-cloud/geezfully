@@ -13,6 +13,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js" integrity="sha384-SR76iDF5vfiuFuYEigF/LOTQIXTU5SrR3Ij29NELtBswNOxcSLM6iMr8OVRzUycq" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous"></script>
+<script src="act-pdf-fonts.js"></script>
 <style>
   /* Shared "Pontaj" product palette/type system — kept in sync with the
      BunPartener pontaj app so every client instance reads as one product. */
@@ -3480,6 +3481,264 @@
       });
     }));
   }
+  const actPdfFontCache = new Map();
+  async function loadActPdfFont(filename){
+    if (!actPdfFontCache.has(filename)) {
+      const embeddedFont = window.ACT_PDF_FONTS?.[filename];
+      actPdfFontCache.set(filename, embeddedFont ? Promise.resolve(embeddedFont) : fetch(filename).then(async response => {
+        if (!response.ok) throw new Error(`Fontul PDF nu a putut fi încărcat: ${filename}`);
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        let binary = '';
+        const chunkSize = 0x8000;
+        for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+          binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+        }
+        return btoa(binary);
+      }));
+    }
+    return actPdfFontCache.get(filename);
+  }
+  async function addActPdfFonts(pdf){
+    const [regular, bold, italic] = await Promise.all([
+      loadActPdfFont('LiberationSans-Regular.ttf'),
+      loadActPdfFont('LiberationSans-Bold.ttf'),
+      loadActPdfFont('LiberationSans-Italic.ttf'),
+    ]);
+    pdf.addFileToVFS('LiberationSans-Regular.ttf', regular);
+    pdf.addFileToVFS('LiberationSans-Bold.ttf', bold);
+    pdf.addFileToVFS('LiberationSans-Italic.ttf', italic);
+    pdf.addFont('LiberationSans-Regular.ttf', 'LiberationSans', 'normal');
+    pdf.addFont('LiberationSans-Bold.ttf', 'LiberationSans', 'bold');
+    pdf.addFont('LiberationSans-Italic.ttf', 'LiberationSans', 'italic');
+  }
+  function actPdfText(root, selector, fallback = '—'){
+    const value = root.querySelector(selector)?.textContent?.replace(/\s+/g, ' ').trim();
+    return value || fallback;
+  }
+  async function createNativeActPdf(root){
+    if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('Biblioteca PDF nu s-a încărcat.');
+    const pdf = new window.jspdf.jsPDF({
+      unit:'mm',
+      format:'a4',
+      orientation:'portrait',
+      compress:true,
+      putOnlyUsedFonts:true,
+    });
+    await addActPdfFonts(pdf);
+
+    const ink = [17, 17, 17];
+    const red = [235, 20, 20];
+    const line = [190, 196, 204];
+    const muted = [126, 137, 149];
+    const setFont = (style = 'normal', size = 9, color = ink) => {
+      pdf.setFont('LiberationSans', style);
+      pdf.setFontSize(size);
+      pdf.setTextColor(...color);
+    };
+    const text = (value, x, y, options = {}) => pdf.text(String(value ?? ''), x, y, options);
+    const centered = (value, x, y, width, options = {}) => text(value, x + width / 2, y, { align:'center', maxWidth:width - 2, ...options });
+    const drawRect = (x, y, width, height, fill = null) => {
+      pdf.setDrawColor(...line);
+      pdf.setLineWidth(0.22);
+      if (fill) {
+        pdf.setFillColor(...fill);
+        pdf.rect(x, y, width, height, 'FD');
+      } else {
+        pdf.rect(x, y, width, height, 'S');
+      }
+    };
+    const wrapped = (value, x, y, width, lineHeight = 4.1, options = {}) => {
+      const lines = pdf.splitTextToSize(String(value ?? ''), width);
+      lines.forEach((lineText, index) => text(lineText, x, y + index * lineHeight, options));
+      return lines.length;
+    };
+
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(0, 0, 210, 297, 'F');
+    drawRect(7, 7, 196, 283);
+
+    pdf.setDrawColor(145, 145, 145);
+    pdf.setLineWidth(0.28);
+    pdf.line(18, 21, 44, 21);
+    pdf.line(166, 21, 192, 21);
+    setFont('bold', 11);
+    centered('ACT DE PRESTARE A SERVICIILOR SPORTIVE', 45, 18.7, 120);
+    setFont('bold', 9);
+    text('Nr.', 76, 25);
+    pdf.line(82, 25.5, 101, 25.5);
+    setFont('normal', 9);
+    text('din data de', 106, 25);
+    pdf.line(126, 25.5, 148, 25.5);
+
+    const sectionX = 18;
+    const bodyX = 26;
+    setFont('bold', 9);
+    text('1', sectionX, 38);
+    setFont('normal', 9);
+    text('1. Prezentul act este întocmit în temeiul Contractului de prestări servicii sportive nr.', bodyX, 38);
+    const contractParts = Array.from(root.querySelectorAll('.act-contract-grid > *')).map(node => node.textContent.replace(/\s+/g, ' ').trim());
+    setFont('bold', 9, red);
+    centered(contractParts[0] || '—', bodyX, 47, 36);
+    setFont('normal', 9);
+    centered(contractParts[1] || 'din', bodyX + 36, 47, 17);
+    setFont('bold', 9, red);
+    centered(contractParts[2] || '—', bodyX + 53, 47, 39);
+    setFont('normal', 9);
+    centered(contractParts[3] || 'și', bodyX + 92, 47, 15);
+    setFont('bold', 9);
+    centered(contractParts[4] || 'Anexei nr. 1 la contract', bodyX + 107, 47, 59);
+
+    setFont('bold', 9);
+    text('2', sectionX, 58);
+    setFont('normal', 9);
+    text('Prestatorul a prestat servicii sportive în cadrul turneelor organizate de Beneficiar în perioada:', bodyX, 58);
+    const periodValues = Array.from(root.querySelectorAll('.act-period-grid .act-value-box')).map(node => node.textContent.replace(/\s+/g, ' ').trim());
+    drawRect(bodyX, 66, 50, 9);
+    drawRect(125, 66, 67, 9);
+    setFont('bold', 9, red);
+    centered(periodValues[0] || '—', bodyX, 72, 50);
+    centered(periodValues[1] || '—', 125, 72, 67);
+
+    setFont('bold', 9);
+    text('3', sectionX, 84);
+    text('Detaliere:', bodyX, 84);
+
+    const tableX = bodyX;
+    const tableY = 89;
+    const columns = [84, 31, 27, 24];
+    const tableWidth = columns.reduce((sum, value) => sum + value, 0);
+    const headerHeight = 10;
+    drawRect(tableX, tableY, tableWidth, headerHeight);
+    let columnX = tableX;
+    columns.slice(0, -1).forEach(width => {
+      columnX += width;
+      pdf.line(columnX, tableY, columnX, tableY + headerHeight);
+    });
+    setFont('bold', 8);
+    text('Categoria calcul', tableX + 2, tableY + 6.3);
+    centered('Regim calcul', tableX + columns[0], tableY + 4.2, columns[1]);
+    centered('(mdl)', tableX + columns[0], tableY + 7.8, columns[1]);
+    centered('Volum servicii', tableX + columns[0] + columns[1], tableY + 6.1, columns[2]);
+    centered('Onorariu (mdl)', tableX + columns[0] + columns[1] + columns[2], tableY + 6.1, columns[3]);
+
+    const serviceRows = Array.from(root.querySelectorAll('[data-act-row]'));
+    if (serviceRows.length !== ITEM_ROWS.length || !root.querySelector('.act-beneficiary-mark') || !root.querySelector('.act-party:not(.act-beneficiary)')) {
+      throw new Error('Structura actului nu este compatibilă cu generatorul PDF vectorial.');
+    }
+    const rowHeight = 5.8;
+    serviceRows.forEach((row, index) => {
+      const y = tableY + headerHeight + index * rowHeight;
+      const cells = Array.from(row.querySelectorAll('td')).map(cell => cell.textContent.replace(/✎/g, '').replace(/\s+/g, ' ').trim());
+      drawRect(tableX, y, tableWidth, rowHeight);
+      let x = tableX;
+      columns.slice(0, -1).forEach((width, columnIndex) => {
+        x += width;
+        pdf.line(x, y, x, y + rowHeight);
+        if (columnIndex === 0 && index % 2 === 1) {
+          pdf.setFillColor(219, 223, 228);
+          pdf.rect(tableX + columns[0], y, columns[1], rowHeight, 'F');
+          pdf.setDrawColor(...line);
+          pdf.rect(tableX + columns[0], y, columns[1], rowHeight, 'S');
+        }
+      });
+      setFont('normal', 7.7);
+      text(cells[0] || '', tableX + 1.5, y + 4);
+      setFont('bold', 7.7, muted);
+      centered(cells[1] || '0', tableX + columns[0], y + 4, columns[1]);
+      setFont('bold', 7.7, red);
+      centered(cells[2] || '0', tableX + columns[0] + columns[1], y + 4, columns[2]);
+      centered(cells[3] || '0', tableX + columns[0] + columns[1] + columns[2], y + 4, columns[3]);
+    });
+
+    let currentY = tableY + headerHeight + serviceRows.length * rowHeight;
+    for (let index = 0; index < 3; index += 1) {
+      drawRect(tableX, currentY, tableWidth, 5.4);
+      pdf.line(tableX + columns[0] + columns[1] + columns[2], currentY, tableX + columns[0] + columns[1] + columns[2], currentY + 5.4);
+      currentY += 5.4;
+    }
+    const totalLabelWidth = columns[0] + columns[1] + columns[2];
+    drawRect(tableX, currentY, tableWidth, 5.8);
+    pdf.line(tableX + totalLabelWidth, currentY, tableX + totalLabelWidth, currentY + 5.8);
+    setFont('bold', 8);
+    text('TOTAL SPRE PLATĂ', tableX + totalLabelWidth - 2, currentY + 4, { align:'right' });
+    centered(actPdfText(root, '#actTotal', '0'), tableX + totalLabelWidth, currentY + 4, columns[3]);
+    currentY += 5.8;
+    drawRect(tableX, currentY, tableWidth, 5.8);
+    pdf.line(tableX + totalLabelWidth, currentY, tableX + totalLabelWidth, currentY + 5.8);
+    setFont('italic', 8, red);
+    text(`inclusiv impozit ${fmtMoney(ACT_TAX_RATE * 100)}%`, tableX + totalLabelWidth - 2, currentY + 4, { align:'right' });
+    setFont('bold', 8, red);
+    centered(actPdfText(root, '#actTax', '0'), tableX + totalLabelWidth, currentY + 4, columns[3]);
+
+    const paymentY = currentY + 12;
+    setFont('bold', 9);
+    text('4', sectionX, paymentY);
+    setFont('normal', 8.7);
+    wrapped(
+      actPdfText(root, '.act-payment-note', 'Prezentul act constituie document justificativ pentru efectuarea plății prin transfer bancar la contul Prestatorului'),
+      bodyX,
+      paymentY,
+      166,
+      4
+    );
+
+    const partiesY = paymentY + 13;
+    const beneficiaryX = bodyX;
+    const beneficiaryWidth = 72;
+    const providerNoX = 108;
+    const providerX = 116;
+    const providerWidth = 76;
+    const partiesHeight = 59;
+    setFont('bold', 9);
+    text('5', sectionX, partiesY + 4);
+    text('6', providerNoX, partiesY + 4);
+    drawRect(beneficiaryX, partiesY, beneficiaryWidth, partiesHeight);
+    drawRect(providerX, partiesY, providerWidth, partiesHeight);
+
+    setFont('italic', 8);
+    text('Beneficiar:', beneficiaryX + 2, partiesY + 5);
+    setFont('bold', 8);
+    text('SRL SETKA-PRO', beneficiaryX + 2, partiesY + 10);
+    setFont('normal', 7.5);
+    text('cod fiscal 1022600014457', beneficiaryX + 2, partiesY + 15);
+    text('BIC: MOLDMD2X317', beneficiaryX + 2, partiesY + 20);
+    text('IBAN: MD02ML0000000022518171022', beneficiaryX + 2, partiesY + 25);
+    setFont('bold', 7.5);
+    text('Vladimir ZASTAVNITCHI', beneficiaryX + 2, partiesY + 30);
+
+    const mark = root.querySelector('.act-beneficiary-mark');
+    if (mark?.src) {
+      pdf.addImage(mark.src, 'PNG', beneficiaryX + 3, partiesY + 30, 65, 27, 'beneficiary-mark', 'FAST');
+    }
+
+    const providerRows = Array.from(root.querySelectorAll('.act-party:not(.act-beneficiary) .act-provider-row'));
+    const providerNameParts = Array.from(root.querySelectorAll('.act-provider-name span')).map(node => node.textContent.replace(/\s+/g, ' ').trim());
+    setFont('italic', 8);
+    text('Prestator:', providerX + 2, partiesY + 5);
+    const providerRowY = partiesY + 8;
+    const providerRowHeight = 8.4;
+    providerRows.forEach((row, index) => {
+      const parts = Array.from(row.children).map(node => node.textContent.replace(/\s+/g, ' ').trim());
+      const y = providerRowY + index * providerRowHeight;
+      pdf.setDrawColor(155, 155, 155);
+      pdf.line(providerX + 2, y + providerRowHeight, providerX + providerWidth - 2, y + providerRowHeight);
+      if (index === 0) {
+        setFont('bold', 8);
+        centered(parts[1] || 'Antreprenor individual', providerX + 18, y + 5.5, providerWidth - 20);
+      } else {
+        setFont('normal', 7.3);
+        text(parts[0] || '', providerX + 2, y + 5.5);
+        setFont('normal', 7.3, index === 2 ? ink : red);
+        text(parts[1] || '—', providerX + 20, y + 5.5, { maxWidth:providerWidth - 23 });
+      }
+    });
+    setFont('bold', 7.5);
+    centered(providerNameParts[0] || '—', providerX + 2, partiesY + partiesHeight - 3.5, (providerWidth - 4) / 2);
+    setFont('normal', 7.5);
+    centered(providerNameParts[1] || '—', providerX + 2 + (providerWidth - 4) / 2, partiesY + partiesHeight - 3.5, (providerWidth - 4) / 2);
+
+    return pdf;
+  }
   async function saveActElementAsPdf(element, filename){
     if (typeof window.html2canvas !== 'function' || !window.jspdf || !window.jspdf.jsPDF) {
       throw new Error('Librăriile PDF nu s-au încărcat.');
@@ -3515,13 +3774,21 @@
     if (filename) pdf.save(filename);
     return pdf;
   }
+  async function createActPdf(element){
+    try {
+      return await createNativeActPdf(element);
+    } catch (error) {
+      console.warn('Native PDF generation failed; using raster fallback.', error);
+      return saveActElementAsPdf(element);
+    }
+  }
   async function printActPdf(){
     const btn = document.getElementById('printActBtn');
     const clone = buildPrintableActClone(document.getElementById('actDoc').innerHTML);
     btn.disabled = true;
     try {
       await waitForActImages(clone);
-      const pdf = await saveActElementAsPdf(clone);
+      const pdf = await createActPdf(clone);
       const pdfUrl = URL.createObjectURL(pdf.output('blob'));
       const frame = document.createElement('iframe');
       frame.setAttribute('aria-hidden', 'true');
@@ -3637,7 +3904,8 @@
     const clone = buildPrintableActClone(html);
     try {
       await waitForActImages(clone);
-      await saveActElementAsPdf(clone, `act-${slug}-${dateSlug}.pdf`);
+      const pdf = await createActPdf(clone);
+      pdf.save(`act-${slug}-${dateSlug}.pdf`);
     } catch (error) {
       console.error('PDF export failed', error);
       alert(t('PDF-ul nu a putut fi generat. Reîncarcă pagina și încearcă din nou.'));
@@ -3756,7 +4024,8 @@
     const clone = buildPrintableActClone(sanitizeStoredActHtml(act.document_html));
     try {
       await waitForActImages(clone);
-      await saveActElementAsPdf(clone, `act-${slug}-${act.period}.pdf`);
+      const pdf = await createActPdf(clone);
+      pdf.save(`act-${slug}-${act.period}.pdf`);
     } finally {
       document.body.removeChild(clone);
     }
