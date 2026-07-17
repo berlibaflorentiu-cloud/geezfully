@@ -5,12 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pontaj — SETKA-PRO</title>
 <meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://ufkeqoeyrhwvvvtiopyt.supabase.co wss://ufkeqoeyrhwvvvtiopyt.supabase.co; img-src 'self' data: blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; media-src 'none'; upgrade-insecure-requests">
 <link rel="icon" type="image/png" href="../pontaj/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js" integrity="sha384-SR76iDF5vfiuFuYEigF/LOTQIXTU5SrR3Ij29NELtBswNOxcSLM6iMr8OVRzUycq" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous"></script>
 <style>
   /* Shared "Pontaj" product palette/type system — kept in sync with the
      BunPartener pontaj app so every client instance reads as one product. */
@@ -265,6 +267,8 @@
 
   /* ── Participant stats ── */
   #statsModal .modal{ max-width:720px; }
+  .modal-title-row{ display:flex; align-items:center; gap:10px; min-width:0; }
+  .modal-back-btn{ flex:0 0 auto; width:34px; height:34px; font-size:20px; line-height:1; }
   .stats-kpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:8px; }
   .stats-kpi{ background:var(--bg); border:1px solid var(--border); border-radius:9px; padding:12px 14px; }
   .stats-kpi .stats-kpi-label{ font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-bottom:5px; }
@@ -273,7 +277,12 @@
   .stats-chart-wrap{ background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:14px 10px 6px; margin-bottom:8px; }
   .stats-chart-wrap svg{ display:block; width:100%; height:auto; overflow:visible; }
   .stats-bar{ fill:var(--gold); transition:fill .12s ease; }
-  .stats-bar:hover{ fill:var(--gold-hi); }
+  .stats-bar-group{ outline:none; }
+  .stats-bar-group:hover .stats-bar, .stats-bar-group:focus .stats-bar{ fill:var(--gold-hi); }
+  .stats-tooltip{ opacity:0; pointer-events:none; transition:opacity .1s ease; }
+  .stats-bar-group:hover .stats-tooltip, .stats-bar-group:focus .stats-tooltip{ opacity:1; }
+  .stats-axis-line{ stroke:var(--border); stroke-width:.7; vector-effect:non-scaling-stroke; }
+  .stats-grid-line{ stroke:rgba(139,148,158,.18); stroke-width:.6; vector-effect:non-scaling-stroke; }
   .stats-chart-empty{ text-align:center; color:var(--muted); font-size:12.5px; font-style:italic; padding:20px 0; }
   .stats-breakdown-row{ display:flex; align-items:center; gap:10px; margin-bottom:9px; font-size:12.5px; }
   .stats-breakdown-row:last-child{ margin-bottom:0; }
@@ -292,13 +301,67 @@
   #statsOverviewModal .modal-head{ flex-wrap:wrap; gap:10px; }
   #statsYearSelect{ padding:6px 26px 6px 10px; font-size:12.5px; }
   #statsOverviewModal .detail-grid{ margin-bottom:8px; }
-  .stats-rank-table{ width:100%; border-collapse:collapse; min-width:0; margin-bottom:6px; }
+  .tax-cell{ font-weight:700; text-align:right; white-space:nowrap; color:var(--gold-hi); }
+  .stats-metric-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:4px 0 14px; }
+  .stats-metric-row label{ color:var(--muted); font-size:12.5px; font-weight:600; }
+  .coefficient{ color:var(--gold-hi); font-weight:700; }
+  .stats-scope-toggle{ display:flex; border:1px solid var(--border); border-radius:7px; overflow:hidden; }
+  .stats-scope-btn{ padding:6px 12px; font-size:12.5px; font-weight:600; background:var(--bg); color:var(--muted); border:0; cursor:pointer; }
+  .stats-scope-btn:not(:last-child){ border-right:1px solid var(--border); }
+  .stats-scope-btn.active{ background:var(--gold-dim); color:var(--gold-hi); }
+  .stats-scope-btn:hover:not(.active){ color:var(--text); }
+  #statsMetricMonthSelect{ padding:6px 26px 6px 10px; font-size:12.5px; }
+  #studioTableModal .modal-body{ padding:22px 24px; overflow:hidden; display:flex; flex-direction:column; }
+  #studioTableModal .table-wrap{
+    border-color:rgba(200,169,110,.28); background:var(--bg); overflow:auto;
+    max-height:calc(70vh - 44px); isolation:isolate; contain:paint;
+  }
+  #studioTable{
+    min-width:1900px; table-layout:fixed; background:var(--bg);
+    /* Collapsed borders can leave a sub-pixel seam between stacked sticky rows,
+       allowing the scrolling body values to flash through. */
+    border-collapse:separate; border-spacing:0;
+  }
+  #studioTable th, #studioTable td{ text-align:center; }
+  #studioTable thead tr:first-child > th:first-child, #studioTable tbody td:first-child{ text-align:left; }
+  #studioTable thead th{ position:sticky; top:0; z-index:6; padding:12px 10px; background:#171D24; }
+  #studioTable thead tr:first-child th{ height:42px; color:#C7D0D9; font-size:11px; letter-spacing:.085em; border-bottom:1px solid rgba(200,169,110,.24); }
+  #studioTable thead tr:first-child th.grp{ background:#20262D; color:var(--gold-hi); }
+  #studioTable thead tr:first-child th.grp.metric-night{ background:#282722; }
+  #studioTable thead tr:nth-child(2) th{ top:42px; z-index:7; height:36px; padding:9px 8px; font-size:10px; line-height:18px; letter-spacing:.1em; white-space:nowrap; background:#12171D; }
+  #studioTable thead tr:nth-child(2) th::before{
+    content:''; position:absolute; left:0; right:0; top:-2px; height:2px; background:inherit;
+  }
+  #studioTable thead tr:nth-child(2) th.studio-rio{ background:#14202D; }
+  #studioTable thead tr:nth-child(2) th.studio-mexico{ background:#211F1A; }
+  #studioTable .studio-rio{ color:#79B8FF; background:rgba(88,166,255,.07); }
+  #studioTable .studio-mexico{ color:#E8CC98; background:rgba(200,169,110,.07); }
+  #studioTable .metric-start{ border-left:2px solid rgba(200,169,110,.34) !important; }
+  #studioTable tbody tr:nth-child(even) td{ background:rgba(255,255,255,.018); }
+  #studioTable tbody tr:hover td{ background:rgba(88,166,255,.07); }
+  #studioTable tbody td{ height:58px; padding:9px 10px; border-bottom:1px solid rgba(139,148,158,.13); font-size:14px; }
+  #studioTable tbody td.num-cell{ color:#D7DEE6; font-weight:600; font-variant-numeric:tabular-nums; }
+  #studioTable thead tr:first-child > th:first-child, #studioTable tbody td:first-child{ position:sticky; left:0; z-index:8; width:250px; min-width:250px; border-right:2px solid rgba(200,169,110,.3); background:#171D24; background-clip:padding-box; box-shadow:8px 0 18px rgba(0,0,0,.28); }
+  #studioTable thead tr:first-child > th:first-child{ z-index:10; overflow:hidden; }
+  #studioTable tbody tr:nth-child(even) td:first-child{ background:#1A2027; }
+  #studioTable tbody tr:hover td:first-child{ background:#202A34; }
+  #studioTable .name-cell .full{ font-size:13px; }
+  #studioTableMessage{ margin:14px 2px 0; }
+  .stats-rank-table{ width:100%; border-collapse:collapse; table-layout:fixed; min-width:0; margin-bottom:6px; }
   .stats-rank-table th{
     position:static; text-align:left; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
     color:var(--muted); padding:8px; border-bottom:1px solid var(--border); white-space:nowrap;
   }
   .stats-rank-table td{ padding:8px; border-bottom:1px solid var(--line-2); font-size:13px; vertical-align:middle; }
+  .stats-rank-table th.r{ text-align:right; }
   .stats-rank-table td.r{ text-align:right; white-space:nowrap; }
+  .stats-rank-table th:first-child, .stats-rank-table td:first-child{ width:52px; }
+  .stats-rank-table th:nth-child(3), .stats-rank-table td:nth-child(3){ width:140px; }
+  .stats-rank-table th:nth-child(4), .stats-rank-table td:nth-child(4){ width:210px; }
+  .stats-rank-table th:nth-child(5), .stats-rank-table td:nth-child(5){ width:60px; }
+  .metric-value{ display:inline-flex; align-items:baseline; justify-content:flex-end; gap:5px; min-width:150px; }
+  .metric-number{ font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; }
+  .metric-unit{ color:var(--muted); font-size:11.5px; }
   .stats-rank-table tr:hover td{ background:var(--surface2); }
   .stats-rank-num{ display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:var(--gold-dim); color:var(--gold-hi); font-size:11px; font-weight:700; }
   .stats-inactive-list{ display:flex; flex-wrap:wrap; gap:6px; }
@@ -450,7 +513,7 @@
     .recon-grid{ grid-template-columns:1fr 1fr; }
     header.topbar{ padding:10px 14px; row-gap:8px; }
     .brand{ margin-right:auto; order:1; flex-basis:100%; }
-    #manageRefereesBtn, #openArchiveBtn, #openStatsOverviewBtn, #logoutBtn{ order:2; flex:1 1 auto; }
+    #manageRefereesBtn, #openStudioTableBtn, #openArchiveBtn, #openStatsOverviewBtn, #logoutBtn{ order:2; flex:1 1 auto; }
     .month-nav{ order:3; flex-basis:100%; justify-content:center; }
     .user-chip{ order:4; flex-basis:100%; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     main{ padding:12px 12px 70px; }
@@ -506,6 +569,28 @@
     .table-wrap .row-action-buttons{ flex-wrap:wrap; }
     .table-wrap .row-action-buttons .row-btn{ flex:1 1 auto; }
 
+    /* The studio matrix must remain a scrollable table on small screens.
+       Undo the roster-only card layout above inside this modal. */
+    #studioTableModal .modal-body{ padding:12px; min-height:0; overflow:hidden; }
+    #studioTableModal .table-wrap{
+      flex:1; min-height:0; max-height:none; overflow:auto;
+      background:var(--bg); border:1px solid rgba(200,169,110,.28); box-shadow:none;
+    }
+    #studioTableModal .table-wrap table{ display:table; min-width:1900px; }
+    #studioTableModal .table-wrap thead{ display:table-header-group; }
+    #studioTableModal .table-wrap tbody{ display:table-row-group; }
+    #studioTableModal .table-wrap tbody tr{
+      display:table-row; background:transparent; border:0; border-radius:0; padding:0; margin:0;
+    }
+    #studioTableModal .table-wrap tbody td,
+    #studioTableModal .table-wrap tbody td.name-cell,
+    #studioTableModal .table-wrap tbody td.num-cell{
+      display:table-cell; padding:9px 10px !important; margin:0; border-radius:0;
+      border-bottom:1px solid rgba(139,148,158,.13) !important;
+    }
+    #studioTableModal .table-wrap tbody td.name-cell{ min-width:250px; }
+    #studioTableModal .table-wrap tbody td.num-cell::before{ display:none; }
+
     /* Modals become full-screen sheets — much easier to work in than a cramped centered dialog */
     .modal-backdrop{ padding:0; align-items:stretch; }
     .modal{ max-width:none !important; width:100%; min-height:100%; border-radius:0; display:flex; flex-direction:column; }
@@ -550,12 +635,13 @@
       background:var(--bg); border:1px solid var(--border); border-radius:10px;
       padding:10px 12px; margin-bottom:8px;
     }
-    .stats-rank-table td{ display:block; padding:0 !important; border:0 !important; }
+    .stats-rank-table td{ display:block; width:auto !important; padding:0 !important; border:0 !important; }
     .stats-rank-table td:nth-child(1){ grid-row:1/3; }
     .stats-rank-table td:nth-child(2){ font-weight:600; }
     .stats-rank-table td:nth-child(3){ grid-column:2; }
     .stats-rank-table td:nth-child(4){ grid-row:1/3; grid-column:3; text-align:right; font-weight:700; }
     .stats-rank-table td:nth-child(5){ grid-column:1/-1; margin-top:4px; }
+    .stats-rank-table .metric-action-spacer{ display:none; }
   }
 
   @media (max-width:400px){
@@ -602,9 +688,9 @@
   <!-- ══ PENDING APPROVAL ══ -->
   <div id="pendingScreen" style="display:none; min-height:100dvh; align-items:center; justify-content:center; padding:20px;">
     <div class="login-card">
-      <h1>Cont în așteptare</h1>
-      <p class="sub">Contul <b id="pendingEmail"></b> a fost creat, dar nu are încă acces aprobat. Cere unui administrator să aprobe contul din baza de date.</p>
-      <button class="btn btn-ghost" id="pendingLogout" style="width:100%">Ieși din cont</button>
+      <h1>Acces neaprobat</h1>
+      <p class="sub" id="pendingMessage">Acest cont nu are acces aprobat.</p>
+      <button class="btn btn-ghost" id="pendingLogout" style="width:100%">Înapoi la autentificare</button>
     </div>
   </div>
 
@@ -622,6 +708,7 @@
         </button>
       </div>
       <button class="btn btn-sm btn-gold" id="manageRefereesBtn">Participanți</button>
+      <button class="btn btn-sm btn-gold" id="openStudioTableBtn">Tabel date</button>
       <button class="btn btn-sm btn-gold" id="openArchiveBtn">Arhivă acte</button>
       <button class="btn btn-sm btn-gold" id="openStatsOverviewBtn">Statistici</button>
       <span class="user-chip" id="userChip"></span>
@@ -637,7 +724,7 @@
             data-lpignore="true" data-form-type="other">
         </div>
         <select class="filter-select" id="categoryFilter" aria-label="Filtrează după categorie">
-          <option value="">Toate categoriile</option>
+          <option value="">Categorii participanți</option>
           <option value="__hidden__">Participanți ascunși</option>
           <option disabled>──────────</option>
           <option value="TOP">TOP</option>
@@ -647,7 +734,7 @@
           <option value="Referee">Referee</option>
         </select>
         <select class="filter-select" id="activityFilter" aria-label="Filtrează după activitatea lunară">
-          <option value="all">Toată activitatea</option>
+          <option value="all">Perioada activității</option>
           <option value="active">Doar activi luna asta</option>
           <option value="inactive">Fără activitate luna asta</option>
         </select>
@@ -688,6 +775,7 @@
               <th colspan="2" class="grp">Locul III</th>
               <th colspan="2" class="grp">Arbitraj</th>
               <th rowspan="2">Onorariu</th>
+              <th rowspan="2">Impozit</th>
               <th rowspan="2" class="actions-head" style="min-width:260px">Acțiuni și detalii</th>
             </tr>
             <tr>
@@ -782,7 +870,10 @@
   <div class="modal-backdrop" id="statsModal">
     <div class="modal">
       <div class="modal-head">
-        <h2 id="statsTitle">Statistici participant</h2>
+        <div class="modal-title-row">
+          <button class="icon-btn modal-back-btn" id="backStats" aria-label="Înapoi" title="Înapoi">←</button>
+          <h2 id="statsTitle">Statistici participant</h2>
+        </div>
         <button class="icon-btn" id="closeStats" aria-label="Închide">✕</button>
       </div>
       <div class="modal-body">
@@ -911,10 +1002,33 @@
   </div>
 
   <!-- ══ Statistici generale ══ -->
+  <div class="modal-backdrop" id="studioTableModal">
+    <div class="modal" style="max-width:96vw">
+      <div class="modal-head">
+        <div><h2 style="margin:0">Tabel date pe platouri</h2><p class="muted" style="margin:3px 0 0">RIO, MEXICO și orice platou adăugat ulterior</p></div>
+        <button class="icon-btn" id="closeStudioTable" aria-label="Închide">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="table-wrap"><table id="studioTable"><thead id="studioTableHead"></thead><tbody id="studioTableBody"></tbody></table></div>
+        <p class="stats-empty" id="studioTableMessage"></p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" id="closeStudioTableBtn">Închide</button>
+        <button class="btn btn-export" id="downloadStudioTableBtn" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
+          Descarcă PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="statsOverviewModal">
     <div class="modal">
       <div class="modal-head">
-        <h2>Statistici generale</h2>
+        <div class="modal-title-row">
+          <button class="icon-btn modal-back-btn" id="backStatsOverview" aria-label="Înapoi" title="Înapoi">←</button>
+          <h2>Statistici generale</h2>
+        </div>
         <div style="display:flex; align-items:center; gap:10px">
           <select class="filter-select" id="statsYearSelect" aria-label="Anul de referință"></select>
           <button class="icon-btn" id="closeStatsOverview" aria-label="Închide">✕</button>
@@ -936,6 +1050,31 @@
             <div id="ovActivityBreakdown"></div>
           </section>
         </div>
+
+        <p class="section-label">Clasament pe activitate și coeficienți</p>
+        <div class="stats-metric-row">
+          <label for="statsMetricSelect">Indicator</label>
+          <select class="filter-select" id="statsMetricSelect">
+            <option value="tournament_day">Turneu zi</option>
+            <option value="tournament_night">Turneu noapte</option>
+            <option value="arbitraj_day">Arbitraj zi</option>
+            <option value="arbitraj_night">Arbitraj noapte</option>
+            <option value="matches_day">Meciuri câștigate zi</option>
+            <option value="matches_night">Meciuri câștigate noapte</option>
+            <option value="win_rate_day">Coeficient câștiguri zi</option>
+            <option value="win_rate_night">Coeficient câștiguri noapte</option>
+            <option value="win_rate_total">Coeficient general câștiguri</option>
+          </select>
+          <div class="stats-scope-toggle" role="group" aria-label="Perioadă clasament">
+            <button type="button" class="stats-scope-btn active" data-scope="year">An</button>
+            <button type="button" class="stats-scope-btn" data-scope="month">Lună</button>
+          </div>
+          <select class="filter-select" id="statsMetricMonthSelect" aria-label="Luna de referință" style="display:none"></select>
+        </div>
+        <table class="stats-rank-table">
+          <thead><tr><th>#</th><th>Participant</th><th>Categorie</th><th class="r">Valoare</th><th class="metric-action-spacer" aria-hidden="true"></th></tr></thead>
+          <tbody id="ovMetricRankBody"></tbody>
+        </table>
 
         <p class="section-label">Clasament — cei mai plătiți participanți</p>
         <table class="stats-rank-table" id="ovRankTable">
@@ -965,7 +1104,9 @@
   const SUPA_KEY = 'sb_publishable_ikWN1Xa22Mj90c1r6pwuhQ_eb8m7Juv';
   // ══════════════════════════════════════════════════════════════════════
 
-  const db = supabase.createClient(SUPA_URL, SUPA_KEY);
+  const db = supabase.createClient(SUPA_URL, SUPA_KEY, {
+    auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:false }
+  });
 
   const ITEM_KEYS = [
     ['tournament_day','tournament_night'],
@@ -1050,9 +1191,13 @@
   const loginForm = document.getElementById('loginForm');
   const loginError = document.getElementById('loginError');
   const loginSubmit = document.getElementById('loginSubmit');
+  const pendingScreen = document.getElementById('pendingScreen');
+  let deniedAccessMessage = '';
 
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    deniedAccessMessage = '';
+    pendingScreen.style.display = 'none';
     loginError.textContent = '';
     loginSubmit.disabled = true;
     const email = document.getElementById('loginEmail').value.trim();
@@ -1061,38 +1206,54 @@
       const { error } = await db.auth.signInWithPassword({ email, password });
       if (error) throw error;
     } catch (err) {
-      loginError.textContent = err.message || 'Eroare la autentificare.';
+      console.warn('Autentificarea a eșuat', err);
+      loginError.textContent = 'Email sau parolă incorectă.';
+      document.getElementById('loginPassword').value = '';
     } finally {
       loginSubmit.disabled = false;
     }
   });
 
   document.getElementById('logoutBtn').addEventListener('click', () => db.auth.signOut());
-  document.getElementById('pendingLogout').addEventListener('click', () => db.auth.signOut());
-  const pendingScreen = document.getElementById('pendingScreen');
+  document.getElementById('pendingLogout').addEventListener('click', () => {
+    deniedAccessMessage = '';
+    pendingScreen.style.display = 'none';
+    loginScreen.style.display = 'flex';
+    document.getElementById('loginPassword').value = '';
+  });
 
   db.auth.onAuthStateChange(async (event, s) => {
     session = s;
     pendingScreen.style.display = 'none';
     if (session) {
       loginScreen.style.display = 'none';
-      // RLS blocks unapproved profiles from seeing *other* rows, but a user
-      // can always read their own profile row — use that to gate the app UI
-      // with a clear message instead of silently rendering empty data.
-      const { data: profile } = await db.from('profiles').select('approved').eq('id', session.user.id).single();
-      if (!profile || !profile.approved) {
+      const email = session.user.email || 'necunoscut';
+      const { data: profile, error: profileError } = await db.from('profiles').select('approved').eq('id', session.user.id).single();
+      if (profileError || !profile || !profile.approved) {
         appEl.classList.remove('show');
-        document.getElementById('pendingEmail').textContent = session.user.email;
+        deniedAccessMessage = profileError
+          ? 'Accesul nu a putut fi verificat. Sesiunea a fost închisă în siguranță; încearcă din nou.'
+          : `Contul ${email} nu are acces aprobat. Cere unui administrator să îl aprobe.`;
+        document.getElementById('pendingMessage').textContent = deniedAccessMessage;
         pendingScreen.style.display = 'flex';
+        session = null;
+        setTimeout(() => { db.auth.signOut({ scope:'local' }); }, 0);
         return;
       }
+      deniedAccessMessage = '';
       appEl.classList.add('show');
       document.getElementById('userChip').textContent = session.user.email;
       await loadStaticData();
       await loadPeriod();
     } else {
       appEl.classList.remove('show');
-      loginScreen.style.display = 'flex';
+      if (deniedAccessMessage) {
+        loginScreen.style.display = 'none';
+        document.getElementById('pendingMessage').textContent = deniedAccessMessage;
+        pendingScreen.style.display = 'flex';
+      } else {
+        loginScreen.style.display = 'flex';
+      }
     }
   });
 
@@ -1356,7 +1517,7 @@
       const nameTd = document.createElement('td');
       nameTd.className = 'name-cell';
       nameTd.innerHTML = `<div class="name-line"><div class="full">${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}</div><button type="button" class="quick-edit-btn" data-quick-edit-ref="${ref.id}" title="Informații participant" aria-label="Informații despre ${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7.5"/><path d="M10 13v-4M10 7h.01" stroke-linecap="round"/></svg></button><button type="button" class="quick-edit-btn" data-stats-ref="${ref.id}" title="Statistici participant" aria-label="Statistici pentru ${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 15V9M10 15V5M15 15v-3"/></svg></button></div>
-        <span class="cat-badge cat-${ref.category}">${ref.category}</span>${ref.active === false ? ' <span class="detail-chip">Ascuns</span>' : ''}${missingProfilePreview(ref)}`;
+        <span class="cat-badge cat-${safeClassToken(ref.category)}">${escapeHtml(ref.category)}</span>${ref.active === false ? ' <span class="detail-chip">Ascuns</span>' : ''}${missingProfilePreview(ref)}`;
       tr.appendChild(nameTd);
 
       ALL_KEYS.forEach(key => {
@@ -1386,6 +1547,12 @@
       feeTd.id = 'fee-' + ref.id;
       feeTd.textContent = fmtMoney(fee);
       tr.appendChild(feeTd);
+
+      const taxTd = document.createElement('td');
+      taxTd.className = 'tax-cell num';
+      taxTd.id = 'tax-' + ref.id;
+      taxTd.textContent = fmtMoney(fee * Number(globalRates.tax_rate || ACT_TAX_RATE));
+      tr.appendChild(taxTd);
 
       const actionsTd = document.createElement('td');
       actionsTd.className = 'actions-cell';
@@ -1428,6 +1595,7 @@
     entry[input.dataset.key] = Number(input.value) || 0;
     const fee = computeFee(ref, entry);
     document.getElementById('fee-' + refId).textContent = fmtMoney(fee);
+    document.getElementById('tax-' + refId).textContent = fmtMoney(fee * Number(globalRates.tax_rate || ACT_TAX_RATE));
 
     // recompute summary chips from real numbers, not by re-parsing formatted text
     // (a fmtMoney() string uses '.' as a thousands separator and ',' for decimals —
@@ -1472,6 +1640,25 @@
   }
 
   function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function safeClassToken(value){ return String(value || '').replace(/[^a-zA-Z0-9_-]/g, ''); }
+  function sanitizeStoredActHtml(html){
+    const template = document.createElement('template');
+    template.innerHTML = String(html || '');
+    template.content.querySelectorAll('script,iframe,object,embed,link,meta,base,style,form,svg,math').forEach(node => node.remove());
+    template.content.querySelectorAll('*').forEach(node => {
+      Array.from(node.attributes).forEach(attribute => {
+        const name = attribute.name.toLowerCase();
+        const value = attribute.value.trim();
+        const dangerousName = name.startsWith('on') || name === 'srcdoc' || name === 'action' ||
+          name === 'formaction' || name === 'background' || name === 'srcset' || name === 'contenteditable' ||
+          name === 'href' || name.endsWith(':href');
+        const dangerousStyle = name === 'style' && /url\s*\(|expression\s*\(|@import|behavior\s*:|-moz-binding/i.test(value);
+        const unsafeImage = name === 'src' && !/^data:image\/(?:png|jpe?g|webp);base64,/i.test(value);
+        if (dangerousName || dangerousStyle || unsafeImage) node.removeAttribute(attribute.name);
+      });
+    });
+    return template.innerHTML;
+  }
 
   // ══ DETAIL MODAL (bonuses + travel/reconciliation) ══
   const detailModal = document.getElementById('detailModal');
@@ -1479,6 +1666,7 @@
   const statsModal = document.getElementById('statsModal');
   const statsOverviewModal = document.getElementById('statsOverviewModal');
   let statsRefId = null;
+  let statsReturnToOverview = false;
 
   function openDetail(refId){
     detailRefId = refId;
@@ -1547,7 +1735,8 @@
     { key:'Locul III', day:'place3_day', night:'place3_night', color:'#F85149' },
     { key:'Arbitraj', day:'arbitraj_day', night:'arbitraj_night', color:'#388BFD', useGlobal:true },
   ];
-  async function openStats(refId){
+  async function openStats(refId, returnToOverview = false){
+    statsReturnToOverview = returnToOverview;
     const ref = referees.find(r => r.id === refId);
     if (!ref) return;
     statsRefId = refId;
@@ -1621,18 +1810,49 @@
       return;
     }
     const max = Math.max(...months.map(m => m.value), 1);
-    const W = 640, H = 160, padBottom = 20, padTop = 8, gap = 6;
-    const barW = (W - gap * (months.length - 1)) / months.length;
+    const W = 640, H = 180, padLeft = 48, padRight = 8, padBottom = 23, padTop = 10, gap = 6;
+    const plotWidth = W - padLeft - padRight;
+    const plotHeight = H - padBottom - padTop;
+    const roughStep = max / 4;
+    const magnitude = 10 ** Math.floor(Math.log10(roughStep));
+    const normalizedStep = roughStep / magnitude;
+    const niceFactor = normalizedStep <= 1 ? 1 : normalizedStep <= 2 ? 2 : normalizedStep <= 5 ? 5 : 10;
+    const tickStep = niceFactor * magnitude;
+    const axisMax = tickStep * Math.ceil(max / tickStep);
+    const axisLabel = value => value >= 1000000
+      ? `${(value / 1000000).toLocaleString('ro-RO', { maximumFractionDigits:1 })} mil.`
+      : value >= 1000 ? `${(value / 1000).toLocaleString('ro-RO', { maximumFractionDigits:1 })} mii` : value.toLocaleString('ro-RO');
+    const ticks = Array.from({ length:5 }, (_, i) => i * axisMax / 4);
+    const grid = ticks.map(value => {
+      const y = padTop + plotHeight - (value / axisMax) * plotHeight;
+      return `<line class="stats-grid-line" x1="${padLeft}" y1="${y.toFixed(1)}" x2="${W - padRight}" y2="${y.toFixed(1)}"/>
+        <text x="${padLeft - 6}" y="${(y + 3).toFixed(1)}" text-anchor="end" font-size="8" fill="var(--muted)">${axisLabel(value)}</text>`;
+    }).join('');
+    const barW = (plotWidth - gap * (months.length - 1)) / months.length;
     const bars = months.map((m, i) => {
-      const h = m.value > 0 ? Math.max((m.value / max) * (H - padBottom - padTop), 2) : 0;
-      const x = i * (barW + gap);
+      const h = m.value > 0 ? Math.max((m.value / axisMax) * plotHeight, 2) : 0;
+      const x = padLeft + i * (barW + gap);
       const y = H - padBottom - h;
-      return `<g><title>${m.full}: ${fmtMoney(m.value)} MDL</title>
+      const tooltipWidth = 112;
+      const tooltipX = Math.max(2, Math.min(W - tooltipWidth - 2, x + barW / 2 - tooltipWidth / 2));
+      const tooltipY = y < padTop + 23 ? y + 6 : y - 22;
+      const amountLabel = `${m.full}: ${fmtMoney(m.value)} MDL`;
+      return `<g class="stats-bar-group" tabindex="0" role="img" aria-label="${escapeHtml(amountLabel)}">
         <rect class="stats-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="3"/>
+        <g class="stats-tooltip" transform="translate(${tooltipX.toFixed(1)} ${tooltipY.toFixed(1)})">
+          <rect width="${tooltipWidth}" height="17" rx="4" fill="#21262D" stroke="#C8A96E" stroke-width=".7"/>
+          <text x="${tooltipWidth / 2}" y="11.2" text-anchor="middle" font-size="7.5" font-weight="600" fill="#E6EDF3">${escapeHtml(amountLabel)}</text>
+        </g>
         <text x="${(x + barW / 2).toFixed(1)}" y="${H - 4}" text-anchor="middle" font-size="9" fill="var(--muted)">${m.label}</text>
       </g>`;
     }).join('');
-    wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}">${bars}</svg>`;
+    wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}" aria-label="Grafic cu valori în MDL">
+      ${grid}
+      <line class="stats-axis-line" x1="${padLeft}" y1="${padTop}" x2="${padLeft}" y2="${H - padBottom}"/>
+      <line class="stats-axis-line" x1="${padLeft}" y1="${H - padBottom}" x2="${W - padRight}" y2="${H - padBottom}"/>
+      <text x="7" y="${padTop + plotHeight / 2}" transform="rotate(-90 7 ${padTop + plotHeight / 2})" text-anchor="middle" font-size="7.5" fill="var(--muted)">MDL</text>
+      ${bars}
+    </svg>`;
   }
   function renderStatsBreakdown(groups, containerId, emptyText){
     const el = document.getElementById(containerId || 'statsBreakdown');
@@ -1646,16 +1866,28 @@
         <span class="stats-breakdown-value">${fmtMoney(g.total)} MDL</span>
       </div>`).join('');
   }
-  document.getElementById('closeStats').addEventListener('click', () => statsModal.classList.remove('show'));
-  document.getElementById('closeStatsBtn').addEventListener('click', () => statsModal.classList.remove('show'));
+  function goBackFromStats(){
+    statsModal.classList.remove('show');
+    if (statsReturnToOverview) statsOverviewModal.classList.add('show');
+    statsReturnToOverview = false;
+  }
+  function goBackFromStatsOverview(){
+    statsOverviewModal.classList.remove('show');
+  }
+  document.getElementById('backStats').addEventListener('click', goBackFromStats);
+  document.getElementById('backStatsOverview').addEventListener('click', goBackFromStatsOverview);
+  document.getElementById('closeStats').addEventListener('click', () => { statsModal.classList.remove('show'); statsReturnToOverview = false; });
+  document.getElementById('closeStatsBtn').addEventListener('click', goBackFromStats);
 
   // ══ STATISTICI GENERALE (org-wide overview) ══
   const CATEGORY_COLORS = { TOP:'#B8863A', I:'#3B7DDE', II:'#A257B0', III:'#2F9E5C', Referee:'#B8415A' };
   const CATEGORY_ORDER = ['TOP','I','II','III','Referee'];
   let ovData = null; // cached across year switches — refetched only when the modal is reopened fresh
+  let statsMetricScope = 'year'; // 'year' | 'month' — scope of the "Clasament pe activitate și coeficienți" table
 
   async function openStatsOverview(){
     statsOverviewModal.classList.add('show');
+    statsOverviewModal.querySelector('.modal-body').scrollTop = 0;
     if (!ovData) {
       document.getElementById('ovKpis').innerHTML = '<p class="stats-empty">Se încarcă…</p>';
       const [totalsRes, entriesRes, actsRes] = await Promise.all([
@@ -1732,6 +1964,9 @@
     });
     renderStatsBreakdown(activityGroups, 'ovActivityBreakdown', `Nicio activitate plătită în ${year}.`);
 
+    populateStatsMetricMonthSelect(year);
+    renderMetricRanking();
+
     const rankRows = Object.entries(byRef)
       .map(([refId, total]) => {
         const person = totals.find(r => r.referee_id === refId);
@@ -1745,7 +1980,7 @@
       <tr>
         <td><span class="stats-rank-num">${i + 1}</span></td>
         <td>${escapeHtml(r.name)}</td>
-        <td><span class="cat-badge cat-${r.category}">${escapeHtml(r.category || '—')}</span></td>
+        <td><span class="cat-badge cat-${safeClassToken(r.category)}">${escapeHtml(r.category || '—')}</span></td>
         <td class="r num">${fmtMoney(r.total)}</td>
         <td><button class="icon-btn" data-ov-stats-ref="${r.refId}" aria-label="Statistici pentru ${escapeHtml(r.name)}" title="Statistici individuale"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 15V9M10 15V5M15 15v-3"/></svg></button></td>
       </tr>`).join('') || '<tr><td colspan="5"><p class="stats-empty">Nicio activitate plătită în acest an.</p></td></tr>';
@@ -1758,7 +1993,7 @@
     }
     rankBody.querySelectorAll('[data-ov-stats-ref]').forEach(b => b.addEventListener('click', () => {
       statsOverviewModal.classList.remove('show');
-      openStats(b.dataset.ovStatsRef);
+      openStats(b.dataset.ovStatsRef, true);
     }));
 
     const activeRefIds = new Set(Object.entries(byRef).filter(([, v]) => v > 0).map(([id]) => id));
@@ -1776,10 +2011,216 @@
     }).join('');
   }
 
+  const METRIC_LABELS = {
+    tournament_day:'turnee zi', tournament_night:'turnee noapte',
+    arbitraj_day:'arbitrări zi', arbitraj_night:'arbitrări noapte',
+    matches_day:'meciuri câștigate zi', matches_night:'meciuri câștigate noapte',
+    win_rate_day:'coeficient câștiguri zi', win_rate_night:'coeficient câștiguri noapte',
+    win_rate_total:'coeficient general câștiguri',
+  };
+  function populateStatsMetricMonthSelect(year){
+    const sel = document.getElementById('statsMetricMonthSelect');
+    const prevValue = sel.value;
+    sel.innerHTML = MONTH_NAMES.map((name, m) => {
+      const value = `${year}-${String(m + 1).padStart(2, '0')}-01`;
+      return `<option value="${value}">${name.charAt(0).toUpperCase()}${name.slice(1)}</option>`;
+    }).join('');
+    const currentYear = String(currentPeriod.getFullYear());
+    const defaultValue = year === currentYear
+      ? `${year}-${String(currentPeriod.getMonth() + 1).padStart(2, '0')}-01`
+      : `${year}-01-01`;
+    sel.value = (prevValue && prevValue.startsWith(`${year}-`)) ? prevValue : defaultValue;
+  }
+
+  function renderMetricRanking(){
+    const year = document.getElementById('statsYearSelect').value;
+    const metric = document.getElementById('statsMetricSelect').value;
+    const monthValue = document.getElementById('statsMetricMonthSelect').value;
+    const entries = statsMetricScope === 'month'
+      ? ovData.entries.filter(e => e.period === monthValue)
+      : ovData.entries.filter(e => e.period.startsWith(year));
+    const byRef = {};
+    entries.forEach(e => {
+      const row = byRef[e.referee_id] ||= { tournament_day:0, tournament_night:0, matches_day:0, matches_night:0, arbitraj_day:0, arbitraj_night:0 };
+      Object.keys(row).forEach(key => row[key] += Number(e[key] || 0));
+    });
+    const ratio = (wins, tournaments) => tournaments > 0 ? wins / tournaments * 100 : 0;
+    const ranked = referees.map(ref => {
+      const v = byRef[ref.id] || { tournament_day:0, tournament_night:0, matches_day:0, matches_night:0, arbitraj_day:0, arbitraj_night:0 };
+      let value = Number(v[metric] || 0);
+      if (metric === 'win_rate_day') value = ratio(v.matches_day, v.tournament_day);
+      if (metric === 'win_rate_night') value = ratio(v.matches_night, v.tournament_night);
+      if (metric === 'win_rate_total') value = ratio(v.matches_day + v.matches_night, v.tournament_day + v.tournament_night);
+      return { ref, value };
+    }).filter(r => r.value > 0).sort((a,b) => b.value - a.value || `${a.ref.last_name} ${a.ref.first_name}`.localeCompare(`${b.ref.last_name} ${b.ref.first_name}`, 'ro'));
+    const isRate = metric.startsWith('win_rate_');
+    const emptyLabel = statsMetricScope === 'month' ? 'Nu există date pentru luna selectată.' : 'Nu există date pentru anul selectat.';
+    document.getElementById('ovMetricRankBody').innerHTML = ranked.slice(0, 20).map((r, i) => `<tr>
+      <td><span class="stats-rank-num">${i + 1}</span></td>
+      <td>${escapeHtml(r.ref.last_name)} ${escapeHtml(r.ref.first_name)}</td>
+      <td><span class="cat-badge cat-${safeClassToken(r.ref.category)}">${escapeHtml(r.ref.category)}</span></td>
+      <td class="r num ${isRate ? 'coefficient' : ''}"><span class="metric-value"><span class="metric-number">${isRate ? r.value.toLocaleString('ro-RO', { maximumFractionDigits:1 }) + '%' : r.value.toLocaleString('ro-RO')}</span>${isRate ? '' : `<span class="metric-unit">${METRIC_LABELS[metric]}</span>`}</span></td>
+      <td class="metric-action-spacer" aria-hidden="true"></td>
+    </tr>`).join('') || `<tr><td colspan="5"><p class="stats-empty">${emptyLabel}</p></td></tr>`;
+  }
+
   document.getElementById('openStatsOverviewBtn').addEventListener('click', openStatsOverview);
   document.getElementById('statsYearSelect').addEventListener('change', (e) => renderStatsOverviewForYear(e.target.value));
+  document.getElementById('statsMetricSelect').addEventListener('change', () => {
+    if (ovData) renderMetricRanking();
+  });
+  document.querySelectorAll('.stats-scope-btn').forEach(btn => btn.addEventListener('click', () => {
+    statsMetricScope = btn.dataset.scope;
+    document.querySelectorAll('.stats-scope-btn').forEach(b => b.classList.toggle('active', b === btn));
+    document.getElementById('statsMetricMonthSelect').style.display = statsMetricScope === 'month' ? '' : 'none';
+    if (ovData) renderMetricRanking();
+  }));
+  document.getElementById('statsMetricMonthSelect').addEventListener('change', () => {
+    if (ovData) renderMetricRanking();
+  });
   document.getElementById('closeStatsOverview').addEventListener('click', () => statsOverviewModal.classList.remove('show'));
-  document.getElementById('closeStatsOverviewBtn').addEventListener('click', () => statsOverviewModal.classList.remove('show'));
+  document.getElementById('closeStatsOverviewBtn').addEventListener('click', goBackFromStatsOverview);
+
+  // ══ TABEL DATE PE PLATOURI ══
+  const studioTableModal = document.getElementById('studioTableModal');
+  async function openStudioTable(){
+    studioTableModal.classList.add('show');
+    const downloadBtn = document.getElementById('downloadStudioTableBtn');
+    downloadBtn.disabled = true;
+    const head = document.getElementById('studioTableHead');
+    const body = document.getElementById('studioTableBody');
+    const message = document.getElementById('studioTableMessage');
+    head.innerHTML = ''; body.innerHTML = '<tr><td>Se încarcă…</td></tr>'; message.textContent = '';
+    const [{ data: studios, error: studiosError }, { data: studioEntries, error: entriesError }] = await Promise.all([
+      db.from('studios').select('id, name').eq('active', true).order('sort_order'),
+      db.from('studio_entries').select('*').eq('period', periodKey(currentPeriod)),
+    ]);
+    if (studiosError || entriesError) {
+      body.innerHTML = '';
+      message.textContent = 'Structura pentru platouri nu este încă instalată în baza de date. Rulează migrarea studio_schema.sql, apoi redeschide tabelul.';
+      return;
+    }
+    const places = studios || [];
+    const metrics = [
+      ['tournament_day','Turneu zi'], ['tournament_night','Turneu noapte'],
+      ['matches_day','Meciuri zi'], ['matches_night','Meciuri noapte'],
+      ['place1_day','Locul I zi'], ['place1_night','Locul I noapte'],
+      ['place3_day','Locul III zi'], ['place3_night','Locul III noapte'],
+      ['arbitraj_day','Arbitraj zi'], ['arbitraj_night','Arbitraj noapte'],
+    ];
+    const studioClass = name => String(name).toLowerCase() === 'rio' ? 'studio-rio' : String(name).toLowerCase() === 'mexico' ? 'studio-mexico' : '';
+    head.innerHTML = `<tr><th rowspan="2">Participant</th>${metrics.map(([key,label]) => `<th colspan="${places.length}" class="grp metric-start ${key.endsWith('_night') ? 'metric-night' : ''}">${label}</th>`).join('')}</tr><tr>${metrics.map(() => places.map((s, i) => `<th class="${i === 0 ? 'metric-start' : ''} ${studioClass(s.name)}">${escapeHtml(s.name)}</th>`).join('')).join('')}</tr>`;
+    const lookup = new Map((studioEntries || []).map(e => [`${e.referee_id}:${e.studio_id}`, e]));
+    body.innerHTML = referees.filter(r => r.active !== false).map(ref => `<tr><td class="name-cell"><div class="full">${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}</div><span class="cat-badge cat-${safeClassToken(ref.category)}">${escapeHtml(ref.category)}</span></td>${metrics.map(([key]) => places.map((studio, i) => `<td class="num-cell num ${i === 0 ? 'metric-start' : ''} ${studioClass(studio.name)}">${Number((lookup.get(`${ref.id}:${studio.id}`) || {})[key] || 0)}</td>`).join('')).join('')}</tr>`).join('');
+    message.textContent = places.length ? 'Datele sunt afișate pentru luna selectată; totalurile lor alimentează tabelul principal.' : 'Nu există platouri active.';
+    downloadBtn.disabled = !places.length;
+  }
+
+  async function downloadStudioTablePdf(){
+    const btn = document.getElementById('downloadStudioTableBtn');
+    if (btn.disabled) return;
+    const originalLabel = btn.innerHTML;
+    btn.disabled = true;
+    btn.textContent = 'Se generează…';
+    try {
+      if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('Biblioteca PDF nu s-a încărcat.');
+      // Draw text and lines directly into the PDF instead of rasterising a huge
+      // screenshot. The result is much smaller, faster and stays sharp at zoom.
+      const pdf = new window.jspdf.jsPDF({ unit:'mm', format:'a3', orientation:'landscape', compress:true });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 8;
+      const titleHeight = 13;
+      const headerRowHeight = 8;
+      const bodyRowHeight = 10;
+      const firstColumnWidth = 52;
+      const metricLabels = Array.from(document.querySelectorAll('#studioTableHead tr:first-child th.grp')).map(th => th.textContent.trim());
+      const studioLabels = Array.from(document.querySelectorAll('#studioTableHead tr:nth-child(2) th')).map(th => th.textContent.trim());
+      const studioCount = metricLabels.length ? studioLabels.length / metricLabels.length : 0;
+      if (!studioCount) throw new Error('Tabelul nu conține coloane de exportat.');
+      const valueColumnWidth = (pageWidth - margin * 2 - firstColumnWidth) / studioLabels.length;
+      const rows = Array.from(document.querySelectorAll('#studioTableBody tr')).map(tr => ({
+        name: tr.querySelector('.name-cell .full')?.textContent.trim() || '',
+        category: tr.querySelector('.name-cell .cat-badge')?.textContent.trim() || '',
+        values: Array.from(tr.querySelectorAll('td:not(:first-child)')).map(td => td.textContent.trim()),
+      }));
+      const safeText = value => String(value).replace(/[șş]/gi, c => c === c.toUpperCase() ? 'S' : 's').replace(/[țţ]/gi, c => c === c.toUpperCase() ? 'T' : 't');
+      const drawCell = (x, y, width, height, fill) => {
+        pdf.setFillColor(...fill);
+        pdf.setDrawColor(190, 196, 204);
+        pdf.rect(x, y, width, height, 'FD');
+      };
+      const drawPageHeader = pageNumber => {
+        pdf.setTextColor(24, 30, 36);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(14);
+        pdf.text('Tabel date pe platouri', margin, margin + 5);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(8);
+        pdf.setTextColor(90, 97, 105);
+        pdf.text(`${safeText(MONTH_NAMES[currentPeriod.getMonth()])} ${currentPeriod.getFullYear()}  ·  Pagina ${pageNumber}`, pageWidth - margin, margin + 5, { align:'right' });
+        const y = margin + titleHeight;
+        drawCell(margin, y, firstColumnWidth, headerRowHeight * 2, [235, 238, 241]);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(8);
+        pdf.setTextColor(20, 25, 30);
+        pdf.text('PARTICIPANT', margin + 3, y + headerRowHeight + 1);
+        metricLabels.forEach((label, metricIndex) => {
+          const x = margin + firstColumnWidth + metricIndex * studioCount * valueColumnWidth;
+          const width = studioCount * valueColumnWidth;
+          drawCell(x, y, width, headerRowHeight, metricIndex % 2 ? [231, 229, 220] : [229, 233, 237]);
+          pdf.setFontSize(6.5);
+          pdf.text(safeText(label).toUpperCase(), x + width / 2, y + 5.2, { align:'center', maxWidth:width - 2 });
+        });
+        studioLabels.forEach((label, columnIndex) => {
+          const x = margin + firstColumnWidth + columnIndex * valueColumnWidth;
+          const isRio = label.toLowerCase() === 'rio';
+          drawCell(x, y + headerRowHeight, valueColumnWidth, headerRowHeight, isRio ? [225, 238, 250] : [244, 237, 222]);
+          pdf.setFontSize(6.5);
+          pdf.text(safeText(label).toUpperCase(), x + valueColumnWidth / 2, y + headerRowHeight + 5.2, { align:'center', maxWidth:valueColumnWidth - 1 });
+        });
+        return y + headerRowHeight * 2;
+      };
+      let pageNumber = 1;
+      let y = drawPageHeader(pageNumber);
+      for (const [rowIndex, row] of rows.entries()) {
+        if (y + bodyRowHeight > pageHeight - margin) {
+          pdf.addPage('a3', 'landscape');
+          y = drawPageHeader(++pageNumber);
+        }
+        const fill = rowIndex % 2 ? [247, 248, 249] : [255, 255, 255];
+        drawCell(margin, y, firstColumnWidth, bodyRowHeight, fill);
+        pdf.setTextColor(18, 24, 30);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(7.5);
+        pdf.text(safeText(row.name), margin + 2.5, y + 4, { maxWidth:firstColumnWidth - 5 });
+        pdf.setTextColor(75, 85, 96);
+        pdf.setFontSize(6.2);
+        pdf.text(safeText(row.category).toUpperCase(), margin + 2.5, y + 7.6, { maxWidth:firstColumnWidth - 5 });
+        row.values.forEach((value, columnIndex) => {
+          const x = margin + firstColumnWidth + columnIndex * valueColumnWidth;
+          drawCell(x, y, valueColumnWidth, bodyRowHeight, fill);
+          pdf.setTextColor(30, 36, 42);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(7.5);
+          pdf.text(safeText(value), x + valueColumnWidth / 2, y + 6.2, { align:'center', maxWidth:valueColumnWidth - 1 });
+        });
+        y += bodyRowHeight;
+      }
+      const dateSlug = `${currentPeriod.getFullYear()}-${String(currentPeriod.getMonth()+1).padStart(2,'0')}`;
+      pdf.save(`tabel-date-platouri-${dateSlug}.pdf`);
+    } catch (error) {
+      console.error('Studio table PDF export failed', error);
+      alert('PDF-ul nu a putut fi generat. Reîncarcă pagina și încearcă din nou.');
+    } finally {
+      btn.innerHTML = originalLabel;
+      btn.disabled = false;
+    }
+  }
+  document.getElementById('openStudioTableBtn').addEventListener('click', openStudioTable);
+  document.getElementById('downloadStudioTableBtn').addEventListener('click', downloadStudioTablePdf);
+  document.getElementById('closeStudioTable').addEventListener('click', () => studioTableModal.classList.remove('show'));
+  document.getElementById('closeStudioTableBtn').addEventListener('click', () => studioTableModal.classList.remove('show'));
 
   function updateRest(){
     const paid = Number(document.getElementById('dPaid').value)||0;
@@ -1828,7 +2269,7 @@
     referees.slice().sort((a,b)=>a.last_name.localeCompare(b.last_name)).forEach(ref => {
       const row = document.createElement('div');
       row.className = 'bonus-row';
-      row.innerHTML = `<label>${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)} <span class="cat-badge cat-${ref.category}">${ref.category}</span>${ref.active===false ? ' <em style="color:var(--ink-2)">(inactiv)</em>' : ''}</label>
+      row.innerHTML = `<label>${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)} <span class="cat-badge cat-${safeClassToken(ref.category)}">${escapeHtml(ref.category)}</span>${ref.active===false ? ' <em style="color:var(--ink-2)">(inactiv)</em>' : ''}</label>
         <button class="icon-btn" data-edit-ref="${ref.id}">✎</button>`;
       el.appendChild(row);
     });
@@ -2248,7 +2689,7 @@
       contract_number: ref.contract_number || null,
       contract_date: localizeRomanianDate(ref.contract_date) || null,
       total, tax,
-      document_html: document.getElementById('actDoc').innerHTML,
+      document_html: sanitizeStoredActHtml(document.getElementById('actDoc').innerHTML),
       created_by: session.user.id,
     }]).select().single();
     if (error) {
@@ -2301,7 +2742,7 @@
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${escapeHtml(act.referee_name)}</td>
-        <td><span class="cat-badge cat-${act.category}">${escapeHtml(act.category||'—')}</span></td>
+        <td><span class="cat-badge cat-${safeClassToken(act.category)}">${escapeHtml(act.category||'—')}</span></td>
         <td style="text-transform:capitalize">${fmtArchivePeriod(act.period)}</td>
         <td>${fmtArchiveDate(act.created_at)}</td>
         <td class="r num">${fmtMoney(act.total)}</td>
@@ -2328,7 +2769,7 @@
     const act = savedActs.find(a => a.id === actId);
     if (!act) return;
     _actState = { refId: act.referee_id, ref: { last_name: act.referee_name.split(' ')[0]||'', first_name: act.referee_name.split(' ').slice(1).join(' ') }, period: new Date(act.period+'T00:00:00'), total: act.total, tax: act.tax, viewOnly: true, savedId: act.id };
-    document.getElementById('actDoc').innerHTML = act.document_html;
+    document.getElementById('actDoc').innerHTML = sanitizeStoredActHtml(act.document_html);
     document.getElementById('actDoc').oninput = null;
     document.getElementById('actDoc').onclick = null;
     setActEditable(false);
@@ -2339,7 +2780,7 @@
     const act = savedActs.find(a => a.id === actId);
     if (!act) return;
     const slug = act.referee_name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
-    const clone = buildPrintableActClone(act.document_html);
+    const clone = buildPrintableActClone(sanitizeStoredActHtml(act.document_html));
     try {
       await waitForActImages(clone);
       await saveActElementAsPdf(clone, `act-${slug}-${act.period}.pdf`);
@@ -2368,16 +2809,20 @@
       closeExportConfirmation();
       return;
     }
+    if (studioTableModal.classList.contains('show')) {
+      studioTableModal.classList.remove('show');
+      return;
+    }
     if (archiveModal.classList.contains('show')) {
       archiveModal.classList.remove('show');
       return;
     }
     if (statsModal.classList.contains('show')) {
-      statsModal.classList.remove('show');
+      goBackFromStats();
       return;
     }
     if (statsOverviewModal.classList.contains('show')) {
-      statsOverviewModal.classList.remove('show');
+      goBackFromStatsOverview();
       return;
     }
     if (actModal.classList.contains('show')) {
