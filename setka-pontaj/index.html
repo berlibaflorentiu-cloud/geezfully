@@ -460,6 +460,7 @@
   }
   .detail-pdf-report h1{ margin:0; font-size:25px; line-height:1.2; }
   .detail-pdf-subtitle{ margin:6px 0 24px; color:#66707b; font-size:13px; }
+  .detail-pdf-summary{ margin:0 0 22px; padding:12px 14px; border:1px solid #b69a64; border-radius:6px; background:#f5f2eb; color:#735a2a; font-size:13px; }
   .detail-pdf-section{ margin-top:22px; }
   .detail-pdf-section h2{ margin:0 0 9px; font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:#735a2a; }
   .detail-pdf-table{ width:100%; border-collapse:collapse; table-layout:fixed; }
@@ -3883,11 +3884,16 @@
     const conform = conformRaw === '' ? null : Number(conformRaw) || 0;
     const rest = conform === null ? '—' : `${fmtMoney(paid - conform)} MDL`;
     const notes = document.getElementById('dNotes').value.trim() || 'Nicio notă.';
+    const ytdSummary = document.getElementById('ytdSummary');
+    const ytdVisible = ytdSummary && ytdSummary.style.display !== 'none';
+    const ytdYear = document.getElementById('ytdYear').textContent.trim();
+    const ytdTotal = document.getElementById('ytdTotal').textContent.trim();
     const report = document.createElement('section');
     report.className = 'detail-pdf-report';
     report.innerHTML = `
       <h1>Detalii participant</h1>
       <p class="detail-pdf-subtitle"><strong>${escapeHtml(snapName)}</strong> · ${escapeHtml(category || '—')} · ${escapeHtml(monthLabel)}</p>
+      ${ytdVisible ? `<div class="detail-pdf-summary">Total încasat în <strong>${escapeHtml(ytdYear)}</strong>: <strong>${escapeHtml(ytdTotal)}</strong> MDL</div>` : ''}
 
       <div class="detail-pdf-section">
         <h2>Deplasare și decontare</h2>
@@ -3901,18 +3907,6 @@
             <td class="value">${conform === null ? '—' : `${escapeHtml(fmtMoney(conform))} MDL`}</td>
             <td class="value">${escapeHtml(rest)}</td>
           </tr></tbody>
-        </table>
-      </div>
-
-      <div class="detail-pdf-section">
-        <h2>Scoruri manuale</h2>
-        <table class="detail-pdf-table">
-          <thead><tr><th>Mexico</th><th style="width:22%">Valoare</th></tr></thead>
-          <tbody>${detailRowsForPdf('bonusMexico') || '<tr><td colspan="2">Nu sunt date.</td></tr>'}</tbody>
-        </table>
-        <table class="detail-pdf-table" style="margin-top:10px">
-          <thead><tr><th>Rio</th><th style="width:22%">Valoare</th></tr></thead>
-          <tbody>${detailRowsForPdf('bonusRio') || '<tr><td colspan="2">Nu sunt date.</td></tr>'}</tbody>
         </table>
       </div>
 
