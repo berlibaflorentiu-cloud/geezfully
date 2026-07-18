@@ -1043,6 +1043,10 @@
         <button class="icon-btn" id="closeRef" aria-label="Închide">✕</button>
       </div>
       <div class="modal-body">
+        <div class="period-locked-banner" id="refModalLockedBanner" style="display:none">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="9" width="10" height="7" rx="1.5"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9"/></svg>
+          Luna este blocată — se afișează profilul salvat pentru ea. Deblocheaz-o pentru a modifica.
+        </div>
         <div class="ref-profile-layout no-profile" id="refProfileLayout">
           <aside class="ref-player-card" id="refPlayerCard" hidden></aside>
           <div class="form-grid">
@@ -1353,6 +1357,8 @@
     'Ieși': 'Выйти',
     'Luna este blocată — datele nu pot fi editate. Deblocheaz-o din butonul de lângă navigarea lunilor pentru a face modificări.':
       'Месяц заблокирован — данные нельзя редактировать. Разблокируйте его кнопкой рядом с навигацией по месяцам, чтобы вносить изменения.',
+    'Luna este blocată — se afișează profilul salvat pentru ea. Deblocheaz-o pentru a modifica.':
+      'Месяц заблокирован — отображается профиль, сохранённый для него. Разблокируйте, чтобы изменить.',
 
     // Toolbar / filters
     'Caută…': 'Поиск…',
@@ -3207,17 +3213,39 @@
     editingRefId = refId;
     refModalReturnToList = returnToList;
     const ref = refId ? referees.find(r => r.id === refId) : {};
+    const locked = periodLocked;
+    // Viewing a locked month shows what was actually saved for it (the
+    // monthly_entries snapshot), not the live referee record — and the form
+    // is fully disabled, so there's no risk of accidentally overwriting the
+    // live profile with an old value just by opening and saving.
+    const entry = refId ? (entries[refId] || {}) : {};
+    const display = (refId && locked) ? {
+      last_name: entry.last_name || ref.last_name,
+      first_name: entry.first_name || ref.first_name,
+      category: entry.category || ref.category,
+      bank_name: entry.bank_name || ref.bank_name,
+      fiscal_code: entry.fiscal_code || ref.fiscal_code,
+      iban: entry.iban || ref.iban,
+      contract_number: entry.contract_number || ref.contract_number,
+      contract_date: entry.contract_date || ref.contract_date,
+      active: ref.active,
+    } : ref;
     document.getElementById('refModalTitle').textContent = refId ? 'Editează participant' : 'Participant nou';
-    document.getElementById('rLastName').value = ref.last_name || '';
-    document.getElementById('rFirstName').value = ref.first_name || '';
-    document.getElementById('rCategory').value = ref.category || 'III';
-    document.getElementById('rBank').value = ref.bank_name || '';
-    document.getElementById('rFiscal').value = ref.fiscal_code || '';
-    document.getElementById('rIban').value = ref.iban || '';
-    document.getElementById('rContractNo').value = ref.contract_number || '';
-    document.getElementById('rContractDate').value = localizeRomanianDate(ref.contract_date || '');
-    document.getElementById('rHidden').checked = ref.active === false;
-    document.getElementById('deleteRefBtn').style.display = refId ? '' : 'none';
+    document.getElementById('rLastName').value = display.last_name || '';
+    document.getElementById('rFirstName').value = display.first_name || '';
+    document.getElementById('rCategory').value = display.category || 'III';
+    document.getElementById('rBank').value = display.bank_name || '';
+    document.getElementById('rFiscal').value = display.fiscal_code || '';
+    document.getElementById('rIban').value = display.iban || '';
+    document.getElementById('rContractNo').value = display.contract_number || '';
+    document.getElementById('rContractDate').value = localizeRomanianDate(display.contract_date || '');
+    document.getElementById('rHidden').checked = display.active === false;
+    ['rLastName','rFirstName','rCategory','rBank','rFiscal','rIban','rContractNo','rContractDate','rHidden'].forEach(id => {
+      document.getElementById(id).disabled = locked;
+    });
+    document.getElementById('saveRef').disabled = locked;
+    document.getElementById('refModalLockedBanner').style.display = locked ? 'flex' : 'none';
+    document.getElementById('deleteRefBtn').style.display = (refId && !locked) ? '' : 'none';
     const profileLayout = document.getElementById('refProfileLayout');
     const playerCard = document.getElementById('refPlayerCard');
     profileLayout.classList.toggle('no-profile', !refId);
@@ -3237,6 +3265,7 @@
   document.getElementById('cancelRef').addEventListener('click', closeRefModal);
 
   document.getElementById('saveRef').addEventListener('click', async () => {
+    if (periodLocked) return;
     const payload = {
       last_name: document.getElementById('rLastName').value.trim(),
       first_name: document.getElementById('rFirstName').value.trim(),
@@ -3261,7 +3290,7 @@
   });
 
   document.getElementById('deleteRefBtn').addEventListener('click', async () => {
-    if (!editingRefId) return;
+    if (!editingRefId || periodLocked) return;
     if (!confirm(t('Sigur ștergi acest participant? Se șterg și toate înregistrările lui.'))) return;
     await db.from('referees').delete().eq('id', editingRefId);
     await loadStaticData();
