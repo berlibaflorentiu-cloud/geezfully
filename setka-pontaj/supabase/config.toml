@@ -1,0 +1,2 @@
+[functions.act-signature]
+verify_jwt = true

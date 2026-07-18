@@ -1,0 +1,5 @@
+# Sensitive act artwork must live only in the private Supabase Storage bucket.
+beneficiary-signature-stamp.png
+.env
+.env.*
+!.env.example
