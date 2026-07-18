@@ -12,11 +12,36 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=20260716-scoreboard">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
   .hero{ padding:56px 0 40px; display:grid; grid-template-columns:1.1fr .9fr; gap:56px; align-items:start; }
   .hero-kicker{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:22px; }
+  .hero-copy{ position:relative; isolation:isolate; }
+  .hero-copy > :not(.hero-motion){ position:relative; z-index:1; }
+  .hero-motion{
+    position:absolute; z-index:0; pointer-events:none;
+    width:calc(100% + 96px); height:auto; left:-56px; top:72px;
+    overflow:visible;
+  }
+  .hero-motion .trail-main{ stroke:var(--spin); opacity:.34; }
+  .hero-motion .trail-light{ stroke:var(--spin-hi); opacity:.18; }
+  .hero-motion .trail-live{ stroke:var(--rally); opacity:.24; }
+  .hero-motion .speed-mark{ stroke:var(--spin-hi); opacity:.42; }
+  .hero-motion .hero-ball-ring{ stroke:var(--spin-hi); opacity:.9; }
+  .hero-motion .hero-ball-seam{ stroke:var(--ink); opacity:.72; }
+  @media (max-width:980px){
+    .hero-motion{ width:min(760px,calc(100% + 64px)); left:-40px; opacity:.82; }
+  }
+  @media (max-width:600px){
+    .hero-motion{ width:calc(100% + 34px); left:-22px; top:88px; opacity:.38; }
+    .hero-motion .trail-light{ display:none; }
+    .hero-motion .hero-ball{ display:none; }
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .hero-motion .hero-ball{ animation:heroBallFloat 5s ease-in-out infinite; transform-origin:670px 110px; }
+    @keyframes heroBallFloat{ 0%,100%{ transform:translateY(0) rotate(0deg); } 50%{ transform:translateY(-7px) rotate(5deg); } }
+  }
   .hero h1{ margin-bottom:20px; }
   .hero h1 .accent{ color:var(--spin); }
   .hero-actions{ display:flex; gap:12px; margin-top:30px; flex-wrap:wrap; }
@@ -123,11 +148,24 @@
 
 <main>
   <section class="container hero">
-    <div>
+    <div class="hero-copy">
       <div class="hero-kicker">
         <span class="tag">Sezon 2025 – 2026</span>
         <span class="tag tag-rally">Rezultate live</span>
       </div>
+      <svg class="hero-motion" viewBox="0 0 740 560" fill="none" aria-hidden="true">
+        <path class="trail-light" d="M10 438C112 548 358 547 521 401C565 361 554 274 590 188" stroke-width="2" stroke-linecap="round"/>
+        <path class="trail-main" d="M-8 466C128 574 384 541 527 388C570 342 552 254 600 176" stroke-width="8" stroke-linecap="round"/>
+        <path class="trail-live" d="M38 478C191 554 402 502 536 365C573 327 558 239 608 164" stroke-width="3" stroke-linecap="round"/>
+        <path class="trail-light" d="M96 500C255 541 436 469 568 330" stroke-width="2" stroke-linecap="round"/>
+        <path class="speed-mark" d="M613 155L625 141M620 163L634 148" stroke-width="3" stroke-linecap="round"/>
+        <g class="hero-ball">
+          <circle cx="670" cy="110" r="49" fill="var(--spin)" opacity=".92" class="hero-ball-ring" stroke-width="3"/>
+          <path d="M640 97C648 80 663 70 681 68" stroke="var(--spin-hi)" stroke-width="4" stroke-linecap="round" opacity=".9"/>
+          <path d="M702 79C710 89 714 99 714 110" class="hero-ball-seam" stroke-width="5" stroke-linecap="round"/>
+          <path d="M715 119L713 133" class="hero-ball-seam" stroke-width="7" stroke-linecap="round"/>
+        </g>
+      </svg>
       <h1>Tenisul de masă profesionist din Moldova, <span class="accent">într-un singur loc</span>.</h1>
       <p class="lede">ATTP reunește jucătorii, arbitrii și antrenorii de tenis de masă din Republica Moldova sub principiile Fair-Play, integrității și performanței — cu turnee naționale derulate constant și clasamente actualizate automat.</p>
       <div class="hero-actions">
@@ -261,9 +299,8 @@
     sbBody.innerHTML = results.map((r,i) => `
       <div class="score-row" style="animation-delay:${i*60}ms">
         <div class="score-name">${escapeHtml(r.first_name)} ${escapeHtml(r.last_name)}</div>
-        <div class="score-chip">${r.match_win ?? '–'} : ${r.match_lost ?? '–'}</div>
-        <div class="score-name r">${escapeHtml(r.tournament_name || '')}</div>
-        <div></div>
+        <div class="score-chip"><span class="score-win">${r.match_win ?? '–'}</span><span class="score-separator">:</span><span class="score-loss">${r.match_lost ?? '–'}</span></div>
+        <div class="score-tournament">${escapeHtml(r.tournament_name || '')}</div>
         <div class="score-meta"><span>${r.division === 'man' ? 'Bărbați' : r.division === 'woman' ? 'Femei' : (r.division||'')}</span><span>${r.start_date ? fmtDateShort(r.start_date) : ''}</span></div>
       </div>`).join('');
   }

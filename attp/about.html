@@ -24,10 +24,17 @@
 
   .person-grid{ display:grid; gap:20px; }
   .person-grid.cols-3{ grid-template-columns:repeat(3,1fr); }
-  .person-grid.cols-4{ grid-template-columns:repeat(4,1fr); }
-  @media (max-width:900px){ .person-grid.cols-4{ grid-template-columns:repeat(3,1fr); } }
-  @media (max-width:700px){ .person-grid.cols-3,.person-grid.cols-4{ grid-template-columns:repeat(2,1fr); } }
-  @media (max-width:460px){ .person-grid.cols-3,.person-grid.cols-4{ grid-template-columns:1fr; } }
+  .person-grid.cols-4{ display:flex; flex-wrap:wrap; justify-content:center; }
+  .person-grid.cols-4 > *{ flex:0 1 calc((100% - 60px)/4); min-width:0; }
+  @media (max-width:900px){ .person-grid.cols-4 > *{ flex-basis:calc((100% - 40px)/3); } }
+  @media (max-width:700px){
+    .person-grid.cols-3{ grid-template-columns:repeat(2,1fr); }
+    .person-grid.cols-4 > *{ flex-basis:calc((100% - 20px)/2); }
+  }
+  @media (max-width:460px){
+    .person-grid.cols-3{ grid-template-columns:1fr; }
+    .person-grid.cols-4 > *{ flex-basis:100%; }
+  }
 
   .person-card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
   .person-photo{
@@ -178,7 +185,7 @@
 
   const renderGrid = list => list.map(p => `
     <div class="person-card">
-      <div class="person-photo">${avatarHtml(p, 'lg')}</div>
+      <div class="person-photo">${avatarHtml(p, 'lg', 'team')}</div>
       <div class="person-body">
         <h3>${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)}</h3>
         <div class="person-role">${escapeHtml(roleText(p))}</div>

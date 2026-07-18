@@ -20,13 +20,27 @@ function setkaPhotoUrl(token, size){
   if (!token) return null;
   return `https://tabletennis.setkacup.com/api/Image/setka/${size || '180x180'}/${token}.jpeg`;
 }
-function avatarHtml(p, size){
+function personImageSlug(p){
+  return `${p.first_name}-${p.last_name}`
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ș/g, 's').replace(/ț/g, 't')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+function avatarHtml(p, size, context = 'player'){
   const token = p.setka_cup_cache?.photo_token;
-  const url = p.photo_url || setkaPhotoUrl(token, size === 'lg' ? '280x280' : '90x90');
+  // Staff and competition portraits are deliberately separate. Some people
+  // have both roles, so a single database photo_url must not choose the image
+  // for every part of the site.
+  const url = `images/${context === 'team' ? 'team' : 'players'}/${personImageSlug(p)}.webp`;
+  const fallback = setkaPhotoUrl(token, size === 'lg' ? '280x280' : '90x90');
   const initials = (p.first_name[0]+p.last_name[0]).toUpperCase();
-  return url
-    ? `<img src="${url}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`
-    : initials;
+  const onerror = fallback
+    ? `this.onerror=function(){this.parentElement.textContent='${initials}'};this.src='${fallback}'`
+    : `this.parentElement.textContent='${initials}'`;
+  return `<img src="${url}" alt="" loading="lazy" onerror="${onerror}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`;
 }
 function playerStats(p){
   const c = p.setka_cup_cache;
