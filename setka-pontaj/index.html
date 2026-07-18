@@ -359,6 +359,24 @@
   .stats-act-row .muted{ color:var(--muted); }
   .stats-empty{ color:var(--muted); font-size:12.5px; font-style:italic; padding:4px 0 8px; }
 
+  /* ── Evoluția jucătorilor (rating/activity comparison) ── */
+  .compare-controls{ display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .compare-controls .search-wrap{ max-width:260px; }
+  .compare-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .compare-chip{ display:flex; align-items:center; gap:6px; padding:5px 6px 5px 10px; border-radius:20px; background:var(--bg); border:1px solid var(--border); font-size:12px; color:var(--text); }
+  .compare-chip-swatch{ width:8px; height:8px; border-radius:50%; flex:0 0 auto; }
+  .compare-chip button{ background:none; border:0; color:var(--muted); cursor:pointer; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; line-height:1; }
+  .compare-chip button:hover{ background:var(--surface2); color:var(--text); }
+  .compare-list{ max-height:180px; overflow-y:auto; border:1px solid var(--border); border-radius:9px; background:var(--bg); margin-bottom:16px; }
+  .compare-list-item{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 12px; font-size:12.5px; border-bottom:1px solid var(--line-2); cursor:pointer; }
+  .compare-list-item:last-child{ border-bottom:0; }
+  .compare-list-item:hover{ background:var(--surface2); }
+  .compare-list-item.is-selected{ opacity:.45; cursor:default; }
+  .compare-list-empty{ padding:14px 12px; font-size:12.5px; color:var(--muted); font-style:italic; }
+  .compare-legend{ display:flex; flex-wrap:wrap; gap:12px; margin-bottom:8px; font-size:11.5px; color:var(--muted); }
+  .compare-legend-item{ display:flex; align-items:center; gap:5px; }
+  .compare-legend-swatch{ width:9px; height:9px; border-radius:2px; flex:0 0 auto; }
+
   /* ── Statistici generale (org-wide overview) ── */
   #statsOverviewModal .modal{ max-width:980px; }
   #statsOverviewModal .modal-head{ flex-wrap:wrap; gap:10px; }
@@ -1231,6 +1249,25 @@
         </table>
         <p class="stats-empty" id="ovRankMore" style="display:none"></p>
 
+        <p class="section-label">Evoluția jucătorilor — rating &amp; activitate</p>
+        <div class="compare-controls">
+          <div class="search-wrap">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="9" r="6.5"/><path d="M17 17l-3.5-3.5" stroke-linecap="round"/></svg>
+            <input type="search" id="compareSearch" placeholder="Caută participant…">
+          </div>
+          <select class="filter-select" id="compareCategoryFilter">
+            <option value="">Toate categoriile</option>
+            <option value="TOP">TOP</option><option value="I">Categoria I</option><option value="II">Categoria II</option>
+            <option value="III">Categoria III</option><option value="Referee">Referee</option>
+          </select>
+        </div>
+        <div class="compare-chips" id="compareChips"></div>
+        <div class="compare-list" id="compareList"></div>
+        <p class="section-label">Rating în timp</p>
+        <div class="stats-chart-wrap" id="compareRatingChart"></div>
+        <p class="section-label">Meciuri jucate pe lună</p>
+        <div class="stats-chart-wrap" id="compareActivityChart"></div>
+
         <p class="section-label">Fără activitate în anul selectat</p>
         <div id="ovInactive"></div>
 
@@ -1554,6 +1591,16 @@
     '#': '#',
     'Valoare': 'Значение',
     'Clasament — cei mai plătiți participanți': 'Рейтинг — самые оплачиваемые участники',
+    'Evoluția jucătorilor — rating & activitate': 'Динамика игроков — рейтинг и активность',
+    'Caută participant…': 'Поиск участника…',
+    'Toate categoriile': 'Все категории',
+    'Rating în timp': 'Рейтинг во времени',
+    'Meciuri jucate pe lună': 'Сыгранные матчи по месяцам',
+    'adăugat': 'добавлен',
+    'Alege participanți mai jos pentru a compara.': 'Выберите участников ниже для сравнения.',
+    'Nu există încă date lunare pentru participanții aleși.': 'Пока нет ежемесячных данных для выбранных участников.',
+    'Doar o lună de date disponibilă — graficul se completează pe măsură ce trec lunile.':
+      'Доступны данные только за один месяц — график заполнится по мере накопления данных.',
     'Fără activitate în anul selectat': 'Без активности за выбранный год',
     'Igiena datelor': 'Полнота данных',
     'Profiluri incomplete': 'Неполные профили',
@@ -2581,6 +2628,9 @@
   async function openStatsOverview(){
     statsOverviewModal.classList.add('show');
     statsOverviewModal.querySelector('.modal-body').scrollTop = 0;
+    renderCompareList();
+    renderCompareChips();
+    renderCompareCharts();
     if (!ovData) {
       document.getElementById('ovKpis').innerHTML = '<p class="stats-empty">Se încarcă…</p>';
       const [totalsRes, entriesRes, actsRes] = await Promise.all([
@@ -2778,6 +2828,161 @@
       <td class="metric-action-spacer" aria-hidden="true"></td>
     </tr>`).join('') || `<tr><td colspan="5"><p class="stats-empty">${emptyLabel}</p></td></tr>`;
   }
+
+  // ══ Evoluția jucătorilor — rating & activity comparison (referee_monthly_stats) ══
+  const COMPARE_COLORS = ['#C8A96E','#3B7DDE','#2F9E5C','#A257B0','#B8415A','#4FB8C8','#E8974E','#8FA7BE'];
+  const COMPARE_MAX = 8;
+  let compareSelectedIds = [];
+  let compareStatsCache = {}; // referee_id -> rows from referee_monthly_stats, ordered by period
+
+  function compareColorFor(refId){
+    const idx = compareSelectedIds.indexOf(refId);
+    return COMPARE_COLORS[idx % COMPARE_COLORS.length];
+  }
+
+  function renderCompareList(){
+    const search = document.getElementById('compareSearch').value.trim().toLowerCase();
+    const categoryFilter = document.getElementById('compareCategoryFilter').value;
+    const list = document.getElementById('compareList');
+    const candidates = referees
+      .filter(r => r.active !== false)
+      .filter(r => !categoryFilter || r.category === categoryFilter)
+      .filter(r => !search || `${r.last_name} ${r.first_name}`.toLowerCase().includes(search))
+      .sort((a, b) => nameCompare(a, b));
+    if (!candidates.length) {
+      list.innerHTML = `<p class="compare-list-empty">${t('Niciun participant găsit.')}</p>`;
+      return;
+    }
+    list.innerHTML = candidates.map(r => {
+      const selected = compareSelectedIds.includes(r.id);
+      return `<div class="compare-list-item ${selected ? 'is-selected' : ''}" data-compare-ref="${r.id}">
+        <span>${escapeHtml(r.last_name)} ${escapeHtml(r.first_name)} <span class="cat-badge cat-${safeClassToken(r.category)}">${escapeHtml(r.category)}</span></span>
+        <span class="muted" style="font-size:11px">${selected ? t('adăugat') : '+'}</span>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('[data-compare-ref]').forEach(row => {
+      row.addEventListener('click', () => toggleCompareSelect(row.dataset.compareRef));
+    });
+  }
+
+  function renderCompareChips(){
+    const chips = document.getElementById('compareChips');
+    chips.innerHTML = compareSelectedIds.map(refId => {
+      const ref = referees.find(r => r.id === refId);
+      if (!ref) return '';
+      return `<span class="compare-chip"><span class="compare-chip-swatch" style="background:${compareColorFor(refId)}"></span>${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}<button type="button" data-remove-compare="${refId}" aria-label="${tName('Elimină ', 'Убрать ', escapeHtml(ref.last_name) + ' ' + escapeHtml(ref.first_name))}">✕</button></span>`;
+    }).join('');
+    chips.querySelectorAll('[data-remove-compare]').forEach(btn => {
+      btn.addEventListener('click', () => toggleCompareSelect(btn.dataset.removeCompare));
+    });
+  }
+
+  async function toggleCompareSelect(refId){
+    const idx = compareSelectedIds.indexOf(refId);
+    if (idx >= 0) {
+      compareSelectedIds.splice(idx, 1);
+    } else {
+      if (compareSelectedIds.length >= COMPARE_MAX) { alert(currentLang === 'ru' ? `Можно сравнить не более ${COMPARE_MAX} участников одновременно.` : `Poți compara cel mult ${COMPARE_MAX} participanți simultan.`); return; }
+      compareSelectedIds.push(refId);
+      if (!compareStatsCache[refId]) {
+        const { data } = await db.from('referee_monthly_stats').select('period, rating_sc, total_tournaments, total_matches, wins, losses').eq('referee_id', refId).order('period');
+        compareStatsCache[refId] = data || [];
+      }
+    }
+    renderCompareList();
+    renderCompareChips();
+    renderCompareCharts();
+  }
+
+  function periodShortLabel(period){
+    const d = new Date(period + 'T00:00:00');
+    return `${MONTH_NAMES[d.getMonth()].slice(0, 3)} '${String(d.getFullYear()).slice(2)}`;
+  }
+
+  function renderMultiLineChart(series, containerId, opts = {}){
+    const wrap = document.getElementById(containerId);
+    const withData = series.filter(s => s.points.length > 0);
+    if (!compareSelectedIds.length) {
+      wrap.innerHTML = `<p class="stats-chart-empty">${t('Alege participanți mai jos pentru a compara.')}</p>`;
+      return;
+    }
+    if (!withData.length) {
+      wrap.innerHTML = `<p class="stats-chart-empty">${t('Nu există încă date lunare pentru participanții aleși.')}</p>`;
+      return;
+    }
+    const allPeriods = Array.from(new Set(withData.flatMap(s => s.points.map(p => p.period)))).sort();
+    if (allPeriods.length < 2) {
+      wrap.innerHTML = `<p class="stats-chart-empty">${t('Doar o lună de date disponibilă — graficul se completează pe măsură ce trec lunile.')}</p>`;
+      return;
+    }
+    const allValues = withData.flatMap(s => s.points.map(p => p.value));
+    const rawMin = Math.min(0, ...allValues);
+    const rawMax = Math.max(...allValues, 1);
+    const W = 640, H = 200, padLeft = 34, padRight = 10, padBottom = 22, padTop = 12;
+    const plotWidth = W - padLeft - padRight;
+    const plotHeight = H - padBottom - padTop;
+    const span = (rawMax - rawMin) || 1;
+    const min = rawMin, max = rawMax + span * 0.08;
+    const x = period => padLeft + (allPeriods.length === 1 ? 0 : (allPeriods.indexOf(period) / (allPeriods.length - 1)) * plotWidth);
+    const y = value => padTop + plotHeight - ((value - min) / ((max - min) || 1)) * plotHeight;
+    const ticks = 4;
+    const grid = Array.from({ length: ticks + 1 }, (_, i) => {
+      const value = min + (i / ticks) * (max - min);
+      const yy = y(value);
+      return `<line class="stats-grid-line" x1="${padLeft}" y1="${yy.toFixed(1)}" x2="${W - padRight}" y2="${yy.toFixed(1)}"/>
+        <text x="${padLeft - 6}" y="${(yy + 3).toFixed(1)}" text-anchor="end" font-size="8" fill="var(--muted)">${(opts.valueFormatter ? opts.valueFormatter(value) : Math.round(value))}</text>`;
+    }).join('');
+    const xLabels = allPeriods.map(p => `<text x="${x(p).toFixed(1)}" y="${H - 4}" text-anchor="middle" font-size="8.5" fill="var(--muted)">${periodShortLabel(p)}</text>`).join('');
+    const lines = withData.map(s => {
+      const pts = s.points.filter(p => allPeriods.includes(p.period));
+      const pathD = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${x(p.period).toFixed(1)} ${y(p.value).toFixed(1)}`).join(' ');
+      const dots = pts.map(p => `<circle cx="${x(p.period).toFixed(1)}" cy="${y(p.value).toFixed(1)}" r="3" fill="${s.color}" stroke="var(--surface)" stroke-width="1.5"><title>${escapeHtml(s.name)} · ${periodShortLabel(p.period)}: ${opts.valueFormatter ? opts.valueFormatter(p.value) : p.value}</title></circle>`).join('');
+      return `<path d="${pathD}" fill="none" stroke="${s.color}" stroke-width="2"/>${dots}`;
+    }).join('');
+    const legend = withData.map(s => `<span class="compare-legend-item"><span class="compare-legend-swatch" style="background:${s.color}"></span>${escapeHtml(s.name)}</span>`).join('');
+    wrap.innerHTML = `<div class="compare-legend">${legend}</div><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeHtml(opts.ariaLabel || 'Grafic comparativ')}">
+      ${grid}
+      <line class="stats-axis-line" x1="${padLeft}" y1="${padTop}" x2="${padLeft}" y2="${H - padBottom}"/>
+      <line class="stats-axis-line" x1="${padLeft}" y1="${H - padBottom}" x2="${W - padRight}" y2="${H - padBottom}"/>
+      ${lines}
+      ${xLabels}
+    </svg>`;
+  }
+
+  function renderCompareCharts(){
+    const ratingSeries = compareSelectedIds.map(refId => {
+      const ref = referees.find(r => r.id === refId);
+      const rows = compareStatsCache[refId] || [];
+      return {
+        name: ref ? `${ref.last_name} ${ref.first_name}` : '—',
+        color: compareColorFor(refId),
+        points: rows.filter(r => r.rating_sc != null).map(r => ({ period: r.period, value: Number(r.rating_sc) })),
+      };
+    });
+    renderMultiLineChart(ratingSeries, 'compareRatingChart', {
+      ariaLabel: currentLang === 'ru' ? 'Рейтинг во времени' : 'Rating în timp',
+      valueFormatter: v => v.toLocaleString('ro-RO', { maximumFractionDigits:1 }),
+    });
+
+    const activitySeries = compareSelectedIds.map(refId => {
+      const ref = referees.find(r => r.id === refId);
+      const rows = compareStatsCache[refId] || [];
+      const points = [];
+      for (let i = 1; i < rows.length; i++) {
+        if (rows[i].total_matches == null || rows[i - 1].total_matches == null) continue;
+        const delta = Number(rows[i].total_matches) - Number(rows[i - 1].total_matches);
+        points.push({ period: rows[i].period, value: Math.max(delta, 0) });
+      }
+      return { name: ref ? `${ref.last_name} ${ref.first_name}` : '—', color: compareColorFor(refId), points };
+    });
+    renderMultiLineChart(activitySeries, 'compareActivityChart', {
+      ariaLabel: currentLang === 'ru' ? 'Сыгранные матчи по месяцам' : 'Meciuri jucate pe lună',
+      valueFormatter: v => Math.round(v).toLocaleString('ro-RO'),
+    });
+  }
+
+  document.getElementById('compareSearch').addEventListener('input', renderCompareList);
+  document.getElementById('compareCategoryFilter').addEventListener('change', renderCompareList);
 
   document.getElementById('openStatsOverviewBtn').addEventListener('click', openStatsOverview);
   document.getElementById('statsYearSelect').addEventListener('change', (e) => renderStatsOverviewForYear(e.target.value));
