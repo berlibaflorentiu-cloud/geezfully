@@ -173,6 +173,7 @@
     #openStatsOverviewBtn{ width:105px; flex:0 0 105px; }
     #openSetkaSyncBtn{ width:68px; flex:0 0 68px; }
     #openCategoryReclassBtn{ width:112px; flex:0 0 112px; }
+    #transportPreviewBtn{ width:105px; flex:0 0 105px; }
   }
   @media (min-width:1100px){
     .toolbar{
@@ -616,7 +617,7 @@
     header.topbar{ padding:10px 14px; row-gap:8px; }
     .brand{ margin-right:auto; order:1; flex-basis:100%; }
     .topbar-actions{ order:2; flex-basis:100%; }
-    #manageRefereesBtn, #openStudioTableBtn, #openArchiveBtn, #openStatsOverviewBtn, #openSetkaSyncBtn, #openCategoryReclassBtn, #langToggle{ flex:1 1 auto; }
+    #manageRefereesBtn, #openStudioTableBtn, #openArchiveBtn, #openStatsOverviewBtn, #openSetkaSyncBtn, #openCategoryReclassBtn, #transportPreviewBtn, #langToggle{ flex:1 1 auto; }
     #logoutBtn{ order:2; flex:1 1 auto; }
     .month-nav{ order:3; flex-basis:100%; justify-content:center; }
     .user-chip{ order:4; flex-basis:100%; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -848,6 +849,7 @@
         <button class="btn btn-sm btn-gold" id="openStatsOverviewBtn">Statistici</button>
         <button class="btn btn-sm btn-gold setka-btn" id="openSetkaSyncBtn">Setka<span class="setka-dot"></span></button>
         <button class="btn btn-sm btn-gold setka-btn" id="openCategoryReclassBtn">Categorii<span class="setka-dot"></span></button>
+        <button class="btn btn-sm btn-gold" id="transportPreviewBtn" title="Previzualizează datele de transport ale lunii selectate">Transport</button>
         <div class="stats-scope-toggle" id="langToggle" role="group" aria-label="Limba interfeței">
           <button type="button" class="stats-scope-btn" data-lang="ro">RO</button>
           <button type="button" class="stats-scope-btn" data-lang="ru">RU</button>
@@ -957,6 +959,40 @@
     </div>
   </div>
 
+  <!-- ══ Transport preview (owner-only, separate from onorariu) ══ -->
+  <div class="modal-backdrop" id="transportModal">
+    <div class="modal" style="max-width:720px">
+      <div class="modal-head">
+        <h2>Transport — <span id="transportPeriodLabel"></span></h2>
+        <button class="icon-btn" id="closeTransport" aria-label="Închide">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin:0 0 14px; color:var(--muted); line-height:1.6">
+          Plăți de transport către participanți — separat de onorariu, doar pentru evidența internă.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Participant</th><th>Regiune</th><th>Km</th><th>Taxi acoperit</th><th>Total transport</th></tr>
+            </thead>
+            <tbody id="transportRowsBody"></tbody>
+          </table>
+        </div>
+        <div class="empty-state" id="transportEmptyState" style="display:none">Nimeni nu are date de transport luna asta.</div>
+        <div class="summary-chip" style="margin-top:14px">
+          <span>Total de plătit: <b class="num" id="transportGrandTotal">0</b> MDL</span>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" id="closeTransportBtn">Închide</button>
+        <button class="btn btn-gold" id="downloadTransportBtn">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v9M6.5 9.5 10 13l3.5-3.5"/><path d="M4 15v2h12v-2"/></svg>
+          Descarcă CSV
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ Referee detail modal (bonuses + travel/reconciliation + edit roster) ══ -->
   <div class="modal-backdrop" id="detailModal">
     <div class="modal">
@@ -968,22 +1004,25 @@
         <div class="ytd-summary" id="ytdSummary" style="display:none">
           <span>Total încasat în <b id="ytdYear"></b>:</span> <b id="ytdTotal" class="num"></b>&nbsp;MDL
         </div>
-        <p class="section-label">Deplasare / decontare</p>
+        <p class="section-label">Deplasare</p>
         <div class="detail-grid">
           <section class="detail-card">
             <h3 class="detail-card-title">Deplasare</h3>
             <div class="field"><label>Regiune</label><input type="text" id="dRegion"></div>
-            <div class="form-grid">
-              <div class="field"><label>Taxi (MDL)</label><input type="number" id="dTaxi" step="0.01"></div>
-              <div class="field"><label>Distanță (km)</label><input type="number" id="dKm" step="0.01"></div>
-            </div>
+            <div class="field"><label>Distanță (km)</label><input type="number" id="dKm" step="0.01"></div>
           </section>
           <section class="detail-card">
-            <h3 class="detail-card-title">Decontare</h3>
-            <div class="field"><label>Achitat (MDL)</label><input type="number" id="dPaid" step="0.01"></div>
-            <div class="form-grid">
-              <div class="field"><label>Conform calculului</label><input type="number" id="dConform" step="0.01"></div>
-              <div class="field"><label>Rest</label><input type="text" id="dRest" disabled></div>
+            <h3 class="detail-card-title">Transport</h3>
+            <div class="field">
+              <label>Total transport (MDL)</label>
+              <input type="number" id="dTransportTotal" step="0.01" disabled>
+            </div>
+            <span class="visibility-copy"><small id="dTransportHint" style="color:var(--muted); font-size:11.5px; display:block; margin:-4px 0 0"></small></span>
+            <div class="field full" style="margin-top:12px">
+              <label class="visibility-setting">
+                <span class="visibility-copy"><strong>Acoperă taxi pe nopți de turneu</strong><small>Adaugă 65 MDL la transport pentru fiecare turneu de noapte jucat luna asta.</small></span>
+                <span class="switch"><input type="checkbox" id="dTaxiCovered"><span class="switch-track"></span></span>
+              </label>
             </div>
           </section>
         </div>
@@ -1064,6 +1103,12 @@
             <div class="field"><label>IBAN</label><input type="text" id="rIban"></div>
             <div class="field"><label>Nr. contract</label><input type="text" id="rContractNo"></div>
             <div class="field"><label>Data contract</label><input type="text" id="rContractDate" placeholder="ex: 25 mart"></div>
+            <div class="field full">
+              <label class="visibility-setting">
+                <span class="visibility-copy"><strong>Acoperă taxi pe nopți de turneu</strong><small>Adaugă 65 MDL la transport pentru fiecare turneu de noapte jucat luna asta.</small></span>
+                <span class="switch"><input type="checkbox" id="rTaxiCovered"><span class="switch-track"></span></span>
+              </label>
+            </div>
             <div class="field full">
               <label class="visibility-setting">
                 <span class="visibility-copy"><strong>Ascunde din lista principală</strong><small>Participantul rămâne disponibil în filtrul „Participanți ascunși”.</small></span>
@@ -1384,11 +1429,19 @@
     '↕ Onorariu: mare–mic': '↕ Гонорар: больше–меньше',
     '↕ Onorariu: mic–mare': '↕ Гонорар: меньше–больше',
     'Resetează': 'Сбросить',
+    'Previzualizează datele de transport ale lunii selectate': 'Просмотр данных о транспорте за выбранный месяц',
     'Descarcă toate datele lunii selectate': 'Скачать все данные выбранного месяца',
     'Descarcă luna': 'Скачать месяц',
     'Activi:': 'Активных:',
     'Total onorarii:': 'Всего гонораров:',
     'Impozit 15%:': 'Налог 15%:',
+
+    // Transport preview modal
+    'Plăți de transport către participanți — separat de onorariu, doar pentru evidența internă.':
+      'Транспортные выплаты участникам — отдельно от гонорара, только для внутреннего учёта.',
+    'Nimeni nu are date de transport luna asta.': 'Ни у кого нет данных о транспорте в этом месяце.',
+    'Total de plătit:': 'Итого к оплате:',
+    'Descarcă CSV': 'Скачать CSV',
 
     // Main table
     'Participant': 'Участник',
@@ -1423,15 +1476,15 @@
     // Detail modal
     'Detalii participant': 'Детали участника',
     'Total încasat în': 'Всего получено в',
-    'Deplasare / decontare': 'Поездки / расчёт',
     'Deplasare': 'Поездки',
     'Regiune': 'Регион',
-    'Taxi (MDL)': 'Такси (MDL)',
     'Distanță (km)': 'Расстояние (км)',
-    'Decontare': 'Расчёт',
-    'Achitat (MDL)': 'Оплачено (MDL)',
-    'Conform calculului': 'По расчёту',
-    'Rest': 'Остаток',
+    'Distanță': 'Расстояние',
+    'Km': 'Км',
+    'Transport': 'Транспорт',
+    'Total transport (MDL)': 'Транспорт всего (MDL)',
+    'Total transport': 'Транспорт всего',
+    'Taxi acoperit': 'Такси покрыто',
     'Scoruri manuale (opțional)': 'Ручные баллы (необязательно)',
     'Mexico': 'Mexico',
     'Rio': 'Rio',
@@ -1472,6 +1525,8 @@
     'Nr. contract': 'Номер договора',
     'Data contract': 'Дата договора',
     'ex: 25 mart': 'напр.: 25 mart',
+    'Acoperă taxi pe nopți de turneu': 'Такси покрывается на ночных турнирах',
+    'Adaugă 65 MDL la transport pentru fiecare turneu de noapte jucat luna asta.': 'Добавляет 65 MDL к транспорту за каждый ночной турнир, сыгранный в этом месяце.',
     'Ascunde din lista principală': 'Скрыть из основного списка',
     'Participantul rămâne disponibil în filtrul „Participanți ascunși”.': 'Участник останется доступен в фильтре «Скрытые участники».',
     'Șterge': 'Удалить',
@@ -2053,9 +2108,9 @@
       'Cod fiscal','IBAN','Bancă','Nr. contract','Data contract',
       'Turneu zi','Turneu noapte','Meciuri zi','Meciuri noapte',
       'Locul I zi','Locul I noapte','Locul III zi','Locul III noapte',
-      'Arbitraj zi','Arbitraj noapte','Taxi (MDL)','Regiune','Km',
+      'Arbitraj zi','Arbitraj noapte','Regiune','Km','Taxi acoperit','Total transport (MDL)',
       'Onorariu (MDL)','Impozit (%)','Impozit (MDL)','Total cu impozit (MDL)',
-      'Achitat (MDL)','Conform calculului','Rest','Notițe','Ultima actualizare'
+      'Notițe','Ultima actualizare'
     ];
     const rows = referees.slice()
       .sort((a, b) => (a.last_name + ' ' + a.first_name).localeCompare(b.last_name + ' ' + b.first_name, 'ro', { sensitivity:'base' }))
@@ -2063,8 +2118,6 @@
         const entry = entries[ref.id] || emptyEntry(ref.id);
         const fee = computeFee(ref, entry);
         const tax = fee * (globalRates.tax_rate || 0);
-        const conform = entry.conform_calcul === null || entry.conform_calcul === undefined || entry.conform_calcul === '' ? null : Number(entry.conform_calcul);
-        const rest = conform === null ? '' : (Number(entry.paid_amount) || 0) - conform;
         return [
           periodKey(currentPeriod).slice(0, 7), entry.last_name || ref.last_name, entry.first_name || ref.first_name, entry.category || ref.category,
           ref.active === false ? 'Ascuns' : 'Vizibil', hasActivity(entry) ? 'Da' : 'Nu',
@@ -2072,9 +2125,9 @@
           entry.contract_number || ref.contract_number || '', localizeRomanianDate(entry.contract_date || ref.contract_date || ''),
           entry.tournament_day || 0, entry.tournament_night || 0, entry.matches_day || 0, entry.matches_night || 0,
           entry.place1_day || 0, entry.place1_night || 0, entry.place3_day || 0, entry.place3_night || 0,
-          entry.arbitraj_day || 0, entry.arbitraj_night || 0, exportNumber(entry.taxi || 0), entry.region || '', exportNumber(entry.km || 0),
+          entry.arbitraj_day || 0, entry.arbitraj_night || 0, entry.region || '', exportNumber(entry.km || 0),
+          ref.taxi_covered ? 'Da' : 'Nu', exportNumber(entry.transport_total || 0),
           exportNumber(fee), exportNumber((globalRates.tax_rate || 0) * 100), exportNumber(tax), exportNumber(fee + tax),
-          exportNumber(entry.paid_amount || 0), conform === null ? '' : exportNumber(conform), rest === '' ? '' : exportNumber(rest),
           entry.notes || '', entry.updated_at || ''
         ];
       });
@@ -2089,6 +2142,59 @@
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
+
+  // ══ TRANSPORT PREVIEW — owner-only ledger, entirely separate from onorariu ══
+  function transportRows(){
+    return referees.slice()
+      .sort((a, b) => (a.last_name + ' ' + a.first_name).localeCompare(b.last_name + ' ' + b.first_name, 'ro', { sensitivity:'base' }))
+      .map(ref => ({ ref, entry: entries[ref.id] || emptyEntry(ref.id) }))
+      .filter(({ ref, entry }) => (Number(entry.km) || 0) !== 0 || (entry.region || '').trim() || (Number(entry.transport_total) || 0) !== 0 || ref.taxi_covered === true);
+  }
+  function openTransportModal(){
+    const rows = transportRows();
+    document.getElementById('transportPeriodLabel').textContent = `${MONTH_NAMES[currentPeriod.getMonth()]} ${currentPeriod.getFullYear()}`;
+    const body = document.getElementById('transportRowsBody');
+    body.innerHTML = '';
+    let grandTotal = 0;
+    rows.forEach(({ ref, entry }) => {
+      const total = Number(entry.transport_total) || 0;
+      grandTotal += total;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${escapeHtml(ref.last_name)} ${escapeHtml(ref.first_name)}</td>
+        <td>${escapeHtml(entry.region || '—')}</td>
+        <td class="num">${escapeHtml(fmtMoney(entry.km || 0))}</td>
+        <td>${ref.taxi_covered ? 'Da' : 'Nu'}</td>
+        <td class="num">${escapeHtml(fmtMoney(total))} MDL</td>`;
+      body.appendChild(tr);
+    });
+    document.getElementById('transportEmptyState').style.display = rows.length ? 'none' : '';
+    document.getElementById('transportGrandTotal').textContent = fmtMoney(grandTotal);
+    document.getElementById('transportModal').classList.add('show');
+  }
+  function downloadTransportCsv(){
+    const rows = transportRows();
+    const headers = ['Luna','Nume','Prenume','Regiune','Km','Taxi acoperit','Total transport (MDL)'];
+    const dataRows = rows.map(({ ref, entry }) => [
+      periodKey(currentPeriod).slice(0, 7), ref.last_name, ref.first_name,
+      entry.region || '', exportNumber(entry.km || 0), ref.taxi_covered ? 'Da' : 'Nu', exportNumber(entry.transport_total || 0)
+    ]);
+    const grandTotal = rows.reduce((sum, { entry }) => sum + (Number(entry.transport_total) || 0), 0);
+    dataRows.push(['', '', '', '', '', 'Total', exportNumber(grandTotal)]);
+    const csv = '﻿' + [headers, ...dataRows].map(row => row.map(csvCell).join(';')).join('\r\n');
+    const blob = new Blob([csv], { type:'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `transport-setka-${periodKey(currentPeriod).slice(0, 7)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  document.getElementById('transportPreviewBtn').addEventListener('click', openTransportModal);
+  document.getElementById('closeTransport').addEventListener('click', () => document.getElementById('transportModal').classList.remove('show'));
+  document.getElementById('closeTransportBtn').addEventListener('click', () => document.getElementById('transportModal').classList.remove('show'));
+  document.getElementById('downloadTransportBtn').addEventListener('click', downloadTransportCsv);
 
   // ══ FEE CALC — mirrors the entry_totals SQL view exactly ══
   function computeFee(referee, entry){
@@ -2113,7 +2219,7 @@
       tournament_day:0, tournament_night:0, matches_day:0, matches_night:0,
       place1_day:0, place1_night:0, place3_day:0, place3_night:0,
       arbitraj_day:0, arbitraj_night:0, taxi:0, region:'', km:0,
-      paid_amount:0, conform_calcul:null, notes:'' };
+      paid_amount:0, conform_calcul:null, transport_total:0, transport_auto_at_save:0, notes:'' };
   }
 
   function hasActivity(entry){
@@ -2123,11 +2229,9 @@
 
   function detailPreview(entry, refId){
     const items = [];
-    if (Number(entry.taxi)) items.push(`Taxi ${fmtMoney(entry.taxi)} MDL`);
     if ((entry.region || '').trim()) items.push(escapeHtml(entry.region.trim()));
     if (Number(entry.km)) items.push(`${fmtMoney(entry.km)} km`);
-    if (Number(entry.paid_amount)) items.push(`Achitat ${fmtMoney(entry.paid_amount)}`);
-    if (entry.conform_calcul !== null && entry.conform_calcul !== undefined && entry.conform_calcul !== '') items.push(`Conform ${fmtMoney(entry.conform_calcul)}`);
+    if (Number(entry.transport_total)) items.push(`Transport ${fmtMoney(entry.transport_total)} MDL`);
     if ((entry.notes || '').trim()) items.push('Notițe');
     const bonusCount = (bonusesByRef[refId] || []).length;
     if (bonusCount) items.push(`${bonusCount} ${bonusCount === 1 ? 'bonus' : 'bonusuri'}`);
@@ -2421,21 +2525,56 @@
   let statsRefId = null;
   let statsReturnToOverview = false;
 
+  const TRANSPORT_KM_RATE = 0.85;
+  const TRANSPORT_TAXI_NIGHT_RATE = 65;
+
+  function computeTransportAuto(ref, entry){
+    const km = Number(entry.km) || 0;
+    const nights = Number(entry.tournament_night) || 0;
+    const taxiBonus = (ref && ref.taxi_covered) ? nights * TRANSPORT_TAXI_NIGHT_RATE : 0;
+    return Math.round((km * TRANSPORT_KM_RATE + taxiBonus) * 100) / 100;
+  }
+
+  function transportHintText(ref, entry){
+    const km = Number(entry.km) || 0;
+    const nights = Number(entry.tournament_night) || 0;
+    const parts = [`${fmtMoney(km)} km × ${fmtMoney(TRANSPORT_KM_RATE)} MDL`];
+    if (ref && ref.taxi_covered) parts.push(`${nights} nopți turneu × ${TRANSPORT_TAXI_NIGHT_RATE} MDL (taxi acoperit)`);
+    return `Calculat automat: ${parts.join(' + ')}.`;
+  }
+
+  // Total transport is always a pure computed display — never independently editable —
+  // so it can't drift out of sync with km/taxi-toggle the way a manually-overridable
+  // field could.
+  function refreshTransportField(){
+    const ref = referees.find(r => r.id === detailRefId);
+    const entry = entries[detailRefId] || emptyEntry(detailRefId);
+    document.getElementById('dTransportTotal').value = computeTransportAuto(ref, entry);
+    document.getElementById('dTransportHint').textContent = transportHintText(ref, entry);
+  }
+
   function openDetail(refId){
     detailRefId = refId;
     const ref = referees.find(r => r.id === refId);
-    const entry = entries[refId] || emptyEntry(refId);
+    const entry = entries[refId] || (entries[refId] = emptyEntry(refId));
     document.getElementById('detailTitle').textContent = tName(`${ref.last_name} ${ref.first_name} — `, `${ref.last_name} ${ref.first_name} — `, currentLang === 'ru' ? 'детали' : 'detalii');
-    document.getElementById('dTaxi').value = entry.taxi || 0;
     document.getElementById('dRegion').value = entry.region || '';
     document.getElementById('dKm').value = entry.km || 0;
-    document.getElementById('dPaid').value = entry.paid_amount || 0;
-    document.getElementById('dConform').value = entry.conform_calcul ?? '';
     document.getElementById('dNotes').value = entry.notes || '';
-    ['dTaxi','dRegion','dKm','dPaid','dConform','dNotes'].forEach(id => { document.getElementById(id).disabled = periodLocked; });
+    document.getElementById('dTaxiCovered').checked = ref.taxi_covered === true;
+    document.getElementById('dTransportTotal').value = computeTransportAuto(ref, entry);
+    document.getElementById('dTransportHint').textContent = transportHintText(ref, entry);
+    ['dRegion','dKm','dTaxiCovered','dNotes'].forEach(id => { document.getElementById(id).disabled = periodLocked; });
+    document.getElementById('dKm').oninput = () => {
+      entry.km = Number(document.getElementById('dKm').value) || 0;
+      refreshTransportField();
+    };
+    document.getElementById('dTaxiCovered').onchange = () => {
+      ref.taxi_covered = document.getElementById('dTaxiCovered').checked;
+      refreshTransportField();
+    };
     document.getElementById('saveDetail').disabled = periodLocked;
     document.getElementById('saveDetail').title = periodLocked ? 'Luna este blocată' : '';
-    updateRest();
 
     const bonusMexico = document.getElementById('bonusMexico');
     const bonusRio = document.getElementById('bonusRio');
@@ -2457,8 +2596,6 @@
       .catch(error => console.error('Nu s-au putut încărca scorurile manuale', error))
       .finally(() => { downloadDetailBtn.disabled = false; });
 
-    document.getElementById('dPaid').oninput = updateRest;
-    document.getElementById('dConform').oninput = updateRest;
     detailModal.classList.add('show');
     loadYtdSummary(refId);
   }
@@ -3079,26 +3216,25 @@
   document.getElementById('closeStudioTable').addEventListener('click', () => studioTableModal.classList.remove('show'));
   document.getElementById('closeStudioTableBtn').addEventListener('click', () => studioTableModal.classList.remove('show'));
 
-  function updateRest(){
-    const paid = Number(document.getElementById('dPaid').value)||0;
-    const conform = document.getElementById('dConform').value === '' ? null : Number(document.getElementById('dConform').value);
-    document.getElementById('dRest').value = conform === null ? '—' : fmtMoney(paid - conform);
-  }
   document.getElementById('closeDetail').addEventListener('click', () => detailModal.classList.remove('show'));
   document.getElementById('cancelDetail').addEventListener('click', () => detailModal.classList.remove('show'));
 
   async function saveDetailChanges({ closeModal = true } = {}) {
     if (periodLocked) return;
     const refId = detailRefId;
+    const ref = referees.find(r => r.id === refId);
     const entry = entries[refId] || (entries[refId] = emptyEntry(refId));
-    entry.taxi = Number(document.getElementById('dTaxi').value)||0;
+    const taxiCoveredChecked = document.getElementById('dTaxiCovered').checked;
+    if (ref) ref.taxi_covered = taxiCoveredChecked;
     entry.region = document.getElementById('dRegion').value;
     entry.km = Number(document.getElementById('dKm').value)||0;
-    entry.paid_amount = Number(document.getElementById('dPaid').value)||0;
-    const conformVal = document.getElementById('dConform').value;
-    entry.conform_calcul = conformVal === '' ? null : Number(conformVal);
+    entry.transport_total = computeTransportAuto(ref, entry);
     entry.notes = document.getElementById('dNotes').value;
     await saveEntry(refId);
+
+    if (ref) {
+      await db.from('referees').update({ taxi_covered: taxiCoveredChecked }).eq('id', refId);
+    }
 
     const bonusInputs = document.querySelectorAll('#bonusList [data-bonus]');
     const bonusRows = Array.from(bonusInputs).map(i => ({
@@ -3316,7 +3452,8 @@
     document.getElementById('rContractNo').value = display.contract_number || '';
     document.getElementById('rContractDate').value = localizeRomanianDate(display.contract_date || '');
     document.getElementById('rHidden').checked = display.active === false;
-    ['rLastName','rFirstName','rCategory','rBank','rFiscal','rIban','rContractNo','rContractDate','rHidden'].forEach(id => {
+    document.getElementById('rTaxiCovered').checked = ref.taxi_covered === true;
+    ['rLastName','rFirstName','rCategory','rBank','rFiscal','rIban','rContractNo','rContractDate','rHidden','rTaxiCovered'].forEach(id => {
       document.getElementById(id).disabled = locked;
     });
     document.getElementById('saveRef').disabled = locked;
@@ -3352,6 +3489,7 @@
       contract_number: document.getElementById('rContractNo').value.trim() || null,
       contract_date: localizeRomanianDate(document.getElementById('rContractDate').value) || null,
       active: !document.getElementById('rHidden').checked,
+      taxi_covered: document.getElementById('rTaxiCovered').checked,
     };
     if (!payload.last_name || !payload.first_name) { alert(t('Nume și prenume sunt obligatorii.')); return; }
     if (editingRefId) {
@@ -3958,13 +4096,9 @@
     const snapName = `${detailEntry.last_name || ref.last_name} ${detailEntry.first_name || ref.first_name}`;
     const btn = document.getElementById('downloadDetailBtn');
     const monthLabel = `${MONTH_NAMES_RO[currentPeriod.getMonth()]} ${currentPeriod.getFullYear()}`;
-    const taxi = Number(document.getElementById('dTaxi').value) || 0;
     const region = document.getElementById('dRegion').value.trim() || '—';
     const km = Number(document.getElementById('dKm').value) || 0;
-    const paid = Number(document.getElementById('dPaid').value) || 0;
-    const conformRaw = document.getElementById('dConform').value;
-    const conform = conformRaw === '' ? null : Number(conformRaw) || 0;
-    const rest = conform === null ? '—' : `${fmtMoney(paid - conform)} MDL`;
+    const transportTotal = Number(document.getElementById('dTransportTotal').value) || 0;
     const notes = document.getElementById('dNotes').value.trim() || 'Nicio notă.';
     const ytdSummary = document.getElementById('ytdSummary');
     const ytdVisible = ytdSummary && ytdSummary.style.display !== 'none';
@@ -3978,16 +4112,13 @@
       ${ytdVisible ? `<div class="detail-pdf-summary">Total încasat în <strong>${escapeHtml(ytdYear)}</strong>: <strong>${escapeHtml(ytdTotal)}</strong> MDL</div>` : ''}
 
       <div class="detail-pdf-section">
-        <h2>Deplasare și decontare</h2>
+        <h2>Deplasare</h2>
         <table class="detail-pdf-table">
-          <thead><tr><th>Regiune</th><th>Taxi</th><th>Distanță</th><th>Achitat</th><th>Conform calculului</th><th>Rest</th></tr></thead>
+          <thead><tr><th>Regiune</th><th>Distanță</th><th>Total transport</th></tr></thead>
           <tbody><tr>
             <td>${escapeHtml(region)}</td>
-            <td class="value">${escapeHtml(fmtMoney(taxi))} MDL</td>
             <td class="value">${escapeHtml(fmtMoney(km))} km</td>
-            <td class="value">${escapeHtml(fmtMoney(paid))} MDL</td>
-            <td class="value">${conform === null ? '—' : `${escapeHtml(fmtMoney(conform))} MDL`}</td>
-            <td class="value">${escapeHtml(rest)}</td>
+            <td class="value">${escapeHtml(fmtMoney(transportTotal))} MDL</td>
           </tr></tbody>
         </table>
       </div>
@@ -4174,6 +4305,11 @@
 
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
+    const transportModal = document.getElementById('transportModal');
+    if (transportModal?.classList.contains('show')) {
+      transportModal.classList.remove('show');
+      return;
+    }
     if (typeof setkaSyncModal !== 'undefined' && setkaSyncModal.classList.contains('show')) {
       setkaSyncModal.classList.remove('show');
       return;
