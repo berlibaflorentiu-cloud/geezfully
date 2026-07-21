@@ -1889,8 +1889,6 @@
   let periodLoadId = 0;
   let _actState = null;
   const rowAvatarCache = new Map();
-  let rowAvatarLoadPromise = null;
-  let rowAvatarsLoaded = false;
   let savedActs = [];
   let archiveLoaded = false;
   let archiveRefFilter = '';
@@ -1996,7 +1994,6 @@
     ]);
     referees = refs || [];
     rowAvatarCache.clear();
-    rowAvatarsLoaded = false;
     rateCategories = {};
     (rc || []).forEach(r => rateCategories[r.category] = r);
     if (gr) globalRates = gr;
@@ -3309,47 +3306,20 @@
 
   function paintRowAvatars(){
     document.querySelectorAll('[data-row-avatar]').forEach(avatar => {
-      const player = rowAvatarCache.get(avatar.dataset.rowAvatar);
-      if (!player) return;
+      const ref = rowAvatarCache.get(avatar.dataset.rowAvatar);
+      if (!ref) return;
       const initials = avatar.textContent.trim();
-      avatar.innerHTML = `<img src="${participantImagePath(player)}" alt="" loading="lazy" onerror="this.parentElement.textContent='${escapeHtml(initials)}'">`;
+      avatar.innerHTML = `<img src="${participantImagePath(ref)}" alt="" loading="lazy" onerror="this.parentElement.textContent='${escapeHtml(initials)}'">`;
     });
   }
 
-  async function hydrateRowAvatars(){
+  // Photo lookup is purely a filesystem guess from the referee's own name —
+  // it doesn't need a confirmed Setka Cup link or an ATTP players-table
+  // round trip. Requiring that link excluded anyone unmatched to Setka Cup
+  // from ever getting a row photo, even when the file existed right there.
+  function hydrateRowAvatars(){
+    referees.forEach(ref => rowAvatarCache.set(ref.id, ref));
     paintRowAvatars();
-    if (rowAvatarsLoaded || rowAvatarLoadPromise || !referees.length) return rowAvatarLoadPromise;
-    rowAvatarLoadPromise = (async () => {
-      try {
-        const refereeIds = referees.map(ref => ref.id);
-        const { data: links, error: linksError } = await db.from('setka_referee_links')
-          .select('referee_id,setka_player_id')
-          .eq('match_status', 'confirmed')
-          .in('referee_id', refereeIds);
-        if (linksError) throw linksError;
-        const playerIds = [...new Set((links || []).map(link => link.setka_player_id).filter(Boolean))];
-        if (!playerIds.length) {
-          rowAvatarsLoaded = true;
-          return;
-        }
-        const { data: players, error: playersError } = await attpDb.from('players')
-          .select('first_name,last_name,setka_cup_player_id')
-          .in('setka_cup_player_id', playerIds);
-        if (playersError) throw playersError;
-        const playersBySetkaId = new Map((players || []).map(player => [player.setka_cup_player_id, player]));
-        (links || []).forEach(link => {
-          const player = playersBySetkaId.get(link.setka_player_id);
-          if (player) rowAvatarCache.set(link.referee_id, player);
-        });
-        rowAvatarsLoaded = true;
-        paintRowAvatars();
-      } catch (error) {
-        console.error('Participant avatars could not be loaded', error);
-      } finally {
-        rowAvatarLoadPromise = null;
-      }
-    })();
-    return rowAvatarLoadPromise;
   }
 
   function renderPlayerProfile(card, ref, player, mttf){
