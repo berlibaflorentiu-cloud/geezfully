@@ -1540,6 +1540,10 @@
     'Rată de victorie': 'Процент побед',
     'Locul II': '2 место',
     'Date Setka Cup prin ATTP': 'Данные Setka Cup через ATTP',
+    'Date MTTF': 'Данные MTTF',
+    'Rating MTTF · meciuri Setka Cup prin ATTP': 'Рейтинг MTTF · матчи Setka Cup через ATTP',
+    'Căutare după nume': 'Поиск по имени',
+    'Nu există momentan statistici sau fotografie pentru ': 'Пока нет статистики или фото для ',
     'Se încarcă profilul sportiv…': 'Загрузка спортивного профиля…',
     'Statisticile nu au putut fi încărcate momentan.': 'Не удалось загрузить статистику.',
     'Nume și prenume sunt obligatorii.': 'Фамилия и имя обязательны.',
@@ -3348,15 +3352,15 @@
     return rowAvatarLoadPromise;
   }
 
-  function renderPlayerProfile(card, ref, player){
-    if (!player) {
+  function renderPlayerProfile(card, ref, player, mttf){
+    if (!player && !mttf) {
       const initials = `${ref.first_name?.[0] || ''}${ref.last_name?.[0] || ''}`.toUpperCase();
       card.innerHTML = `<div class="ref-player-avatar">${escapeHtml(initials)}</div>
-        <div class="ref-player-status"><strong>${t('Profil sportiv indisponibil')}</strong><br>${tName('ATTP nu conține momentan statistici sau fotografie pentru ', 'ATTP пока не содержит статистику или фото для ', escapeHtml(ref.first_name) + ' ' + escapeHtml(ref.last_name))}.</div>
-        <div class="ref-player-source">Căutare după ID Setka Cup și nume</div>`;
+        <div class="ref-player-status"><strong>${t('Profil sportiv indisponibil')}</strong><br>${tName('Nu există momentan statistici sau fotografie pentru ', 'Пока нет статистики или фото для ', escapeHtml(ref.first_name) + ' ' + escapeHtml(ref.last_name))}.</div>
+        <div class="ref-player-source">Căutare după nume</div>`;
       return;
     }
-    const stats = player.setka_cup_cache;
+    const stats = player?.setka_cup_cache;
     const finished = Array.isArray(stats?.tournament_stats)
       ? stats.tournament_stats.filter(row => row && row.status === 'finished')
       : [];
@@ -3364,11 +3368,17 @@
     const wins = Number(stats?.wins || 0);
     const matches = Number(stats?.total_matches || 0);
     const winRate = matches ? Math.round((wins / matches) * 100) : 0;
-    const initials = `${player.first_name?.[0] || ''}${player.last_name?.[0] || ''}`.toUpperCase();
-    const imagePath = participantImagePath(player);
-    card.innerHTML = `<div class="ref-player-avatar"><img src="${imagePath}" alt="${escapeHtml(player.first_name)} ${escapeHtml(player.last_name)}" onerror="this.parentElement.textContent='${escapeHtml(initials)}'"></div>
-      <div class="ref-player-location">${escapeHtml(player.city || 'Localitate nespecificată')}</div>
-      <div class="ref-player-rating"><small>Rating</small> ${stats?.rating_sc ?? '—'}</div>
+    const initials = `${ref.first_name?.[0] || ''}${ref.last_name?.[0] || ''}`.toUpperCase();
+    const imagePath = participantImagePath(ref);
+    // Rating and city come from MTTF when available (a more complete, better-
+    // maintained federation database) — match/tournament counts stay Setka-sourced.
+    const rating = mttf?.ranking ?? stats?.rating_sc ?? '—';
+    const city = mttf?.city || player?.city || 'Localitate nespecificată';
+    const sourceLabel = mttf && player ? 'Rating MTTF · meciuri Setka Cup prin ATTP'
+      : mttf ? 'Date MTTF' : 'Date Setka Cup prin ATTP';
+    card.innerHTML = `<div class="ref-player-avatar"><img src="${imagePath}" alt="${escapeHtml(ref.first_name)} ${escapeHtml(ref.last_name)}" onerror="this.parentElement.textContent='${escapeHtml(initials)}'"></div>
+      <div class="ref-player-location">${escapeHtml(city)}</div>
+      <div class="ref-player-rating"><small>Rating</small> ${rating}</div>
       <div class="ref-player-stats">
         <div class="ref-player-stat"><b>${Number(stats?.total_tournaments || 0).toLocaleString('ro-RO')}</b><span>Turnee jucate</span></div>
         <div class="ref-player-stat"><b>${matches.toLocaleString('ro-RO')}</b><span>Meciuri jucate</span></div>
@@ -3380,12 +3390,13 @@
         <span><b>${placeCount(2)}</b>Locul II</span>
         <span><b>${placeCount(3)}</b>Locul III</span>
       </div>
-      <div class="ref-player-source">Date Setka Cup prin ATTP</div>`;
+      <div class="ref-player-source">${sourceLabel}</div>`;
   }
 
   async function loadPlayerProfile(refId, ref, card){
     if (playerProfileCache.has(refId)) {
-      renderPlayerProfile(card, ref, playerProfileCache.get(refId));
+      const cached = playerProfileCache.get(refId);
+      renderPlayerProfile(card, ref, cached.player, cached.mttf);
       return;
     }
     try {
@@ -3421,8 +3432,20 @@
         if (data?.length === 1) player = data[0];
       }
 
-      playerProfileCache.set(refId, player || null);
-      renderPlayerProfile(card, ref, player || null);
+      // Rating and profile details (rating, city, photo) come from the MTTF
+      // federation database instead — a more complete and reliable source
+      // than Setka Cup for this. Match/tournament counts still come from
+      // Setka Cup above; this is a separate, additive lookup.
+      let mttf = null;
+      const { data: mttfLink, error: mttfError } = await db.from('mttf_referee_links')
+        .select('match_status, ranking, city, birthyear')
+        .eq('referee_id', refId)
+        .maybeSingle();
+      if (mttfError) throw mttfError;
+      if (mttfLink?.match_status === 'confirmed') mttf = mttfLink;
+
+      playerProfileCache.set(refId, { player: player || null, mttf });
+      renderPlayerProfile(card, ref, player || null, mttf);
     } catch (error) {
       console.error('Player profile load failed', error);
       card.innerHTML = '<div class="ref-player-status">Statisticile nu au putut fi încărcate momentan.</div>';
