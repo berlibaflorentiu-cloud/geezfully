@@ -884,6 +884,9 @@ function activeShiftName(){
   if(isFullAdmin()) return currentAdmin;
   return currentShift?.administrator || currentAdmin;
 }
+function journalActorName(){
+  return isFullAdmin() ? publicAdminName(DB?.administratori.find(a=>a.id===currentAdminId)) : activeShiftName();
+}
 
 function todayISO(){ return new Date().toISOString().slice(0,10); }
 function uid(){ return Math.random().toString(36).slice(2,9); }
@@ -959,9 +962,9 @@ async function fetchAll(){
     daune: (dauneR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, inventarAfectat:r.inventar_afectat, natura:r.natura, bunDeterioratDistrus:r.stare, observatii:r.observatii})),
     arbitraj: (arbitrajR.data||[]).map(r=>({id:r.id, data:r.data, arbitru:r.arbitru, turneu:r.turneu, marcaMingi:r.marca_mingi, cantitateMingi:r.cantitate_mingi, observatii:r.observatii, sesiuneSchimbId:r.sesiune_schimb_id, slotSchimb:r.slot_schimb})),
     inventar: (inventarR.data||[]).map(r=>({id:r.id, denumire:r.denumire, culoare:r.culoare, marime:r.marime, um:r.um, cantitateInitiala:r.cantitate_initiala, intrari:r.intrari, iesiri:r.iesiri, cantitateMinima:r.cantitate_minima, stare:r.stare, observatii:r.observatii})),
-    sarcini: (sarciniR.data||[]).map(r=>({id:r.id, dataInreg:r.data_inreg, administratorServiciuInregId:r.administrator_serviciu_inreg_id, adminInreg: serviciuAdminById[r.administrator_serviciu_inreg_id]?.nume || publicAdminName(adminById[r.admin_inreg_id]), status:r.status, actiuni:r.actiuni, dataSolutionare:r.data_solutionare, adminSolutionare: r.admin_solutionare_id ? publicAdminName(adminById[r.admin_solutionare_id]) : '', descriere:r.descriere})),
+    sarcini: (sarciniR.data||[]).map(r=>({id:r.id, dataInreg:r.data_inreg, administratorServiciuInregId:r.administrator_serviciu_inreg_id, adminInreg: serviciuAdminById[r.administrator_serviciu_inreg_id]?.nume || publicAdminName(adminById[r.admin_inreg_id]), status:r.status, actiuni:r.actiuni, dataSolutionare:r.data_solutionare, administratorServiciuSolutionareId:r.administrator_serviciu_solutionare_id, adminSolutionare: serviciuAdminById[r.administrator_serviciu_solutionare_id]?.nume || (r.admin_solutionare_id ? publicAdminName(adminById[r.admin_solutionare_id]) : ''), descriere:r.descriere})),
     observatii: (observatiiR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, categorie:r.categorie, descriere:r.descriere})),
-    jurnal: (jurnalR.data||[]).map(r=>({id:r.id, cont: publicAdminName(adminById[r.administrator_id]), data:String(r.data).slice(0,10), actiune:r.actiune})),
+    jurnal: (jurnalR.data||[]).map(r=>({id:r.id, cont: serviciuAdminById[r.administrator_serviciu_id]?.nume || publicAdminName(adminById[r.administrator_id]), data:String(r.data).slice(0,10), actiune:r.actiune})),
     trustedIps: (trustedIpsR.data||[]).map(r=>({id:r.id, ip:r.ip, eticheta:r.eticheta, createdAt:r.created_at})),
     treninguri: (treninguriR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, antrenor:r.antrenor, data:r.data, ora:r.ora, sumaJucator:Number(r.suma_jucator), sumaAntrenor:Number(r.suma_antrenor), observatii:r.observatii})),
   };
@@ -982,8 +985,9 @@ async function refetchInventar(){
 }
 
 async function logAction(actiune){
-  DB.jurnal.unshift({ id: uid(), cont: currentAdmin, data: todayISO(), actiune });
-  const { error } = await sb.from('jurnal').insert({ administrator_id: currentAdminId, actiune });
+  const administratorServiciuId = !isFullAdmin() ? currentShift?.administratorServiciuId || null : null;
+  DB.jurnal.unshift({ id: uid(), cont: journalActorName(), data: todayISO(), actiune });
+  const { error } = await sb.from('jurnal').insert({ administrator_id: currentAdminId, administrator_serviciu_id:administratorServiciuId, actiune });
   if (error) console.error('jurnal insert failed', error);
 }
 
@@ -2422,7 +2426,7 @@ function renderSarcini(){
           <td class="td-muted">${stale?'<span class="row-flag red"></span>':''}${fmtDate(task.dataInreg)}</td>
           <td class="td-muted">${esc(task.adminInreg)}</td><td>${esc(task.descriere)}</td>
           <td>
-            <select onchange="updateTaskStatus('${task.id}', this.value)" ${disabledAttr(true)} style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:5px;font-size:12px;padding:4px 6px">
+            <select onchange="updateTaskStatus('${task.id}', this.value)" ${disabledAttr()} style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:5px;font-size:12px;padding:4px 6px">
               <option value="nesoluționat" ${task.status==='nesoluționat'?'selected':''}>${trEnum('nesoluționat')}</option>
               <option value="în lucru" ${task.status==='în lucru'?'selected':''}>${trEnum('în lucru')}</option>
               <option value="soluționat" ${task.status==='soluționat'?'selected':''}>${trEnum('soluționat')}</option>
@@ -2454,14 +2458,18 @@ async function addSarcina(){
 }
 async function updateTaskStatus(id, status){
   const t = DB.sarcini.find(s=>s.id===id); if(!t) return;
-  const patch = { status };
-  if(status==='soluționat'){ patch.data_solutionare = todayISO(); patch.admin_solutionare_id = currentAdminId; }
-  const { data, error } = await sb.from('sarcini').update(patch).eq('id', id).select();
-  if(error){ alert('Actualizarea a eșuat: ' + error.message); return; }
-  if(!data || !data.length){ alert('Actualizarea a eșuat: nu aveți permisiunea necesară.'); return; }
-  t.status = status;
-  if(status==='soluționat'){ t.dataSolutionare = todayISO(); t.adminSolutionare = publicAdminName(DB.administratori.find(a=>a.id===currentAdminId)); }
-  await logAction(`A schimbat statutul sarcinii „${t.descriere}” în „${status}”`);
+  const previousStatus = t.status;
+  const { data, error } = await sb.rpc('schimba_status_sarcina', { p_sarcina_id:id, p_status:status });
+  if(error){ alert('Actualizarea a eșuat: ' + error.message); render(); return; }
+  if(!data || !data.length){ alert('Actualizarea a eșuat: nu aveți permisiunea necesară.'); render(); return; }
+  const row = data[0];
+  t.status = row.status;
+  t.dataSolutionare = row.data_solutionare;
+  t.administratorServiciuSolutionareId = row.administrator_serviciu_solutionare_id;
+  t.adminSolutionare = row.status==='soluționat' ? journalActorName() : '';
+  if(isFullAdmin() && previousStatus!==status){
+    DB.jurnal.unshift({id:uid(), cont:journalActorName(), data:todayISO(), actiune:`${journalActorName()} a schimbat statutul sarcinii „${t.descriere}” din „${previousStatus}” în „${status}”`});
+  }
   render();
 }
 
