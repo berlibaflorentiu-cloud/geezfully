@@ -384,7 +384,7 @@ const ENUM_RU = {
   'returnat':'возвращено', 'nereturnat':'не возвращено',
   'bună':'хорошее',
   'Maiou roșu':'Красная майка', 'Maiou albastru':'Синяя майка',
-  'Roșu':'Красный', 'Albastru':'Синий',
+  'Roșu':'Красный', 'Albastru':'Синий', 'Albă':'Белый',
   'Joc pasiv':'Пассивная игра', 'Simptome de boală':'Симптомы болезни', 'Fără cartelă':'Без карты',
   'Absent':'Отсутствует', 'Lipsă vestimentație':'Нет формы', 'Comportament necorespunzător':'Ненадлежащее поведение',
   'Conflict':'Конфликт', 'Altă situație':'Другая ситуация',
@@ -859,6 +859,8 @@ function frequentLate(){
   return Object.entries(counts).filter(([,c])=>c>=3).map(([pid,c])=>({participantId:pid, count:c}));
 }
 function inventoryCurrent(item){ return item.cantitateInitiala + item.intrari - item.iesiri; }
+const INVENTAR_ORDER = { 'Mingi noi':0, 'Inventar sportiv (mese, plase)':1, 'Seturi lenjerie':2 };
+function inventarSorted(){ return DB.inventar.slice().sort((a,b)=> (INVENTAR_ORDER[a.denumire]??3) - (INVENTAR_ORDER[b.denumire]??3)); }
 
 function buildAlerts(){
   const alerts = [];
@@ -1567,7 +1569,7 @@ function renderInventar(){
   <div class="add-form">
     <div class="form-title">${t('iv_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:1.4fr 0.8fr 0.8fr auto">
-      <div class="field"><label>${t('iv_articol')}</label><select id="if2-item">${DB.inventar.map(i=>`<option value="${i.id}">${esc(trEnum(i.denumire))}${i.marime!=='—'?' — '+i.marime:''}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('iv_articol')}</label><select id="if2-item">${inventarSorted().map(i=>`<option value="${i.id}">${esc(trEnum(i.denumire))}${i.marime!=='—'?' — '+i.marime:''}</option>`).join('')}</select></div>
       <div class="field"><label>${t('iv_tipMiscare')}</label><select id="if2-tip"><option value="intrare">${t('iv_intrare')}</option><option value="iesire">${t('iv_iesire')}</option></select></div>
       <div class="field"><label>${t('ve_cantitate')}</label><input id="if2-cant" type="number" min="1" value="1"></div>
       <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="adjustInventory()">${t('iv_btnAdd')}</button></div>
@@ -1578,7 +1580,7 @@ function renderInventar(){
     <div class="table-header"><div class="table-title">${t('iv_structTitle')}</div></div>
     <div class="table-scroll"><table>
       <thead><tr><th>${t('iv_th_articol')}</th><th>${t('iv_th_culoare')}</th><th>${t('iv_th_marime')}</th><th>${t('iv_th_um')}</th><th>${t('iv_th_initial')}</th><th>${t('iv_th_intrari')}</th><th>${t('iv_th_iesiri')}</th><th>${t('iv_th_curent')}</th><th>${t('iv_th_minim')}</th><th>${t('iv_th_stare')}</th></tr></thead>
-      <tbody>${DB.inventar.map(i=>{
+      <tbody>${inventarSorted().map(i=>{
         const curent = inventoryCurrent(i);
         const low = curent < i.cantitateMinima;
         return `<tr class="${low?'flag-yellow':''}">
@@ -1761,7 +1763,7 @@ function renderRapoarte(){
 
   <div class="report-card">
     <div class="form-title" style="margin-bottom:10px">${t('re_sect_inv')}</div>
-    ${DB.inventar.map(i=>`<div class="report-row"><span>${esc(trEnum(i.denumire))}${i.marime!=='—'?' — '+i.marime:''}</span><span class="td-gold">${inventoryCurrent(i)} ${i.um}</span></div>`).join('')}
+    ${inventarSorted().map(i=>`<div class="report-row"><span>${esc(trEnum(i.denumire))}${i.marime!=='—'?' — '+i.marime:''}</span><span class="td-gold">${inventoryCurrent(i)} ${i.um}</span></div>`).join('')}
   </div>`;
 }
 
@@ -1789,7 +1791,7 @@ function reportSections(){
     { title:'Financiar', rows:[
       ['Cheltuieli spălătorie', DB.spalatorie.filter(r=>range.includes(r.data)).reduce((s,r)=>s+Number(r.suma||0),0)+' MDL'],
     ]},
-    { title:'Inventar', rows:DB.inventar.map(i=>[
+    { title:'Inventar', rows:inventarSorted().map(i=>[
       `${i.denumire}${i.marime!=='—'?' — '+i.marime:''}`,
       `${inventoryCurrent(i)} ${i.um}`,
     ])},
@@ -1862,7 +1864,7 @@ function excelReportRows(report){
   DB.jurnal.filter(r=>report.includes(r.data)).forEach(r=>add(
     r.data, 'Jurnal activitate', 'Acțiune administrator', r.cont, r.actiune || ''
   ));
-  DB.inventar.forEach(i=>add(
+  inventarSorted().forEach(i=>add(
     report.to, 'Inventar', 'Situație la finalul perioadei', i.denumire,
     [
       i.culoare && i.culoare!=='—' ? `culoare ${i.culoare}` : '',
