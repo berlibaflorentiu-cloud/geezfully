@@ -530,6 +530,7 @@ ro: {
   sh_trainer:'Antrenor', sh_trainee:'Sportiv', sh_time:'Ora', sh_addTraining:'Salvează antrenamentul',
   sh_addRow:'+ Alt antrenament', sh_noEligible:'Nu există sportivi eligibili pentru antrenament.',
   sh_startError:'Schimbul nu a putut fi pornit.', sh_stopError:'Schimbul nu a putut fi oprit.',
+  sh_stopConfirm:'Sigur doriți să opriți schimbul? După confirmare, registrul va fi blocat și va trebui început un schimb nou pentru a putea edita din nou.',
   sh_locked:'Registrul este blocat. Începeți un schimb din Tablou de bord.',
 
   pa_title:'Participanți', pa_sub:'Date generale ale sportivilor înregistrați la locație.',
@@ -720,6 +721,7 @@ ru: {
   sh_trainer:'Тренер', sh_trainee:'Спортсмен', sh_time:'Время', sh_addTraining:'Сохранить тренировку',
   sh_addRow:'+ Ещё тренировка', sh_noEligible:'Нет спортсменов, допущенных к тренировкам.',
   sh_startError:'Не удалось начать смену.', sh_stopError:'Не удалось завершить смену.',
+  sh_stopConfirm:'Вы уверены, что хотите завершить смену? После подтверждения журнал будет заблокирован, и для дальнейшего редактирования потребуется начать новую смену.',
   sh_locked:'Журнал заблокирован. Начните смену на панели управления.',
 
   pa_title:'Участники', pa_sub:'Основные данные спортсменов, зарегистрированных на локации.',
@@ -1279,6 +1281,7 @@ async function confirmLocationShift(){
 async function stopDashboardShift(){
   if(isFullAdmin()) return;
   if(!currentShift) return;
+  if(!window.confirm(t('sh_stopConfirm'))) return;
   const endedAt = new Date().toISOString();
   const shiftName = currentShift.administrator;
   const { data, error } = await sb.from('sesiuni_schimb').update({ended_at:endedAt}).eq('id',currentShift.id).select();
