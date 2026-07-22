@@ -28,6 +28,7 @@
     --border: #30363D;
     --green: #3FB950;
     --yellow: #D2A64A;
+    --amber: #C97B2B;
     --red: #F85149;
   }
 
@@ -202,6 +203,7 @@
   .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
   .badge.green { color: var(--green); background: rgba(63,185,80,.1); border: 1px solid rgba(63,185,80,.3); }
   .badge.yellow { color: var(--yellow); background: rgba(210,166,74,.1); border: 1px solid rgba(210,166,74,.3); }
+  .badge.amber { color: var(--amber); background: rgba(201,123,43,.14); border: 1px solid rgba(201,123,43,.4); }
   .badge.red { color: var(--red); background: rgba(248,81,73,.1); border: 1px solid rgba(248,81,73,.3); }
   .badge.muted { color: var(--muted); background: var(--surface2); border: 1px solid var(--border); }
   .badge.gold { color: var(--gold); background: var(--gold-dim); border: 1px solid rgba(200,169,110,.3); }
@@ -1654,7 +1656,7 @@ function renderInventar(){
         const curent = inventoryCurrent(i);
         const low = curent < i.cantitateMinima;
         const stare = inventoryStare(curent, i.cantitateMinima);
-        const stareBadge = stare==='bună' ? 'green' : stare==='minim' ? 'yellow' : 'red';
+        const stareBadge = stare==='bună' ? 'green' : stare==='minim' ? 'yellow' : stare==='sub minim' ? 'amber' : 'red';
         return `<tr class="${low?'flag-yellow':''}">
           <td class="td-name">${low?'<span class="row-flag yellow"></span>':''}${esc(trEnum(i.denumire))}</td>
           <td class="td-muted">${esc(trEnum(i.culoare))}</td>
