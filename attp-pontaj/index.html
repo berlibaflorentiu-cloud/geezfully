@@ -828,10 +828,11 @@ function realAdmins(){ return DB.administratori.filter(a=>!a.ascuns && a.rol==='
 
 async function fetchAll(){
   const [
-    administratoriR, participantiR, intarzieriR, vestimentatieR, serviciuR, spalatorieR,
+    administratoriR, serviciuAdministratoriR, participantiR, intarzieriR, vestimentatieR, serviciuR, spalatorieR,
     hostelR, lenjerieR, dauneR, arbitrajR, inventarR, sarciniR, observatiiR, jurnalR, trustedIpsR, treninguriR
   ] = await Promise.all([
     sb.from('administratori').select('*'),
+    sb.from('serviciu_administratori').select('*').eq('activ', true).order('nume'),
     sb.from('participanti').select('*').order('created_at', {ascending:false}),
     sb.from('intarzieri').select('*').order('data', {ascending:false}),
     sb.from('vestimentatie').select('*').order('data', {ascending:false}),
@@ -851,9 +852,12 @@ async function fetchAll(){
 
   const administratori = administratoriR.data || [];
   const adminById = Object.fromEntries(administratori.map(a=>[a.id, a]));
+  const serviciuAdministratori = serviciuAdministratoriR.data || [];
+  const serviciuAdminById = Object.fromEntries(serviciuAdministratori.map(a=>[a.id, a]));
 
   DB = {
     administratori,
+    serviciuAdministratori,
     participanti: (participantiR.data||[]).map(p=>({
       id:p.id, nrDulap:p.nr_dulap, nume:p.nume, prenume:p.prenume, dataNasterii:p.data_nasterii,
       adresa:p.adresa, telefon:p.telefon, email:p.email, dataAvizMedical:p.data_aviz_medical,
@@ -862,7 +866,12 @@ async function fetchAll(){
     })),
     intarzieri: (intarzieriR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, data:r.data, minuteIntarziere:r.minute_intarziere, motiv:r.motiv})),
     vestimentatie: (vestimentatieR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, tip:r.tip, culoare:r.culoare, marime:r.marime, cantitate:r.cantitate, dataReturnare:r.data_returnare, stareReturnare:r.stare_returnare})),
-    serviciu: (serviciuR.data||[]).map(r=>({id:r.id, data:r.data, administratorId:r.administrator_id, administrator: publicAdminName(adminById[r.administrator_id])})),
+    serviciu: (serviciuR.data||[]).map(r=>({
+      id:r.id, data:r.data,
+      administratorServiciuId:r.administrator_serviciu_id,
+      administratorId:r.administrator_id,
+      administrator: serviciuAdminById[r.administrator_serviciu_id]?.nume || publicAdminName(adminById[r.administrator_id]),
+    })),
     spalatorie: (spalatorieR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, tipArticole:r.tip_articole, cantitate:r.cantitate, suma:Number(r.suma)})),
     hostel: (hostelR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, dataCazare:r.data_cazare, observatii:r.observatii})),
     lenjerie: (lenjerieR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, dataEliberare:r.data_eliberare, dataReturnare:r.data_returnare})),
@@ -1582,7 +1591,7 @@ function renderServiciu(){
     <div class="form-title">${t('se_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:1fr 1fr auto">
       <div class="field"><label>${t('th_data')}</label><input id="sf-data" type="date" value="${todayISO()}"></div>
-      <div class="field"><label>${t('th_administrator')}</label><select id="sf-admin">${realAdmins().map(a=>`<option value="${a.id}">${esc(adminName(a))}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('th_administrator')}</label><select id="sf-admin">${DB.serviciuAdministratori.map(a=>`<option value="${a.id}">${esc(a.nume)}</option>`).join('')}</select></div>
       <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr(true)} onclick="addServiciu()">${t('btn_add')}</button></div>
     </div>
   </div>
@@ -1606,12 +1615,13 @@ function renderServiciu(){
 }
 async function addServiciu(){
   const data = document.getElementById('sf-data').value || todayISO();
-  const administratorId = document.getElementById('sf-admin').value;
-  const { data:row, error } = await sb.from('serviciu').insert({ data, administrator_id:administratorId }).select().single();
+  const administratorServiciuId = document.getElementById('sf-admin').value;
+  const serviciuAdmin = DB.serviciuAdministratori.find(a=>a.id===administratorServiciuId);
+  if(!serviciuAdmin) return;
+  const { data:row, error } = await sb.from('serviciu').insert({ data, administrator_serviciu_id:administratorServiciuId }).select().single();
   if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
-  const adminObj = DB.administratori.find(a=>a.id===administratorId);
-  DB.serviciu.push({id:row.id, data:row.data, administratorId:row.administrator_id, administrator: publicAdminName(adminObj)});
-  await logAction(`A programat schimb pentru ${publicAdminName(adminObj)} pe ${fmtDate(data)}`);
+  DB.serviciu.push({id:row.id, data:row.data, administratorServiciuId:row.administrator_serviciu_id, administrator:serviciuAdmin.nume});
+  await logAction(`A programat schimb pentru ${serviciuAdmin.nume} pe ${fmtDate(data)}`);
   render();
 }
 
