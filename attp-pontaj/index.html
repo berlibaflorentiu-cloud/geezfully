@@ -359,6 +359,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const TOURNAMENTS = ['RIO','MEXICO Day','MEXICO Night'];
 const CLOTHING_TYPES = ['Maiou roșu','Maiou albastru'];
 const CLOTHING_SIZES = ['S','M','L','XL','XXL','XXXL'];
+const SPORT_CATEGORIES = ['MS','CMS','Categoria I','Categoria II','Categoria III','Amator'];
 const OBS_CATEGORIES = ['Joc pasiv','Simptome de boală','Fără cartelă','Absent','Lipsă vestimentație','Comportament necorespunzător','Conflict','Altă situație'];
 
 /* ══════════════════════ I18N ══════════════════════ */
@@ -426,6 +427,7 @@ ro: {
   pa_adresa:'Adresa domiciliului', pa_adresaPh:'mun. Chișinău, str. ...', pa_aviz:'Data avizului medical',
   pa_marime:'Mărime vestimentație', pa_btnAdd:'+ Adaugă participant', pa_searchPh:'Caută după nume, telefon sau nr. dulap...',
   pa_th_dulap:'Dulap', pa_th_naștere:'Naștere', pa_th_avizMed:'Aviz medical', pa_th_marime:'Mărime',
+  pa_categorieSp:'Categorie sportivă', pa_th_categorieSp:'Categorie',
   pa_none:'Niciun participant găsit.', pa_countSuffix:'participanți',
   pa_needNumePrenume:'Completați cel puțin nume și prenume.',
   pa_editTitle:'Modifică datele participantului', pa_editBtn:'Editează datele', pa_nespecificata:'Nespecificată',
@@ -568,6 +570,7 @@ ru: {
   pa_adresa:'Адрес проживания', pa_adresaPh:'г. Кишинёв, ул. ...', pa_aviz:'Дата медицинской справки',
   pa_marime:'Размер формы', pa_btnAdd:'+ Добавить участника', pa_searchPh:'Поиск по имени, телефону или № шкафчика...',
   pa_th_dulap:'Шкафчик', pa_th_naștere:'Рождение', pa_th_avizMed:'Мед. справка', pa_th_marime:'Размер',
+  pa_categorieSp:'Спортивная категория', pa_th_categorieSp:'Категория',
   pa_none:'Участник не найден.', pa_countSuffix:'участников',
   pa_needNumePrenume:'Заполните хотя бы фамилию и имя.',
   pa_editTitle:'Изменить данные участника', pa_editBtn:'Редактировать данные', pa_nespecificata:'Не указан',
@@ -731,7 +734,7 @@ async function fetchAll(){
     participanti: (participantiR.data||[]).map(p=>({
       id:p.id, nrDulap:p.nr_dulap, nume:p.nume, prenume:p.prenume, dataNasterii:p.data_nasterii,
       adresa:p.adresa, telefon:p.telefon, email:p.email, dataAvizMedical:p.data_aviz_medical,
-      marime:p.marime, statut:p.statut, dataInregistrarii:p.data_inregistrarii,
+      marime:p.marime, categorieSportiva:p.categorie_sportiva, statut:p.statut, dataInregistrarii:p.data_inregistrarii,
     })),
     intarzieri: (intarzieriR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, data:r.data, minuteIntarziere:r.minute_intarziere, motiv:r.motiv})),
     vestimentatie: (vestimentatieR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, tip:r.tip, culoare:r.culoare, marime:r.marime, cantitate:r.cantitate, dataReturnare:r.data_returnare, stareReturnare:r.stare_returnare})),
@@ -989,6 +992,7 @@ function renderParticipanti(){
       <div class="field"><label>${t('pa_adresa')}</label><input id="pf-adresa" placeholder="${t('pa_adresaPh')}"></div>
       <div class="field"><label>${t('pa_aviz')}</label><input id="pf-aviz" type="date" value="${todayISO()}"></div>
       <div class="field"><label>${t('pa_marime')}</label><select id="pf-marime">${CLOTHING_SIZES.map(s=>`<option>${s}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('pa_categorieSp')}</label><select id="pf-categorie"><option value="">${t('pa_nespecificata')}</option>${SPORT_CATEGORIES.map(c=>`<option>${c}</option>`).join('')}</select></div>
       <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addParticipant()">${t('pa_btnAdd')}</button></div>
     </div>
   </div>
@@ -1001,15 +1005,22 @@ function renderParticipanti(){
   <div class="table-wrap">
     <div class="table-header"><div class="table-title">${DB.participanti.length} ${t('pa_countSuffix')}</div></div>
     <div class="table-scroll"><table>
-      <thead><tr><th>${t('pa_th_dulap')}</th><th>${t('pa_nume')}</th><th>${t('pa_prenume')}</th><th>${t('pa_th_naștere')}</th><th>${t('pa_telefon')}</th><th>${t('pa_th_avizMed')}</th><th>${t('pa_th_marime')}</th><th>${t('th_statut')}</th></tr></thead>
+      <thead><tr><th>${t('pa_th_dulap')}</th><th>${t('pa_nume')}</th><th>${t('pa_prenume')}</th><th>${t('pa_th_naștere')}</th><th>${t('pa_telefon')}</th><th>${t('pa_th_avizMed')}</th><th>${t('pa_th_marime')}</th><th>${t('pa_th_categorieSp')}</th><th>${t('th_statut')}</th></tr></thead>
       <tbody>${participantiRows()}</tbody>
     </table></div>
   </div>`;
 }
+function participantCompleteness(p){
+  return [p.nrDulap, p.dataNasterii, p.telefon, p.email, p.adresa, p.dataAvizMedical, p.marime, p.categorieSportiva]
+    .filter(v => v!=null && v!=='').length;
+}
 function participantiRows(){
   const q = (document.getElementById('p-search')?.value || '').toLowerCase().trim();
-  const rows = DB.participanti.filter(p => !q || `${p.nume} ${p.prenume} ${p.telefon} ${p.nrDulap}`.toLowerCase().includes(q));
-  if(!rows.length) return `<tr><td class="td-empty" colspan="8">${t('pa_none')}</td></tr>`;
+  const rows = DB.participanti
+    .filter(p => !q || `${p.nume} ${p.prenume} ${p.telefon} ${p.nrDulap}`.toLowerCase().includes(q))
+    .slice()
+    .sort((a,b) => participantCompleteness(b) - participantCompleteness(a) || a.nume.localeCompare(b.nume));
+  if(!rows.length) return `<tr><td class="td-empty" colspan="9">${t('pa_none')}</td></tr>`;
   return rows.map(p=>`
     <tr class="clickable" onclick="openProfile('${p.id}')">
       <td class="td-muted">${esc(p.nrDulap)}</td>
@@ -1019,6 +1030,7 @@ function participantiRows(){
       <td class="td-muted">${esc(p.telefon)}</td>
       <td class="td-muted">${fmtDate(p.dataAvizMedical)}</td>
       <td>${p.marime ? `<span class="badge muted">${esc(p.marime)}</span>` : '—'}</td>
+      <td>${p.categorieSportiva ? `<span class="badge gold">${esc(p.categorieSportiva)}</span>` : '—'}</td>
       <td><span class="badge ${p.statut==='activ'?'green':'muted'}">${trEnum(p.statut)}</span></td>
     </tr>`).join('');
 }
@@ -1035,6 +1047,7 @@ async function addParticipant(){
     email: document.getElementById('pf-email').value.trim() || null,
     data_aviz_medical: document.getElementById('pf-aviz').value || todayISO(),
     marime: document.getElementById('pf-marime').value,
+    categorie_sportiva: document.getElementById('pf-categorie').value || null,
     statut: 'activ',
   };
   const { data, error } = await sb.from('participanti').insert(row).select().single();
@@ -1042,7 +1055,7 @@ async function addParticipant(){
   DB.participanti.unshift({
     id:data.id, nrDulap:data.nr_dulap, nume:data.nume, prenume:data.prenume, dataNasterii:data.data_nasterii,
     adresa:data.adresa, telefon:data.telefon, email:data.email, dataAvizMedical:data.data_aviz_medical,
-    marime:data.marime, statut:data.statut, dataInregistrarii:data.data_inregistrarii,
+    marime:data.marime, categorieSportiva:data.categorie_sportiva, statut:data.statut, dataInregistrarii:data.data_inregistrarii,
   });
   await logAction(`A înregistrat participant nou: ${nume} ${prenume}`);
   render();
@@ -1077,6 +1090,10 @@ function renderProfile(editing = false){
           <option value="">${t('pa_nespecificata')}</option>
           ${CLOTHING_SIZES.map(s=>`<option value="${s}" ${p.marime===s?'selected':''}>${s}</option>`).join('')}
         </select></div>
+        <div class="field"><label>${t('pa_categorieSp')}</label><select id="ep-categorie">
+          <option value="">${t('pa_nespecificata')}</option>
+          ${SPORT_CATEGORIES.map(c=>`<option value="${c}" ${p.categorieSportiva===c?'selected':''}>${c}</option>`).join('')}
+        </select></div>
         <div class="field"><label>${t('pa_telefon')}</label><input id="ep-telefon" value="${esc(p.telefon)}"></div>
         <div class="field"><label>${t('pa_email')}</label><input id="ep-email" type="email" value="${esc(p.email)}"></div>
         <div class="field"><label>${t('pa_adresa')}</label><input id="ep-adresa" value="${esc(p.adresa)}"></div>
@@ -1102,6 +1119,7 @@ function renderProfile(editing = false){
       <div><div class="k">${t('th_statut')}</div><div class="v"><span class="badge ${p.statut==='activ'?'green':'muted'}">${trEnum(p.statut)}</span></div></div>
       <div><div class="k">${t('pa_nastere')}</div><div class="v">${fmtDate(p.dataNasterii)}</div></div>
       <div><div class="k">${t('pa_marime')}</div><div class="v">${esc(p.marime)||'—'}</div></div>
+      <div><div class="k">${t('pa_categorieSp')}</div><div class="v">${p.categorieSportiva ? `<span class="badge gold">${esc(p.categorieSportiva)}</span>` : '—'}</div></div>
       <div><div class="k">${t('pa_adresa')}</div><div class="v">${esc(p.adresa)||'—'}</div></div>
       <div><div class="k">${t('pa_telefon')}</div><div class="v">${esc(p.telefon)||'—'}</div></div>
       <div><div class="k">${t('pa_email')}</div><div class="v">${esc(p.email)||'—'}</div></div>
@@ -1146,6 +1164,7 @@ async function saveParticipantProfile(){
     email: document.getElementById('ep-email').value.trim() || null,
     data_aviz_medical: document.getElementById('ep-aviz').value || null,
     marime: document.getElementById('ep-marime').value || null,
+    categorie_sportiva: document.getElementById('ep-categorie').value || null,
     statut: document.getElementById('ep-statut').value,
   };
   const saveBtn = document.querySelector('#profile-modal-body .btn-primary');
@@ -1159,7 +1178,7 @@ async function saveParticipantProfile(){
   Object.assign(p, {
     nrDulap:data.nr_dulap, nume:data.nume, prenume:data.prenume, dataNasterii:data.data_nasterii,
     adresa:data.adresa, telefon:data.telefon, email:data.email, dataAvizMedical:data.data_aviz_medical,
-    marime:data.marime, statut:data.statut,
+    marime:data.marime, categorieSportiva:data.categorie_sportiva, statut:data.statut,
   });
   await logAction(`A actualizat profilul participantului ${data.nume} ${data.prenume}`);
   render();
