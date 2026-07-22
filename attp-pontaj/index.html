@@ -571,6 +571,7 @@ ro: {
   se_overlap:'⚠ Suprapunere de schimburi detectată pe:', se_addTitle:'Adăugare schimb',
   se_raportTitle:'Raport schimburi lucrate', se_nrSchimburi:'Nr. schimburi', se_calendarTitle:'Calendar schimburi',
   se_startTime:'Început', se_endTime:'Sfârșit',
+  se_filterMonth:'Schimbă luna', se_month:'Lună', se_allMonths:'Toate lunile',
   se_none:'Niciun schimb înregistrat.',
 
   sp_title:'Spălătorie', sp_sub:'Evidența spălătoriilor chimice și a sumelor de plată.',
@@ -763,6 +764,7 @@ ru: {
   se_overlap:'⚠ Обнаружено пересечение смен на:', se_addTitle:'Добавление смены',
   se_raportTitle:'Отчёт по отработанным сменам', se_nrSchimburi:'Кол-во смен', se_calendarTitle:'Календарь смен',
   se_startTime:'Начало', se_endTime:'Окончание',
+  se_filterMonth:'Сменить месяц', se_month:'Месяц', se_allMonths:'Все месяцы',
   se_none:'Смены не зарегистрированы.',
 
   sp_title:'Прачечная', sp_sub:'Учёт химчистки и сумм к оплате.',
@@ -1869,12 +1871,23 @@ async function addVestimentatie(){
 }
 
 /* ══════════════════════ SERVICIU ══════════════════════ */
+let serviciuFilter = { month:todayISO().slice(0,7) };
+function serviciuMonthsAvailable(){
+  const months = new Set(DB.serviciu.map(r=>r.data.slice(0,7)));
+  months.add(todayISO().slice(0,7));
+  return [...months].sort().reverse();
+}
+function serviciuRowsFiltered(){
+  const month = serviciuFilter.month;
+  return DB.serviciu.filter(r=>!month || r.data.slice(0,7)===month);
+}
 function renderServiciu(){
+  const rows = serviciuRowsFiltered();
   const perAdmin = {};
-  DB.serviciu.forEach(s=>{ perAdmin[s.administrator]=(perAdmin[s.administrator]||0)+1; });
+  rows.forEach(s=>{ perAdmin[s.administrator]=(perAdmin[s.administrator]||0)+1; });
   const overlaps = (() => {
     const byDate = {};
-    DB.serviciu.forEach(s=>{ byDate[s.data]=byDate[s.data]||[]; byDate[s.data].push(s.administrator); });
+    rows.forEach(s=>{ byDate[s.data]=byDate[s.data]||[]; byDate[s.data].push(s.administrator); });
     return Object.entries(byDate).filter(([,a])=>a.length>1);
   })();
   return `
@@ -1882,6 +1895,17 @@ function renderServiciu(){
   <div class="view-sub">${t('se_sub')}</div>
 
   ${overlaps.length ? `<div class="locked-banner" style="border-color:rgba(248,81,73,.35);color:var(--red);background:rgba(248,81,73,.08)">${t('se_overlap')} ${overlaps.map(([d])=>fmtDate(d)).join(', ')}</div>` : ''}
+
+  <div class="add-form">
+    <div class="form-title">${t('se_filterMonth')}</div>
+    <div class="form-grid" style="grid-template-columns:1fr auto">
+      <div class="field"><label>${t('se_month')}</label><select onchange="serviciuFilter.month=this.value; render();">
+        <option value="" ${!serviciuFilter.month?'selected':''}>${t('se_allMonths')}</option>
+        ${serviciuMonthsAvailable().map(m=>`<option value="${m}" ${serviciuFilter.month===m?'selected':''}>${monthLabel(m)}</option>`).join('')}
+      </select></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-ghost" onclick="serviciuFilter={month:''}; render();">${t('se_allMonths')}</button></div>
+    </div>
+  </div>
 
   <div class="add-form">
     <div class="form-title">${t('se_addTitle')}</div>
@@ -1903,7 +1927,7 @@ function renderServiciu(){
     <div class="table-header"><div class="table-title">${t('se_calendarTitle')}</div></div>
     <div class="table-scroll service-calendar-scroll"><table>
       <thead><tr><th>${t('th_data')}</th><th>${t('th_administrator')}</th><th>${t('se_startTime')}</th><th>${t('se_endTime')}</th><th></th></tr></thead>
-      <tbody>${DB.serviciu.length ? DB.serviciu.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(s=>`
+      <tbody>${rows.length ? rows.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(s=>`
         <tr><td class="td-muted">${fmtDate(s.data)}</td><td>${esc(s.administrator)}</td>
         <td class="td-muted">${fmtTime(s.inceputLa)}</td><td class="td-muted">${fmtTime(s.sfarsitLa)}</td>
         <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('serviciu','${s.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="5">${t('se_none')}</td></tr>`}</tbody>
