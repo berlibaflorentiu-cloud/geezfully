@@ -169,7 +169,7 @@
   .alert-type { flex: 0 0 76px; padding: 3px 7px; border: 1px solid var(--border); border-radius: 999px; font-size: 9.5px; font-weight: 700; line-height: 1.2; letter-spacing: .06em; text-align: center; text-transform: uppercase; }
   .alert-type.medical { color: var(--red); border-color: rgba(248,81,73,.35); background: rgba(248,81,73,.08); }
   .alert-type.inventory { color: var(--yellow); border-color: rgba(210,166,74,.35); background: rgba(210,166,74,.08); }
-  .alert-type.task { color: var(--gold); border-color: rgba(200,163,91,.35); background: rgba(200,163,91,.08); }
+  .alert-type.task { color: #79C7FF; border-color: rgba(121,199,255,.42); background: rgba(121,199,255,.10); }
   .alert-text { min-width: 0; padding-top: 1px; }
   .alert-empty { padding: 20px 18px; color: var(--muted); font-size: 13px; text-align: center; }
 
@@ -396,6 +396,14 @@ const REFEREES = ['Bambuleac Cristian','Barancean Iulia','Bulat Mihai','Calev Le
 const TRAINERS = ['Dubrovin','Turcan','Iasciuc'];
 const TRAINING_SUMA_JUCATOR = 100;
 const TRAINING_SUMA_ANTRENOR = 200;
+const MONTH_NAMES = {
+  ro: ['Ianuarie','Februarie','Martie','Aprilie','Mai','Iunie','Iulie','August','Septembrie','Octombrie','Noiembrie','Decembrie'],
+  ru: ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'],
+};
+function monthLabel(yyyyMM){
+  const [y,m] = yyyyMM.split('-').map(Number);
+  return `${MONTH_NAMES[LANG==='ru'?'ru':'ro'][m-1]} ${y}`;
+}
 const CLOTHING_TYPES = ['Maiou roșu','Maiou albastru'];
 const CLOTHING_SIZES = ['M','L','XL','XXL','XXXL'];
 const SPORT_CATEGORIES = ['MS','CMS','Categoria I','Categoria II','Categoria III','Amator'];
@@ -554,7 +562,7 @@ ro: {
   an_eligibiliTitle:'Jucători eligibili pentru antrenament', an_eligibiliSub:'Doar acești jucători apar în formularul de mai sus. Alegeți din toți participanții.',
   an_adaugaEligibil:'Adaugă jucător eligibil', an_eligibilAdaugat:'+ Adaugă', an_eligibilNone:'Niciun jucător eligibil încă.',
   an_needJucator:'Selectați un jucător eligibil.', an_neeligibil:'Acest jucător nu este marcat eligibil pentru antrenament.',
-  an_perioada:'Filtrează după perioadă',
+  an_perioada:'Filtrează după lună', an_luna:'Lună', an_toateLunile:'Toate lunile',
 
   iv_title:'Inventar', iv_sub:'Stocul bunurilor aflate la locație. Cantitatea curentă scade automat la eliberări.',
   iv_lowStock:'articole sub stocul minim admis.', iv_addTitle:'Intrare / corectare stoc', iv_articol:'Articol',
@@ -732,7 +740,7 @@ ru: {
   an_eligibiliTitle:'Игроки, допущенные к тренировкам', an_eligibiliSub:'Только эти игроки появляются в форме выше. Выберите из всех участников.',
   an_adaugaEligibil:'Добавить допущенного игрока', an_eligibilAdaugat:'+ Добавить', an_eligibilNone:'Пока нет допущенных игроков.',
   an_needJucator:'Выберите допущенного игрока.', an_neeligibil:'Этот игрок не отмечен как допущенный к тренировкам.',
-  an_perioada:'Фильтр по периоду',
+  an_perioada:'Фильтр по месяцу', an_luna:'Месяц', an_toateLunile:'Все месяцы',
 
   iv_title:'Инвентарь', iv_sub:'Запас товаров на локации. Текущее количество автоматически снижается при выдаче.',
   iv_lowStock:'товаров ниже допустимого минимума.', iv_addTitle:'Приход / корректировка склада', iv_articol:'Товар',
@@ -1895,13 +1903,18 @@ async function addArbitraj(){
 }
 
 /* ══════════════════════ ANTRENAMENTE ══════════════════════ */
-let antrenamenteFilter = { from:'', to:'' };
+let antrenamenteFilter = { month:'' };
 function eligibleTrainingParticipants(){
   return DB.participanti.filter(p=>p.eligibilAntrenament).sort((a,b)=>a.nume.localeCompare(b.nume,'ro')||a.prenume.localeCompare(b.prenume,'ro'));
 }
+function antrenamenteMonthsAvailable(){
+  const months = new Set(DB.treninguri.map(r=>r.data.slice(0,7)));
+  months.add(todayISO().slice(0,7));
+  return [...months].sort().reverse();
+}
 function trainingSessionsFiltered(){
-  const { from, to } = antrenamenteFilter;
-  return DB.treninguri.filter(r => (!from || r.data >= from) && (!to || r.data <= to));
+  const m = antrenamenteFilter.month;
+  return DB.treninguri.filter(r => !m || r.data.slice(0,7)===m);
 }
 function renderAntrenamente(){
   const rows = trainingSessionsFiltered();
@@ -1916,6 +1929,17 @@ function renderAntrenamente(){
   return `
   <div class="view-head"><div class="view-title">${t('an_title')}</div></div>
   <div class="view-sub">${t('an_sub')}</div>
+
+  <div class="add-form">
+    <div class="form-title">${t('an_perioada')}</div>
+    <div class="form-grid" style="grid-template-columns:1fr auto">
+      <div class="field"><label>${t('an_luna')}</label><select onchange="antrenamenteFilter.month=this.value; render();">
+        <option value="" ${!antrenamenteFilter.month?'selected':''}>${t('an_toateLunile')}</option>
+        ${antrenamenteMonthsAvailable().map(m=>`<option value="${m}" ${antrenamenteFilter.month===m?'selected':''}>${monthLabel(m)}</option>`).join('')}
+      </select></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-ghost" onclick="antrenamenteFilter={month:''}; render();">${t('an_toateLunile')}</button></div>
+    </div>
+  </div>
 
   <div class="stats-row">
     <div class="stat-card"><div class="stat-label">${t('an_totalSesiuni')}</div><div class="stat-value">${rows.length}</div></div>
@@ -1945,15 +1969,6 @@ function renderAntrenamente(){
       ${eligibili.length ? eligibili.map(p=>`<div class="mini-row"><span class="td-name" onclick="openProfile('${p.id}')">${esc(p.nume)} ${esc(p.prenume)}</span><button class="btn-danger" onclick="removeEligibleParticipant('${p.id}')">${t('btn_delete')}</button></div>`).join('') : `<div class="mini-empty">${t('an_eligibilNone')}</div>`}
     </div>
   </div>` : ''}
-
-  <div class="add-form">
-    <div class="form-title">${t('an_perioada')}</div>
-    <div class="form-grid" style="grid-template-columns:1fr 1fr auto">
-      <div class="field"><label>${t('re_de_la')}</label><input type="date" value="${antrenamenteFilter.from}" onchange="antrenamenteFilter.from=this.value; render();"></div>
-      <div class="field"><label>${t('re_pana_la')}</label><input type="date" value="${antrenamenteFilter.to}" onchange="antrenamenteFilter.to=this.value; render();"></div>
-      <div class="field" style="justify-content:flex-end"><button class="btn-ghost" onclick="antrenamenteFilter={from:'',to:''}; render();">${t('sp_toatePerioadele')}</button></div>
-    </div>
-  </div>
 
   <div class="table-wrap">
     <div class="table-header"><div class="table-title">${rows.length} ${t('an_countSuffix')}</div></div>
