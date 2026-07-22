@@ -1590,7 +1590,7 @@ function renderLenjerie(){
       <tbody>${DB.lenjerie.length ? DB.lenjerie.slice().sort((a,b)=>b.dataEliberare.localeCompare(a.dataEliberare)).map(l=>`
         <tr><td class="td-name" onclick="openProfile('${l.participantId}')">${esc(participantName(l.participantId))}</td>
         <td class="td-muted">${fmtDate(l.dataEliberare)}</td><td class="td-muted">${l.dataReturnare?fmtDate(l.dataReturnare):'—'}</td>
-        <td><button type="button" class="badge ${l.dataReturnare?'green':'yellow'}" ${disabledAttr(true)} onclick="toggleLenjerieReturn('${l.id}')" title="${t('le_hint')}">${trEnum(l.dataReturnare?'returnat':'nereturnat')}</button></td>
+        <td><button type="button" class="badge ${l.dataReturnare?'green':'yellow'}" ${disabledAttr()} onclick="toggleLenjerieReturn('${l.id}')" title="${t('le_hint')}">${trEnum(l.dataReturnare?'returnat':'nereturnat')}</button></td>
         <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('lenjerie','${l.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="5">${t('le_none')}</td></tr>`}</tbody>
     </table></div>
   </div>`;
