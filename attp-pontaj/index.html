@@ -2426,7 +2426,7 @@ function renderSarcini(){
           <td class="td-muted">${stale?'<span class="row-flag red"></span>':''}${fmtDate(task.dataInreg)}</td>
           <td class="td-muted">${esc(task.adminInreg)}</td><td>${esc(task.descriere)}</td>
           <td>
-            <select onchange="updateTaskStatus('${task.id}', this.value)" ${disabledAttr()} style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:5px;font-size:12px;padding:4px 6px">
+            <select onchange="updateTaskStatus('${task.id}', this.value)" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:5px;font-size:12px;padding:4px 6px;cursor:pointer">
               <option value="nesoluționat" ${task.status==='nesoluționat'?'selected':''}>${trEnum('nesoluționat')}</option>
               <option value="în lucru" ${task.status==='în lucru'?'selected':''}>${trEnum('în lucru')}</option>
               <option value="soluționat" ${task.status==='soluționat'?'selected':''}>${trEnum('soluționat')}</option>
