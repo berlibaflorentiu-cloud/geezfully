@@ -467,6 +467,8 @@ ro: {
   pa_marime:'Mărime vestimentație', pa_btnAdd:'+ Adaugă participant', pa_searchPh:'Caută după nume, telefon sau nr. dulap...',
   pa_th_dulap:'Dulap', pa_th_naștere:'Naștere', pa_th_avizMed:'Aviz medical', pa_th_marime:'Mărime',
   pa_categorieSp:'Categorie sportivă', pa_th_categorieSp:'Categorie',
+  pa_sortare:'Sortare', pa_sortNume:'Nume (A-Z)', pa_sortStatut:'Statut (activ/inactiv)',
+  pa_inactivPrimii:'Inactivi primii', pa_inactivUltimii:'Inactivi ultimii',
   pa_none:'Niciun participant găsit.', pa_countSuffix:'participanți',
   pa_needNumePrenume:'Completați cel puțin nume și prenume.',
   pa_editTitle:'Modifică datele participantului', pa_editBtn:'Editează datele', pa_nespecificata:'Nespecificată',
@@ -627,6 +629,8 @@ ru: {
   pa_marime:'Размер формы', pa_btnAdd:'+ Добавить участника', pa_searchPh:'Поиск по имени, телефону или № шкафчика...',
   pa_th_dulap:'Шкафчик', pa_th_naștere:'Рождение', pa_th_avizMed:'Мед. справка', pa_th_marime:'Размер',
   pa_categorieSp:'Спортивная категория', pa_th_categorieSp:'Категория',
+  pa_sortare:'Сортировка', pa_sortNume:'Имя (A-Z)', pa_sortStatut:'Статус (активен/неактивен)',
+  pa_inactivPrimii:'Неактивные сначала', pa_inactivUltimii:'Неактивные в конце',
   pa_none:'Участник не найден.', pa_countSuffix:'участников',
   pa_needNumePrenume:'Заполните хотя бы фамилию и имя.',
   pa_editTitle:'Изменить данные участника', pa_editBtn:'Редактировать данные', pa_nespecificata:'Не указан',
@@ -1098,6 +1102,8 @@ function renderDashboard(){
 }
 
 /* ══════════════════════ PARTICIPANȚI ══════════════════════ */
+let participantSearchQuery = '';
+let participantSort = { mode:'nume', inactivFirst:false };
 function renderParticipanti(){
   return `
   <div class="view-head"><div class="view-title">${t('pa_title')}</div></div>
@@ -1122,27 +1128,48 @@ function renderParticipanti(){
 
   <div class="search-bar">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-    <input id="p-search" placeholder="${t('pa_searchPh')}" oninput="render()">
+    <input id="p-search" placeholder="${t('pa_searchPh')}" value="${esc(participantSearchQuery)}" oninput="participantSearchQuery=this.value; refreshParticipantiTable();">
+  </div>
+
+  <div class="form-grid" style="grid-template-columns:1fr 1fr;margin-bottom:16px">
+    <div class="field"><label>${t('pa_sortare')}</label><select onchange="participantSort.mode=this.value; render();">
+      <option value="nume" ${participantSort.mode==='nume'?'selected':''}>${t('pa_sortNume')}</option>
+      <option value="statut" ${participantSort.mode==='statut'?'selected':''}>${t('pa_sortStatut')}</option>
+    </select></div>
+    ${participantSort.mode==='statut' ? `<div class="field"><label>&nbsp;</label><select onchange="participantSort.inactivFirst=(this.value==='1'); render();">
+      <option value="0" ${!participantSort.inactivFirst?'selected':''}>${t('pa_inactivUltimii')}</option>
+      <option value="1" ${participantSort.inactivFirst?'selected':''}>${t('pa_inactivPrimii')}</option>
+    </select></div>` : ''}
   </div>
 
   <div class="table-wrap">
-    <div class="table-header"><div class="table-title">${DB.participanti.length} ${t('pa_countSuffix')}</div></div>
+    <div class="table-header"><div class="table-title" id="participanti-count">${participantiFiltered().length} ${t('pa_countSuffix')}</div></div>
     <div class="table-scroll"><table>
       <thead><tr><th>${t('pa_th_dulap')}</th><th>${t('pa_nume')}</th><th>${t('pa_prenume')}</th><th>${t('pa_th_naștere')}</th><th>${t('pa_telefon')}</th><th>${t('pa_th_avizMed')}</th><th>${t('pa_th_marime')}</th><th>${t('pa_th_categorieSp')}</th><th>${t('th_statut')}</th></tr></thead>
-      <tbody>${participantiRows()}</tbody>
+      <tbody id="participanti-tbody">${participantiRows()}</tbody>
     </table></div>
   </div>`;
 }
-function participantCompleteness(p){
-  return [p.nrDulap, p.dataNasterii, p.telefon, p.email, p.adresa, p.dataAvizMedical, p.marime, p.categorieSportiva]
-    .filter(v => v!=null && v!=='').length;
+function participantiFiltered(){
+  const q = participantSearchQuery.toLowerCase().trim();
+  const rows = DB.participanti.filter(p => !q || `${p.nume} ${p.prenume} ${p.telefon} ${p.nrDulap}`.toLowerCase().includes(q));
+  const byNume = (a,b) => a.nume.localeCompare(b.nume,'ro') || a.prenume.localeCompare(b.prenume,'ro');
+  if(participantSort.mode==='statut'){
+    const weight = p => (p.statut==='inactiv') === participantSort.inactivFirst ? 0 : 1;
+    return rows.slice().sort((a,b) => weight(a)-weight(b) || byNume(a,b));
+  }
+  // 'nume' mode: alphabetical, inactive forced to the bottom regardless
+  return rows.slice().sort((a,b) => (a.statut==='inactiv')-(b.statut==='inactiv') || byNume(a,b));
+}
+function refreshParticipantiTable(){
+  const tbody = document.getElementById('participanti-tbody');
+  const count = document.getElementById('participanti-count');
+  if(!tbody || !count) return;
+  tbody.innerHTML = participantiRows();
+  count.textContent = `${participantiFiltered().length} ${t('pa_countSuffix')}`;
 }
 function participantiRows(){
-  const q = (document.getElementById('p-search')?.value || '').toLowerCase().trim();
-  const rows = DB.participanti
-    .filter(p => !q || `${p.nume} ${p.prenume} ${p.telefon} ${p.nrDulap}`.toLowerCase().includes(q))
-    .slice()
-    .sort((a,b) => participantCompleteness(b) - participantCompleteness(a) || a.nume.localeCompare(b.nume));
+  const rows = participantiFiltered();
   if(!rows.length) return `<tr><td class="td-empty" colspan="9">${t('pa_none')}</td></tr>`;
   return rows.map(p=>`
     <tr class="clickable" onclick="openProfile('${p.id}')">
