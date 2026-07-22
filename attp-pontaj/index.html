@@ -1,0 +1,2013 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="../pontaj/favicon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pontaj — Registru Electronic Locație</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { overflow-x: hidden; }
+  button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; font: inherit; }
+  a { color: inherit; }
+
+  :root {
+    --bg: #0D1117;
+    --surface: #161B22;
+    --surface2: #21262D;
+    --gold: #C8A96E;
+    --gold-dim: rgba(200,169,110,0.12);
+    --text: #E6EDF3;
+    --muted: #8B949E;
+    --border: #30363D;
+    --green: #3FB950;
+    --yellow: #D2A64A;
+    --red: #F85149;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100dvh;
+  }
+
+  ::selection { background: var(--gold-dim); }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  h1, h2, h3 { font-family: 'Cormorant Garamond', serif; font-weight: 600; }
+
+  /* ══ AUTH ══ */
+  #auth-screen {
+    min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 40px 20px; background: var(--bg);
+  }
+  .auth-brand { text-align: center; margin-bottom: 30px; }
+  .auth-logo { font-family: 'Cormorant Garamond', serif; font-size: 40px; font-weight: 600; letter-spacing: 0.18em; color: var(--gold); }
+  .auth-rule { width: 60px; height: 1px; background: var(--gold); margin: 14px auto; opacity: 0.4; }
+  .auth-sub { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+  .auth-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 28px; width: 100%; max-width: 360px; }
+  .auth-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); display: block; margin-bottom: 6px; }
+  .auth-input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 10px 12px; outline: none; transition: border-color .15s;
+  }
+  .auth-input:focus { border-color: var(--gold); }
+  .auth-fields { display: flex; flex-direction: column; gap: 14px; }
+  .auth-submit {
+    background: var(--gold); border: none; border-radius: 8px; color: #0D1117; font-weight: 600; font-size: 14px;
+    padding: 11px; cursor: pointer; transition: opacity .15s; letter-spacing: .02em;
+  }
+  .auth-submit:hover { opacity: .85; }
+  .auth-demo {
+    width: 100%; padding: 11px; background: transparent; border: 1px solid var(--gold); border-radius: 8px; color: var(--gold);
+    font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: .04em; transition: background .15s;
+  }
+  .auth-demo:hover { background: rgba(200,169,110,.1); }
+  .auth-hint { font-size: 11px; color: var(--muted); margin-top: 8px; text-align: center; }
+  .auth-select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; color: var(--text); font-size: 14px; padding: 10px 12px; }
+  .lang-switch { display: inline-flex; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 2px; }
+  .lang-btn { background: none; border: none; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .04em; padding: 5px 11px; border-radius: 16px; cursor: pointer; transition: all .15s; }
+  .lang-btn.active { background: var(--gold); color: var(--bg); }
+  .auth-lang { display: flex; justify-content: center; margin-top: 16px; }
+
+  /* ══ APP SHELL ══ */
+  #app-shell { display: none; min-height: 100dvh; }
+  #app-shell.visible { display: flex; }
+
+  #sidebar {
+    width: 232px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; height: 100dvh; position: sticky; top: 0; overflow-y: auto;
+  }
+  .sb-brand { padding: 22px 20px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .sb-brand img { width: 28px; height: 28px; }
+  .sb-brand-text { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 600; letter-spacing: .1em; color: var(--gold); line-height: 1.2; }
+  .sb-brand-sub { font-size: 9px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; }
+  .sb-nav { flex: 1; padding: 10px; display: flex; flex-direction: column; gap: 2px; }
+  .sb-item {
+    display: flex; align-items: center; gap: 11px; padding: 9px 12px; border-radius: 7px; cursor: pointer;
+    color: var(--muted); font-size: 13.5px; transition: background .12s, color .12s; border: none; background: none; width: 100%; text-align: left;
+  }
+  .sb-item:hover { background: var(--surface2); color: var(--text); }
+  .sb-item.active { background: var(--gold-dim); color: var(--gold); font-weight: 600; }
+  .sb-icon { width: 18px; text-align: center; flex-shrink: 0; font-size: 14px; }
+  .sb-badge { margin-left: auto; background: var(--red); color: #fff; font-size: 10px; font-weight: 700; border-radius: 20px; padding: 1px 6px; min-width: 16px; text-align: center; }
+  .sb-foot { padding: 14px 20px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }
+
+  header {
+    background: var(--surface); border-bottom: 1px solid var(--border); box-shadow: 0 1px 0 rgba(200,169,110,0.14);
+    padding: 0 28px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 20;
+  }
+  .header-title { font-size: 15px; font-weight: 600; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .header-user { font-size: 13px; color: var(--muted); }
+
+  .btn-ghost {
+    background: none; border: 1px solid var(--border); color: var(--muted); font-size: 13px; padding: 7px 14px;
+    border-radius: 6px; cursor: pointer; transition: color .15s, border-color .15s;
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+  .btn-primary {
+    background: var(--gold); border: none; border-radius: 6px; color: #0D1117; font-size: 13px; font-weight: 600;
+    padding: 9px 18px; cursor: pointer; transition: opacity .15s; white-space: nowrap;
+  }
+  .btn-primary:hover { opacity: .85; }
+  .btn-primary:disabled, .btn-ghost:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-danger { background: none; border: 1px solid rgba(248,81,73,.35); color: var(--red); border-radius: 6px; font-size: 12px; padding: 6px 10px; cursor: pointer; }
+  .btn-danger:hover { background: rgba(248,81,73,.1); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-icon { width: 15px; height: 15px; vertical-align: -2px; margin-right: 6px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  #content-scroll { flex: 1; height: 100dvh; overflow-y: auto; }
+  main { padding: 28px 32px 60px; max-width: 1220px; margin: 0 auto; width: 100%; }
+
+  .view-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; flex-wrap: wrap; gap: 8px; }
+  .view-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 600; }
+  .view-sub { color: var(--muted); font-size: 13px; margin-bottom: 22px; }
+
+  .locked-banner {
+    background: rgba(200,169,110,.08); border: 1px solid rgba(200,169,110,.3); border-radius: 8px; padding: 10px 16px;
+    font-size: 12.5px; color: var(--gold); margin-bottom: 20px; display: flex; align-items: center; gap: 8px;
+  }
+
+  /* stats */
+  .stats-row { display: flex; gap: 12px; margin-bottom: 26px; flex-wrap: wrap; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; flex: 1; min-width: 150px; }
+  .stat-card.warn { border-color: rgba(210,166,74,.4); }
+  .stat-card.crit { border-color: rgba(248,81,73,.4); }
+  .stat-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 8px; }
+  .stat-value { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 600; color: var(--gold); line-height: 1; }
+  .stat-value.c-green { color: var(--green); } .stat-value.c-yellow { color: var(--yellow); } .stat-value.c-red { color: var(--red); }
+  .stat-sub { font-size: 11.5px; color: var(--muted); margin-top: 5px; }
+
+  /* alerts */
+  .alerts-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 26px; overflow: hidden; }
+  .alerts-panel-head { padding: 13px 18px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--gold); display: flex; align-items: center; gap: 8px; }
+  .alert-row { display: flex; align-items: flex-start; gap: 10px; padding: 11px 18px; border-bottom: 1px solid var(--surface2); font-size: 13px; }
+  .alert-row:last-child { border-bottom: none; }
+  .alert-dot { width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .alert-dot.red { background: var(--red); box-shadow: 0 0 0 3px rgba(248,81,73,.18); }
+  .alert-dot.yellow { background: var(--yellow); box-shadow: 0 0 0 3px rgba(210,166,74,.18); }
+  .alert-empty { padding: 20px 18px; color: var(--muted); font-size: 13px; text-align: center; }
+
+  /* forms */
+  .add-form { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px 22px; margin-bottom: 22px; }
+  .form-title { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--gold); margin-bottom: 15px; }
+  .form-grid { display: grid; gap: 12px; align-items: end; }
+  .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .field label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .field input, .field select, .field textarea {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px; padding: 9px 11px; outline: none; transition: border-color .15s; width: 100%;
+  }
+  .field textarea { resize: vertical; min-height: 38px; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--gold); }
+  .field input::placeholder, .field textarea::placeholder { color: var(--muted); }
+
+  .search-bar { position: relative; margin-bottom: 16px; max-width: 320px; }
+  .search-bar input {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13.5px;
+    padding: 9px 12px 9px 34px; outline: none; width: 100%;
+  }
+  .search-bar input:focus { border-color: var(--gold); }
+  .search-bar svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+
+  /* table */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 24px; }
+  .table-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 13px 18px; border-bottom: 1px solid var(--border); }
+  .table-title { font-size: 13px; font-weight: 600; }
+  .table-hint { color: var(--gold); font-size: 11.5px; }
+  .table-scroll { overflow-x: auto; }
+  .recent-actions-scroll { height: 540px; overflow: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 500; padding: 10px 16px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 11px 16px; font-size: 13.5px; border-bottom: 1px solid var(--surface2); white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--surface2); cursor: default; }
+  tbody tr.clickable:hover td { cursor: pointer; }
+  .td-name { color: var(--text); font-weight: 500; cursor: pointer; }
+  .td-name:hover { color: var(--gold); text-decoration: underline; }
+  .td-muted { color: var(--muted); font-size: 12.5px; }
+  .td-gold { color: var(--gold); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .td-empty { padding: 30px; text-align: center; color: var(--muted); font-size: 13px; }
+
+  .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+  .badge.green { color: var(--green); background: rgba(63,185,80,.1); border: 1px solid rgba(63,185,80,.3); }
+  .badge.yellow { color: var(--yellow); background: rgba(210,166,74,.1); border: 1px solid rgba(210,166,74,.3); }
+  .badge.red { color: var(--red); background: rgba(248,81,73,.1); border: 1px solid rgba(248,81,73,.3); }
+  .badge.muted { color: var(--muted); background: var(--surface2); border: 1px solid var(--border); }
+  .badge.gold { color: var(--gold); background: var(--gold-dim); border: 1px solid rgba(200,169,110,.3); }
+  button.badge { font-family: inherit; cursor: pointer; transition: filter .15s, transform .15s; }
+  button.badge:hover { filter: brightness(1.25); transform: translateY(-1px); }
+  button.badge:disabled { cursor: not-allowed; opacity: .55; transform: none; }
+
+  .row-flag { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+  .row-flag.red { background: var(--red); box-shadow: 0 0 0 3px rgba(248,81,73,.18); }
+  .row-flag.yellow { background: var(--yellow); box-shadow: 0 0 0 3px rgba(210,166,74,.18); }
+  tr.flag-red td:first-child { border-left: 2px solid var(--red); }
+  tr.flag-yellow td:first-child { border-left: 2px solid var(--yellow); }
+
+  .tag { display: inline-block; font-size: 11px; padding: 3px 9px; border-radius: 20px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); margin: 2px 4px 2px 0; }
+  .inventory-size {
+    display: inline-flex; align-items: center; justify-content: center; min-width: 42px;
+    padding: 4px 9px; border-radius: 6px; color: var(--gold); background: var(--gold-dim);
+    border: 1px solid rgba(200,169,110,.38); font-size: 12.5px; font-weight: 700; letter-spacing: .04em;
+  }
+
+  .toggle-group { display: inline-flex; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 3px; }
+  .toggle-btn { background: none; border: none; color: var(--muted); font-size: 12.5px; font-weight: 500; padding: 6px 15px; border-radius: 5px; cursor: pointer; transition: all .15s; }
+  .toggle-btn.active { background: var(--gold); color: var(--bg); }
+
+  /* modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 100; align-items: flex-start; justify-content: center; padding: 40px 20px; overflow-y: auto; }
+  .modal-overlay.visible { display: flex; }
+  .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 100%; max-width: 720px; padding: 0; }
+  .profile-modal-box { max-width: 980px; }
+  .modal-head { padding: 20px 26px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .modal-head-actions { display: flex; align-items: center; gap: 10px; }
+  .modal-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 600; color: var(--gold); }
+  .modal-close { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; line-height: 1; padding: 4px; }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 22px 26px 26px; max-height: 74vh; overflow-y: auto; }
+  .profile-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 24px; margin-bottom: 22px; padding: 18px; background: var(--bg); border: 1px solid var(--border); border-radius: 9px; font-size: 13.5px; }
+  .profile-grid .k { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+  .profile-grid .v { margin-top: 4px; overflow-wrap: anywhere; }
+  .profile-history-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+  .profile-section { min-width: 0; padding: 15px; background: rgba(13,17,23,.45); border: 1px solid var(--border); border-radius: 9px; }
+  .profile-section-title { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--gold); margin: 0 0 10px; }
+  .profile-edit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 18px; }
+  .profile-edit-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); }
+  .mini-list { display: flex; flex-direction: column; gap: 5px; }
+  .mini-row { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; padding: 7px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; }
+  .mini-row span:first-child { color: var(--text); }
+  .mini-row span:last-child { color: var(--muted); }
+  .mini-empty { font-size: 12px; color: var(--muted); padding: 6px 2px; }
+
+  .report-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px 22px; margin-bottom: 16px; }
+  .report-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--surface2); font-size: 13.5px; }
+  .report-row:last-child { border-bottom: none; }
+
+  .empty-state { text-align: center; padding: 50px 20px; color: var(--muted); }
+  .empty-state .e-icon { font-size: 30px; margin-bottom: 12px; opacity: .5; }
+
+  @media (max-width: 880px) {
+    #sidebar { position: fixed; left: -232px; z-index: 50; transition: left .2s; box-shadow: 8px 0 30px rgba(0,0,0,.4); }
+    #sidebar.open { left: 0; }
+    main { padding: 20px 16px 50px; }
+    .header-user { display: none; }
+    .sb-scrim { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 40; }
+    .sb-scrim.visible { display: block; }
+    .profile-grid, .profile-history-grid, .profile-edit-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ AUTH ══ -->
+<div id="auth-screen">
+  <div class="auth-brand">
+    <div class="auth-logo">PONTAJ</div>
+    <div class="auth-rule"></div>
+    <div class="auth-sub" data-i18n="au_sub">Registru electronic · Locație ATTP</div>
+  </div>
+  <div class="auth-box">
+    <div class="auth-fields">
+      <div class="field">
+        <label class="auth-label" data-i18n="au_email">E-mail</label>
+        <input type="email" id="l-email" class="auth-input" data-i18n-ph="au_emailPh" placeholder="nume@exemplu.com" autocomplete="username" onkeydown="if(event.key==='Enter')login()">
+      </div>
+      <div>
+        <label class="auth-label" data-i18n="au_pass">Parolă</label>
+        <input type="password" id="l-password" class="auth-input" data-i18n-ph="au_passPh" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
+      </div>
+      <button class="auth-submit" id="login-btn" data-i18n="au_login" onclick="login()">Autentificare</button>
+      <div class="auth-hint" id="login-msg"></div>
+    </div>
+  </div>
+  <div class="auth-lang">
+    <div class="lang-switch">
+      <button class="lang-btn" data-lang="ro" onclick="setLang('ro')">RO</button>
+      <button class="lang-btn" data-lang="ru" onclick="setLang('ru')">RU</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app-shell">
+  <div class="sb-scrim" id="sb-scrim" onclick="toggleSidebar(false)"></div>
+  <aside id="sidebar">
+    <div class="sb-brand">
+      <img src="../pontaj/favicon.png" alt="Pontaj">
+      <div>
+        <div class="sb-brand-text">PONTAJ</div>
+        <div class="sb-brand-sub" data-i18n="sb_sub">Registru · ATTP</div>
+      </div>
+    </div>
+    <nav class="sb-nav" id="sb-nav"></nav>
+    <div class="sb-foot">
+      <span data-i18n="sb_shift">Schimb curent</span><br><strong id="sb-admin" style="color:var(--text)">—</strong>
+    </div>
+  </aside>
+
+  <div id="content-scroll">
+    <header>
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="btn-ghost" style="display:none" id="burger-btn" onclick="toggleSidebar()">☰</button>
+        <div class="header-title" id="header-title">Tablou de bord</div>
+      </div>
+      <div class="header-right">
+        <div class="lang-switch">
+          <button class="lang-btn" data-lang="ro" onclick="setLang('ro')">RO</button>
+          <button class="lang-btn" data-lang="ru" onclick="setLang('ru')">RU</button>
+        </div>
+        <span class="header-user" id="header-user">Rusu Andrei</span>
+        <button class="btn-ghost" data-i18n="hdr_logout" onclick="logout()">Ieșire</button>
+      </div>
+    </header>
+    <main id="main"></main>
+  </div>
+</div>
+
+<!-- ══ PARTICIPANT PROFILE MODAL ══ -->
+<div class="modal-overlay" id="profile-modal">
+  <div class="modal-box profile-modal-box">
+    <div class="modal-head">
+      <div class="modal-title" id="profile-modal-title" data-i18n="pa_fisa">Fișă participant</div>
+      <div class="modal-head-actions">
+        <button class="btn-ghost btn-sm" id="profile-edit-btn" data-i18n="pa_editBtn" onclick="renderProfile(true)">Editează datele</button>
+        <button class="modal-close" onclick="closeModal('profile-modal')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="profile-modal-body"></div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════ STATE ══════════════════════ */
+const SUPABASE_URL = 'https://ildoegipvcgxboijfksw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlsZG9lZ2lwdmNneGJvaWpma3N3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0NTE1MDIsImV4cCI6MjEwMDAyNzUwMn0.P4bSmuSQn58A5ag6KODWebsU4A2xPqv8mLKCzxJmy5I';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const TOURNAMENTS = ['RIO','MEXICO Day','MEXICO Night'];
+const CLOTHING_TYPES = ['Maiou roșu','Maiou albastru'];
+const CLOTHING_SIZES = ['M','L','XL','XXL','XXXL'];
+const OBS_CATEGORIES = ['Joc pasiv','Simptome de boală','Fără cartelă','Absent','Lipsă vestimentație','Comportament necorespunzător','Conflict','Altă situație'];
+
+/* ══════════════════════ I18N ══════════════════════ */
+let LANG = localStorage.getItem('attp-lang') || 'ro';
+function t(key){ return (I18N[LANG] && I18N[LANG][key]) || I18N.ro[key] || key; }
+function setLang(l){
+  LANG = l; localStorage.setItem('attp-lang', l);
+  applyStaticI18n();
+  if (DB) { buildSidebar(); navigate(currentView); }
+}
+function applyStaticI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  document.querySelectorAll('.lang-btn').forEach(el => el.classList.toggle('active', el.dataset.lang===LANG));
+  document.documentElement.lang = LANG;
+}
+// valorile din baza de date (statut/status/stare) rămân în română (constrângeri CHECK) — se traduc doar la afișare
+const ENUM_RU = {
+  'activ':'активен', 'inactiv':'неактивен',
+  'nesoluționat':'не решено', 'în lucru':'в работе', 'soluționat':'решено',
+  'deteriorat':'повреждено', 'distrus':'уничтожено',
+  'expirat':'истёк', 'expiră curând':'скоро истекает', 'valabil':'действителен',
+  'returnat':'возвращено', 'nereturnat':'не возвращено',
+  'bună':'хорошее',
+  'Maiou roșu':'Красная майка', 'Maiou albastru':'Синяя майка',
+  'Roșu':'Красный', 'Albastru':'Синий',
+  'Joc pasiv':'Пассивная игра', 'Simptome de boală':'Симптомы болезни', 'Fără cartelă':'Без карты',
+  'Absent':'Отсутствует', 'Lipsă vestimentație':'Нет формы', 'Comportament necorespunzător':'Ненадлежащее поведение',
+  'Conflict':'Конфликт', 'Altă situație':'Другая ситуация',
+  'intrare':'приход', 'iesire':'расход', 'corectare':'корректировка',
+};
+function trEnum(v){ return (LANG==='ru' && ENUM_RU[v]) ? ENUM_RU[v] : v; }
+
+const I18N = {
+ro: {
+  au_sub:'Registru electronic · Locație ATTP', au_email:'E-mail', au_pass:'Parolă', au_login:'Autentificare',
+  au_loading:'Se autentifică…', au_needBoth:'Introduceți e-mail și parolă.', au_badCreds:'E-mail sau parolă incorectă.',
+  au_emailPh:'nume@exemplu.com', au_passPh:'••••••••',
+
+  nav_dashboard:'Tablou de bord', nav_participanti:'Participanți', nav_intarzieri:'Întârzieri',
+  nav_vestimentatie:'Vestimentație', nav_serviciu:'Serviciu administratori', nav_spalatorie:'Spălătorie',
+  nav_hostel:'Hostel', nav_lenjerie:'Lenjerie', nav_medical:'Medical', nav_daune:'Daune și recuperări',
+  nav_arbitraj:'Arbitraj', nav_inventar:'Inventar', nav_sarcini:'Sarcini', nav_observatii:'Observații',
+  nav_rapoarte:'Rapoarte', nav_setari:'Setări',
+  sb_sub:'Registru · ATTP', sb_shift:'Schimb curent', hdr_logout:'Ieșire',
+
+  th_cont:'Cont', th_data:'Data', th_actiune:'Acțiune', th_participant:'Participant', th_stare:'Stare',
+  th_administrator:'Administrator', th_categorie:'Categorie', th_descriere:'Descriere', th_statut:'Statut',
+  btn_add:'+ Adaugă', btn_delete:'Șterge', btn_cancel:'Anulează', btn_save:'Salvează modificările',
+  btn_saving:'Se salvează…', empty_dash:'—',
+
+  da_title:'Tablou de bord', da_stat_activi:'Participanți activi', da_stat_medical:'Avize medicale',
+  da_stat_stoc:'Articole sub stoc minim', da_stat_sarcini:'Sarcini nesoluționate >48h',
+  da_stat_hostel:'Cazați hostel (azi)', da_alerts_title:'⚠ Alerte automate',
+  da_alerts_empty:'Nicio alertă activă în acest moment.', da_jurnal_title:'Jurnal activitate — ultimele acțiuni',
+  da_total_inreg:'total înregistrați', da_expira30:'expiră', da_din:'din', da_categorii:'categorii',
+  da_total_lucru:'total în lucru', da_total_inregistrari:'total înregistrări',
+
+  pa_title:'Participanți', pa_sub:'Date generale ale sportivilor înregistrați la locație.',
+  pa_addTitle:'Adăugare participant nou', pa_dulap:'Nr. dulap', pa_dulapPh:'ex. 118', pa_nume:'Nume', pa_prenume:'Prenume',
+  pa_nastere:'Data nașterii', pa_telefon:'Telefon', pa_telefonPh:'+373 6XXXXXXX', pa_email:'E-mail', pa_emailPh:'nume@mail.md',
+  pa_adresa:'Adresa domiciliului', pa_adresaPh:'mun. Chișinău, str. ...', pa_aviz:'Data avizului medical',
+  pa_marime:'Mărime vestimentație', pa_btnAdd:'+ Adaugă participant', pa_searchPh:'Caută după nume, telefon sau nr. dulap...',
+  pa_th_dulap:'Dulap', pa_th_naștere:'Naștere', pa_th_avizMed:'Aviz medical', pa_th_marime:'Mărime',
+  pa_none:'Niciun participant găsit.', pa_countSuffix:'participanți',
+  pa_needNumePrenume:'Completați cel puțin nume și prenume.',
+  pa_editTitle:'Modifică datele participantului', pa_editBtn:'Editează datele', pa_nespecificata:'Nespecificată',
+  pa_needNumePrenume2:'Numele și prenumele sunt obligatorii.',
+  pa_fisa:'Fișă participant', pa_statut:'Statut', pa_faraAviz:'fără aviz înregistrat',
+  pa_expiraLa:'zile', pa_k_intarzieri:'Întârzieri', pa_k_vestimentatie:'Vestimentație primită', pa_k_cazari:'Cazări hostel',
+  pa_k_lenjerie:'Lenjerie', pa_k_daune:'Daune provocate', pa_k_observatii:'Observații', pa_fara_inreg:'Fără înregistrări.',
+  pa_intarziere_word:'Întârziere', pa_cazare_word:'Cazare', pa_eliberat_returnat:'Eliberat → returnat',
+  pa_nereturnat:'nereturnat',
+
+  it_title:'Întârzieri', it_sub:'Evidența întârzierilor sportivilor la locație, cu statistici automate.',
+  it_totalInreg:'Total înregistrate', it_lunaCurenta:'Luna curentă', it_frecventi:'Participanți frecvenți (≥3/30 zile)',
+  it_addTitle:'Înregistrare întârziere', it_topTitle:'Participanți cu cele mai multe întârzieri (30 zile)',
+  it_nrIntarzieri:'Nr. întârzieri', it_allTitle:'Toate întârzierile', it_none:'Nicio întârziere înregistrată.',
+
+  ve_title:'Vestimentație', ve_sub:'Eliberări de vestimentație către sportivi — scade automat din inventar.',
+  ve_addTitle:'Eliberare vestimentație', ve_tip:'Tip articol', ve_marime:'Mărime', ve_cantitate:'Cantitate',
+  ve_data:'Data', ve_btnAdd:'+ Eliberează', ve_th_tip:'Tip', ve_th_cantitate:'Cantitate', ve_th_returnare:'Returnare',
+  ve_countSuffix:'eliberări', ve_none:'Nicio eliberare înregistrată.',
+
+  se_title:'Serviciu administratori', se_sub:'Graficul de serviciu / schimburile administratorilor la locație.',
+  se_overlap:'⚠ Suprapunere de schimburi detectată pe:', se_addTitle:'Adăugare schimb',
+  se_raportTitle:'Raport schimburi lucrate', se_nrSchimburi:'Nr. schimburi', se_calendarTitle:'Calendar schimburi',
+  se_none:'Niciun schimb înregistrat.',
+
+  sp_title:'Spălătorie', sp_sub:'Evidența spălătoriilor chimice și a sumelor de plată.',
+  sp_totalChelt:'Total cheltuieli spălătorie', sp_operatiuni:'operațiuni', sp_addTitle:'Predare la spălătorie',
+  sp_tipArt:'Tip articole', sp_tipArtPh:'ex. Maiou, șort', sp_dataPredarii:'Data predării', sp_suma:'Sumă (MDL)',
+  sp_th_articole:'Articole', sp_th_suma:'Sumă', sp_countSuffix:'înregistrări', sp_none:'Nicio înregistrare.',
+
+  ho_title:'Hostel', ho_sub:'Cazările pe noapte ale sportivilor la locație.', ho_cazatiAzi:'Cazați azi',
+  ho_totalNopti:'Total nopți înregistrate', ho_addTitle:'Înregistrare cazare', ho_dataCazarii:'Data cazării',
+  ho_observatii:'Observații', ho_observatiiPh:'ex. Cameră 2', ho_noptiTitle:'Nopți per participant',
+  ho_nrNopti:'Nr. nopți', ho_faraDate:'Fără date.', ho_toateCazarile:'Toate cazările', ho_th_observatii:'Observații',
+  ho_none:'Nicio cazare.',
+
+  le_title:'Lenjerie', le_sub:'Evidența lenjeriei de hostel eliberate sportivilor.', le_addTitle:'Eliberare lenjerie',
+  le_dataElib:'Data eliberării', le_countSuffix:'înregistrări', le_hint:'Apasă pe statut pentru a marca returnarea',
+  le_th_eliberare:'Eliberare', le_th_returnare:'Returnare', le_none:'Nicio înregistrare.',
+
+  me_title:'Medical', me_sub:'Avize medicale, ordonate crescător după numărul zilelor rămase. Valabilitate: 6 luni.',
+  me_expirate:'Expirate', me_expira30:'Expiră < 30 zile', me_valabile:'Valabile',
+  me_tableTitle:'Avize medicale — toți participanții activi', me_th_dataAvizului:'Data avizului',
+  me_th_dataExpirarii:'Data expirării', me_th_zileRamase:'Zile rămase', me_none:'Fără participanți activi.',
+
+  da2_title:'Daune și recuperări', da2_sub:'Evidența daunelor aduse locației (inventar afectat/distrus).',
+  da2_addTitle:'Înregistrare daună', da2_inventarAfectat:'Inventar afectat', da2_inventarAfectatPh:'ex. Masă tenis nr.1',
+  da2_natura:'Natura deteriorării', da2_naturaPh:'ex. Fisură blat', da2_stareBun:'Stare bun',
+  da2_th_inventarAfectat:'Inventar afectat', da2_th_natura:'Natura', da2_countSuffix:'daune înregistrate',
+  da2_none:'Nicio daună înregistrată.',
+
+  ar_title:'Arbitraj', ar_sub:'Arbitrii de turneu și cantitatea de mingi noi eliberate — scade automat din inventar.',
+  ar_addTitle:'Eliberare mingi arbitru', ar_numeArbitru:'Nume arbitru', ar_numeArbitruPh:'Nume arbitru',
+  ar_turneu:'Turneu', ar_mingiNoi:'Mingi noi', ar_th_arbitru:'Arbitru', ar_th_turneu:'Turneu', ar_th_mingiNoi:'Mingi noi',
+  ar_countSuffix:'eliberări', ar_none:'Nicio eliberare.', ar_needNume:'Introduceți numele arbitrului.',
+
+  iv_title:'Inventar', iv_sub:'Stocul bunurilor aflate la locație. Cantitatea curentă scade automat la eliberări.',
+  iv_lowStock:'articole sub stocul minim admis.', iv_addTitle:'Intrare / corectare stoc', iv_articol:'Articol',
+  iv_tipMiscare:'Tip mișcare', iv_intrare:'intrare', iv_iesire:'ieșire', iv_btnAdd:'+ Înregistrează',
+  iv_structTitle:'Structura inventarului', iv_th_articol:'Articol', iv_th_culoare:'Culoare', iv_th_marime:'Mărime',
+  iv_th_um:'UM', iv_th_initial:'Inițial', iv_th_intrari:'Intrări', iv_th_iesiri:'Ieșiri', iv_th_curent:'Curent',
+  iv_th_minim:'Minim', iv_th_stare:'Stare',
+
+  ta_title:'Sarcini', ta_sub:'Sarcini și probleme nesoluționate. Sistemul semnalează cele restante >48 ore.',
+  ta_total:'Total sarcini', ta_nesolutionate:'Nesoluționate', ta_restante:'Restante >48h',
+  ta_addTitle:'Înregistrare sarcină', ta_descriere:'Descriere problemă', ta_descrierePh:'ex. Bec ars în vestiar',
+  ta_th_inregDe:'Înregistrat de', ta_th_status:'Status', ta_th_solDe:'Soluționat de', ta_countSuffix:'sarcini',
+  ta_none:'Nicio sarcină înregistrată.', ta_needDesc:'Descrieți sarcina.',
+  ta_st_nesolutionat:'nesoluționat', ta_st_inLucru:'în lucru', ta_st_solutionat:'soluționat',
+
+  ob_title:'Observații', ob_sub:'Situații scurte despre participanți, cu analiza repetitivității lor.',
+  ob_addTitle:'Înregistrare observație', ob_categorie:'Categorie', ob_descScurta:'Descriere scurtă',
+  ob_descScurtaPh:'detalii...', ob_countSuffix:'observații', ob_none:'Nicio observație.',
+
+  re_title:'Rapoarte și statistici', re_sub:'Generare rapoarte pentru orice perioadă. Export: Excel, PDF, imprimare.',
+  re_perioada:'Perioadă raport', re_de_la:'De la', re_pana_la:'Până la', re_excel:'Excel', re_pdf:'PDF',
+  re_print:'Imprimare', re_sect_participanti:'Rapoarte privind participanții', re_sect_admin:'Rapoarte administrative',
+  re_sect_fin:'Rapoarte financiare', re_sect_inv:'Rapoarte de inventar',
+  re_r_intarzieri:'Întârzieri înregistrate', re_r_obsAbs:'Observații / absențe', re_r_cazariHostel:'Cazări hostel',
+  re_r_vestElib:'Vestimentație eliberată', re_r_avizeExp:'Avize medicale expirate', re_r_dauneProv:'Daune provocate',
+  re_r_schimburi:'Schimburi programate', re_r_sarciniInreg:'Sarcini înregistrate', re_r_sarciniSol:'Sarcini soluționate',
+  re_r_cheltSpal:'Cheltuieli spălătorie', re_noExcel:'Modulul Excel nu s-a încărcat. Verificați conexiunea la internet și reîncărcați pagina.',
+  re_noPdf:'Modulul PDF nu s-a încărcat. Verificați conexiunea la internet și reîncărcați pagina.',
+  re_popupBlocked:'Browserul a blocat fereastra de imprimare. Permiteți ferestrele pop-up pentru acest fișier.',
+
+  st_title:'Setări', st_sub:'Administratori, praguri de alertă și jurnal complet de activitate.',
+  st_admins:'Administratori', st_rol:'Rol', st_rolValue:'Administrator locație', st_activAcum:'activ acum',
+  st_praguri:'Praguri de alertă (informativ)', st_p_medAlerta:'Aviz medical — alertă', st_p_medAlertaV:'≤ 7 zile rămase',
+  st_p_medVal:'Aviz medical — valabilitate', st_p_medValV:'6 luni', st_p_sarciniRest:'Sarcini restante',
+  st_p_sarciniRestV:'> 48 ore', st_p_intarzieri:'Întârzieri frecvente', st_p_intarzieriV:'≥ 3 în 30 zile',
+  st_p_inactiv:'Participant inactiv', st_p_inactivV:'> 2 luni fără prezență',
+  st_jurnalTitle:'Jurnal activitate — ultimele acțiuni',
+
+  al_medExpired:(name)=>`Avizul medical al sportivului ${name} a expirat.`,
+  al_medSoon:(name,days)=>`Avizul medical al sportivului ${name} expiră peste ${days} zile.`,
+  al_lowStock:(name,qty,um,min)=>`Stocul „${name}” a scăzut la ${qty} ${um} (minim ${min}).`,
+  al_staleTask:(desc)=>`Sarcina „${desc}” înregistrată mai mult de 48 ore în urmă nu a fost soluționată.`,
+  al_frequentLate:(name,count)=>`Sportivul ${name} a întârziat de ${count} ori în ultimele 30 de zile.`,
+},
+ru: {
+  au_sub:'Электронный журнал · Локация ATTP', au_email:'Эл. почта', au_pass:'Пароль', au_login:'Войти',
+  au_loading:'Вход…', au_needBoth:'Введите эл. почту и пароль.', au_badCreds:'Неверная эл. почта или пароль.',
+  au_emailPh:'name@example.com', au_passPh:'••••••••',
+
+  nav_dashboard:'Панель управления', nav_participanti:'Участники', nav_intarzieri:'Опоздания',
+  nav_vestimentatie:'Форма', nav_serviciu:'Смены администраторов', nav_spalatorie:'Прачечная',
+  nav_hostel:'Хостел', nav_lenjerie:'Постельное бельё', nav_medical:'Медицина', nav_daune:'Ущерб и возмещение',
+  nav_arbitraj:'Судейство', nav_inventar:'Инвентарь', nav_sarcini:'Задачи', nav_observatii:'Замечания',
+  nav_rapoarte:'Отчёты', nav_setari:'Настройки',
+  sb_sub:'Журнал · ATTP', sb_shift:'Текущая смена', hdr_logout:'Выход',
+
+  th_cont:'Аккаунт', th_data:'Дата', th_actiune:'Действие', th_participant:'Участник', th_stare:'Состояние',
+  th_administrator:'Администратор', th_categorie:'Категория', th_descriere:'Описание', th_statut:'Статус',
+  btn_add:'+ Добавить', btn_delete:'Удалить', btn_cancel:'Отмена', btn_save:'Сохранить изменения',
+  btn_saving:'Сохранение…', empty_dash:'—',
+
+  da_title:'Панель управления', da_stat_activi:'Активные участники', da_stat_medical:'Медицинские справки',
+  da_stat_stoc:'Товары ниже минимума', da_stat_sarcini:'Нерешённые задачи >48ч',
+  da_stat_hostel:'Заселены в хостел (сегодня)', da_alerts_title:'⚠ Автоматические уведомления',
+  da_alerts_empty:'Активных уведомлений нет.', da_jurnal_title:'Журнал активности — последние действия',
+  da_total_inreg:'всего зарегистрировано', da_expira30:'истекают', da_din:'из', da_categorii:'категорий',
+  da_total_lucru:'всего в работе', da_total_inregistrari:'всего записей',
+
+  pa_title:'Участники', pa_sub:'Основные данные спортсменов, зарегистрированных на локации.',
+  pa_addTitle:'Добавление нового участника', pa_dulap:'№ шкафчика', pa_dulapPh:'напр. 118', pa_nume:'Фамилия', pa_prenume:'Имя',
+  pa_nastere:'Дата рождения', pa_telefon:'Телефон', pa_telefonPh:'+373 6XXXXXXX', pa_email:'Эл. почта', pa_emailPh:'name@mail.md',
+  pa_adresa:'Адрес проживания', pa_adresaPh:'г. Кишинёв, ул. ...', pa_aviz:'Дата медицинской справки',
+  pa_marime:'Размер формы', pa_btnAdd:'+ Добавить участника', pa_searchPh:'Поиск по имени, телефону или № шкафчика...',
+  pa_th_dulap:'Шкафчик', pa_th_naștere:'Рождение', pa_th_avizMed:'Мед. справка', pa_th_marime:'Размер',
+  pa_none:'Участник не найден.', pa_countSuffix:'участников',
+  pa_needNumePrenume:'Заполните хотя бы фамилию и имя.',
+  pa_editTitle:'Изменить данные участника', pa_editBtn:'Редактировать данные', pa_nespecificata:'Не указан',
+  pa_needNumePrenume2:'Фамилия и имя обязательны.',
+  pa_fisa:'Карточка участника', pa_statut:'Статус', pa_faraAviz:'справка не зарегистрирована',
+  pa_expiraLa:'дней', pa_k_intarzieri:'Опоздания', pa_k_vestimentatie:'Полученная форма', pa_k_cazari:'Проживание в хостеле',
+  pa_k_lenjerie:'Бельё', pa_k_daune:'Причинённый ущерб', pa_k_observatii:'Замечания', pa_fara_inreg:'Нет записей.',
+  pa_intarziere_word:'Опоздание', pa_cazare_word:'Заселение', pa_eliberat_returnat:'Выдано → возвращено',
+  pa_nereturnat:'не возвращено',
+
+  it_title:'Опоздания', it_sub:'Учёт опозданий спортсменов на локацию, с автоматической статистикой.',
+  it_totalInreg:'Всего записано', it_lunaCurenta:'Текущий месяц', it_frecventi:'Частые опоздания (≥3/30 дней)',
+  it_addTitle:'Регистрация опоздания', it_topTitle:'Участники с наибольшим числом опозданий (30 дней)',
+  it_nrIntarzieri:'Кол-во опозданий', it_allTitle:'Все опоздания', it_none:'Опозданий не зарегистрировано.',
+
+  ve_title:'Форма', ve_sub:'Выдача формы спортсменам — автоматически списывается со склада.',
+  ve_addTitle:'Выдача формы', ve_tip:'Тип изделия', ve_marime:'Размер', ve_cantitate:'Количество',
+  ve_data:'Дата', ve_btnAdd:'+ Выдать', ve_th_tip:'Тип', ve_th_cantitate:'Количество', ve_th_returnare:'Возврат',
+  ve_countSuffix:'выдач', ve_none:'Выдач не зарегистрировано.',
+
+  se_title:'Смены администраторов', se_sub:'График смен администраторов на локации.',
+  se_overlap:'⚠ Обнаружено пересечение смен на:', se_addTitle:'Добавление смены',
+  se_raportTitle:'Отчёт по отработанным сменам', se_nrSchimburi:'Кол-во смен', se_calendarTitle:'Календарь смен',
+  se_none:'Смены не зарегистрированы.',
+
+  sp_title:'Прачечная', sp_sub:'Учёт химчистки и сумм к оплате.',
+  sp_totalChelt:'Общие расходы на прачечную', sp_operatiuni:'операций', sp_addTitle:'Сдача в прачечную',
+  sp_tipArt:'Тип изделий', sp_tipArtPh:'напр. майка, шорты', sp_dataPredarii:'Дата сдачи', sp_suma:'Сумма (MDL)',
+  sp_th_articole:'Изделия', sp_th_suma:'Сумма', sp_countSuffix:'записей', sp_none:'Записей нет.',
+
+  ho_title:'Хостел', ho_sub:'Ночные заселения спортсменов на локации.', ho_cazatiAzi:'Заселены сегодня',
+  ho_totalNopti:'Всего ночей зарегистрировано', ho_addTitle:'Регистрация заселения', ho_dataCazarii:'Дата заселения',
+  ho_observatii:'Замечания', ho_observatiiPh:'напр. Комната 2', ho_noptiTitle:'Ночей на участника',
+  ho_nrNopti:'Кол-во ночей', ho_faraDate:'Нет данных.', ho_toateCazarile:'Все заселения', ho_th_observatii:'Замечания',
+  ho_none:'Заселений нет.',
+
+  le_title:'Постельное бельё', le_sub:'Учёт постельного белья, выданного спортсменам в хостеле.', le_addTitle:'Выдача белья',
+  le_dataElib:'Дата выдачи', le_countSuffix:'записей', le_hint:'Нажмите на статус, чтобы отметить возврат',
+  le_th_eliberare:'Выдача', le_th_returnare:'Возврат', le_none:'Записей нет.',
+
+  me_title:'Медицина', me_sub:'Медицинские справки, по возрастанию оставшихся дней. Срок действия: 6 месяцев.',
+  me_expirate:'Истекли', me_expira30:'Истекают < 30 дней', me_valabile:'Действительны',
+  me_tableTitle:'Медицинские справки — все активные участники', me_th_dataAvizului:'Дата справки',
+  me_th_dataExpirarii:'Дата истечения', me_th_zileRamase:'Осталось дней', me_none:'Нет активных участников.',
+
+  da2_title:'Ущерб и возмещение', da2_sub:'Учёт ущерба, нанесённого локации (повреждённый/уничтоженный инвентарь).',
+  da2_addTitle:'Регистрация ущерба', da2_inventarAfectat:'Затронутый инвентарь', da2_inventarAfectatPh:'напр. Стол №1',
+  da2_natura:'Характер повреждения', da2_naturaPh:'напр. Трещина столешницы', da2_stareBun:'Состояние',
+  da2_th_inventarAfectat:'Затронутый инвентарь', da2_th_natura:'Характер', da2_countSuffix:'случаев ущерба',
+  da2_none:'Случаев ущерба не зарегистрировано.',
+
+  ar_title:'Судейство', ar_sub:'Судьи турниров и количество выданных новых мячей — автоматически списывается со склада.',
+  ar_addTitle:'Выдача мячей судье', ar_numeArbitru:'Имя судьи', ar_numeArbitruPh:'Имя судьи',
+  ar_turneu:'Турнир', ar_mingiNoi:'Новые мячи', ar_th_arbitru:'Судья', ar_th_turneu:'Турнир', ar_th_mingiNoi:'Новые мячи',
+  ar_countSuffix:'выдач', ar_none:'Выдач нет.', ar_needNume:'Введите имя судьи.',
+
+  iv_title:'Инвентарь', iv_sub:'Запас товаров на локации. Текущее количество автоматически снижается при выдаче.',
+  iv_lowStock:'товаров ниже допустимого минимума.', iv_addTitle:'Приход / корректировка склада', iv_articol:'Товар',
+  iv_tipMiscare:'Тип операции', iv_intrare:'приход', iv_iesire:'расход', iv_btnAdd:'+ Зарегистрировать',
+  iv_structTitle:'Структура склада', iv_th_articol:'Товар', iv_th_culoare:'Цвет', iv_th_marime:'Размер',
+  iv_th_um:'Ед.изм.', iv_th_initial:'Начальный', iv_th_intrari:'Приход', iv_th_iesiri:'Расход', iv_th_curent:'Текущий',
+  iv_th_minim:'Минимум', iv_th_stare:'Состояние',
+
+  ta_title:'Задачи', ta_sub:'Задачи и нерешённые проблемы. Система отмечает просроченные более 48 часов.',
+  ta_total:'Всего задач', ta_nesolutionate:'Нерешённые', ta_restante:'Просрочено >48ч',
+  ta_addTitle:'Регистрация задачи', ta_descriere:'Описание проблемы', ta_descrierePh:'напр. Перегорела лампа в раздевалке',
+  ta_th_inregDe:'Зарегистрировал', ta_th_status:'Статус', ta_th_solDe:'Решил', ta_countSuffix:'задач',
+  ta_none:'Задач не зарегистрировано.', ta_needDesc:'Опишите задачу.',
+  ta_st_nesolutionat:'не решено', ta_st_inLucru:'в работе', ta_st_solutionat:'решено',
+
+  ob_title:'Замечания', ob_sub:'Краткие ситуации об участниках, с анализом их повторяемости.',
+  ob_addTitle:'Регистрация замечания', ob_categorie:'Категория', ob_descScurta:'Краткое описание',
+  ob_descScurtaPh:'детали...', ob_countSuffix:'замечаний', ob_none:'Замечаний нет.',
+
+  re_title:'Отчёты и статистика', re_sub:'Формирование отчётов за любой период. Экспорт: Excel, PDF, печать.',
+  re_perioada:'Период отчёта', re_de_la:'С', re_pana_la:'По', re_excel:'Excel', re_pdf:'PDF',
+  re_print:'Печать', re_sect_participanti:'Отчёты об участниках', re_sect_admin:'Административные отчёты',
+  re_sect_fin:'Финансовые отчёты', re_sect_inv:'Отчёты по складу',
+  re_r_intarzieri:'Зарегистрированные опоздания', re_r_obsAbs:'Замечания / отсутствия', re_r_cazariHostel:'Заселения в хостел',
+  re_r_vestElib:'Выданная форма', re_r_avizeExp:'Истёкшие мед. справки', re_r_dauneProv:'Причинённый ущерб',
+  re_r_schimburi:'Запланированные смены', re_r_sarciniInreg:'Зарегистрированные задачи', re_r_sarciniSol:'Решённые задачи',
+  re_r_cheltSpal:'Расходы на прачечную', re_noExcel:'Модуль Excel не загрузился. Проверьте интернет-соединение и обновите страницу.',
+  re_noPdf:'Модуль PDF не загрузился. Проверьте интернет-соединение и обновите страницу.',
+  re_popupBlocked:'Браузер заблокировал окно печати. Разрешите всплывающие окна для этого сайта.',
+
+  st_title:'Настройки', st_sub:'Администраторы, пороги уведомлений и полный журнал активности.',
+  st_admins:'Администраторы', st_rol:'Роль', st_rolValue:'Администратор локации', st_activAcum:'сейчас в сети',
+  st_praguri:'Пороги уведомлений (справочно)', st_p_medAlerta:'Мед. справка — уведомление', st_p_medAlertaV:'≤ 7 дней осталось',
+  st_p_medVal:'Мед. справка — срок действия', st_p_medValV:'6 месяцев', st_p_sarciniRest:'Просроченные задачи',
+  st_p_sarciniRestV:'> 48 часов', st_p_intarzieri:'Частые опоздания', st_p_intarzieriV:'≥ 3 за 30 дней',
+  st_p_inactiv:'Неактивный участник', st_p_inactivV:'> 2 месяцев без посещений',
+  st_jurnalTitle:'Журнал активности — последние действия',
+
+  al_medExpired:(name)=>`Медицинская справка спортсмена ${name} истекла.`,
+  al_medSoon:(name,days)=>`Медицинская справка спортсмена ${name} истекает через ${days} дн.`,
+  al_lowStock:(name,qty,um,min)=>`Запас «${name}» снизился до ${qty} ${um} (минимум ${min}).`,
+  al_staleTask:(desc)=>`Задача «${desc}», зарегистрированная более 48 часов назад, не решена.`,
+  al_frequentLate:(name,count)=>`Спортсмен ${name} опаздывал ${count} раз(а) за последние 30 дней.`,
+},
+};
+
+let DB = null;
+let currentView = 'dashboard';
+let currentAdmin = null;      // "Nume Prenume" afișat
+let currentAdminId = null;    // uuid din auth.users / administratori
+let currentProfileId = null;
+
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function addDays(iso,n){ const d=new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+function addMonths(iso,n){ const d=new Date(iso+'T00:00:00'); d.setMonth(d.getMonth()+n); return d.toISOString().slice(0,10); }
+function daysDiff(iso){ const a=new Date(todayISO()+'T00:00:00'); const b=new Date(iso+'T00:00:00'); return Math.round((b-a)/86400000); }
+function fmtDate(iso){ if(!iso) return '—'; const [y,m,d]=iso.split('-'); return `${d}.${m}.${y}`; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ══════════════════════ DATA LAYER (Supabase) ══════════════════════ */
+function adminName(a){ return a ? `${a.nume} ${a.prenume}` : '—'; }
+// nume afișat altor administratori — conturile marcate "ascuns" (proprietar, nu angajat) apar generic
+function publicAdminName(a){ return !a ? '—' : (a.ascuns ? (LANG==='ru'?'Администратор':'Administrator') : adminName(a)); }
+function visibleAdmins(){ return DB.administratori.filter(a=>!a.ascuns); }
+
+async function fetchAll(){
+  const [
+    administratoriR, participantiR, intarzieriR, vestimentatieR, serviciuR, spalatorieR,
+    hostelR, lenjerieR, dauneR, arbitrajR, inventarR, sarciniR, observatiiR, jurnalR
+  ] = await Promise.all([
+    sb.from('administratori').select('*'),
+    sb.from('participanti').select('*').order('created_at', {ascending:false}),
+    sb.from('intarzieri').select('*').order('data', {ascending:false}),
+    sb.from('vestimentatie').select('*').order('data', {ascending:false}),
+    sb.from('serviciu').select('*').order('data', {ascending:true}),
+    sb.from('spalatorie').select('*').order('data', {ascending:false}),
+    sb.from('hostel').select('*').order('data_cazare', {ascending:false}),
+    sb.from('lenjerie').select('*').order('data_eliberare', {ascending:false}),
+    sb.from('daune').select('*').order('data', {ascending:false}),
+    sb.from('arbitraj').select('*').order('data', {ascending:false}),
+    sb.from('inventar').select('*').order('denumire'),
+    sb.from('sarcini').select('*').order('data_inreg', {ascending:false}),
+    sb.from('observatii').select('*').order('data', {ascending:false}),
+    sb.from('jurnal').select('*').order('data', {ascending:false}).limit(200),
+  ]);
+
+  const administratori = administratoriR.data || [];
+  const adminById = Object.fromEntries(administratori.map(a=>[a.id, a]));
+
+  DB = {
+    administratori,
+    participanti: (participantiR.data||[]).map(p=>({
+      id:p.id, nrDulap:p.nr_dulap, nume:p.nume, prenume:p.prenume, dataNasterii:p.data_nasterii,
+      adresa:p.adresa, telefon:p.telefon, email:p.email, dataAvizMedical:p.data_aviz_medical,
+      marime:p.marime, statut:p.statut, dataInregistrarii:p.data_inregistrarii,
+    })),
+    intarzieri: (intarzieriR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, data:r.data})),
+    vestimentatie: (vestimentatieR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, tip:r.tip, culoare:r.culoare, marime:r.marime, cantitate:r.cantitate, dataReturnare:r.data_returnare})),
+    serviciu: (serviciuR.data||[]).map(r=>({id:r.id, data:r.data, administratorId:r.administrator_id, administrator: publicAdminName(adminById[r.administrator_id])})),
+    spalatorie: (spalatorieR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, tipArticole:r.tip_articole, suma:Number(r.suma)})),
+    hostel: (hostelR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, dataCazare:r.data_cazare, observatii:r.observatii})),
+    lenjerie: (lenjerieR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, dataEliberare:r.data_eliberare, dataReturnare:r.data_returnare})),
+    daune: (dauneR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, inventarAfectat:r.inventar_afectat, natura:r.natura, bunDeterioratDistrus:r.stare, observatii:r.observatii})),
+    arbitraj: (arbitrajR.data||[]).map(r=>({id:r.id, data:r.data, arbitru:r.arbitru, turneu:r.turneu, cantitateMingi:r.cantitate_mingi, observatii:r.observatii})),
+    inventar: (inventarR.data||[]).map(r=>({id:r.id, denumire:r.denumire, culoare:r.culoare, marime:r.marime, um:r.um, cantitateInitiala:r.cantitate_initiala, intrari:r.intrari, iesiri:r.iesiri, cantitateMinima:r.cantitate_minima, stare:r.stare, observatii:r.observatii})),
+    sarcini: (sarciniR.data||[]).map(r=>({id:r.id, dataInreg:r.data_inreg, adminInreg: publicAdminName(adminById[r.admin_inreg_id]), status:r.status, actiuni:r.actiuni, dataSolutionare:r.data_solutionare, adminSolutionare: r.admin_solutionare_id ? publicAdminName(adminById[r.admin_solutionare_id]) : '', descriere:r.descriere})),
+    observatii: (observatiiR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, categorie:r.categorie, descriere:r.descriere})),
+    jurnal: (jurnalR.data||[]).map(r=>({id:r.id, cont: publicAdminName(adminById[r.administrator_id]), data:String(r.data).slice(0,10), actiune:r.actiune})),
+  };
+}
+
+async function refetchInventar(){
+  const { data } = await sb.from('inventar').select('*').order('denumire');
+  DB.inventar = (data||[]).map(r=>({id:r.id, denumire:r.denumire, culoare:r.culoare, marime:r.marime, um:r.um, cantitateInitiala:r.cantitate_initiala, intrari:r.intrari, iesiri:r.iesiri, cantitateMinima:r.cantitate_minima, stare:r.stare, observatii:r.observatii}));
+}
+
+async function logAction(actiune){
+  DB.jurnal.unshift({ id: uid(), cont: currentAdmin, data: todayISO(), actiune });
+  if (DB.jurnal.length > 200) DB.jurnal.length = 200;
+  const { error } = await sb.from('jurnal').insert({ administrator_id: currentAdminId, actiune });
+  if (error) console.error('jurnal insert failed', error);
+}
+
+function participant(id){ return DB.participanti.find(p=>p.id===id); }
+function participantName(id){ const p=participant(id); return p ? `${p.nume} ${p.prenume}` : '—'; }
+
+/* ══════════════════════ AUTH ══════════════════════ */
+async function login(){
+  const email = document.getElementById('l-email').value.trim();
+  const password = document.getElementById('l-password').value;
+  const msg = document.getElementById('login-msg');
+  const btn = document.getElementById('login-btn');
+  if(!email || !password){ msg.textContent = 'Introduceți e-mail și parolă.'; msg.style.color = 'var(--muted)'; return; }
+  btn.disabled = true; btn.textContent = 'Se autentifică…';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false; btn.textContent = 'Autentificare';
+  if(error){
+    msg.textContent = 'E-mail sau parolă incorectă.';
+    msg.style.color = 'var(--red)';
+    return;
+  }
+  const { data: profile } = await sb.from('administratori').select('*').eq('id', data.user.id).single();
+  const displayName = profile ? adminName(profile) : (data.user.email || 'Administrator');
+  await enterApp(data.user.id, displayName);
+}
+
+async function enterApp(userId, displayName){
+  currentAdminId = userId;
+  currentAdmin = displayName;
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-shell').classList.add('visible');
+  document.getElementById('header-user').textContent = currentAdmin;
+  document.getElementById('sb-admin').textContent = currentAdmin;
+  await fetchAll();
+  buildSidebar();
+  navigate('dashboard');
+}
+
+async function logout(){
+  await sb.auth.signOut();
+  currentAdmin = null; currentAdminId = null; DB = null;
+  document.getElementById('app-shell').classList.remove('visible');
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('login-msg').textContent = '';
+  document.getElementById('l-password').value = '';
+}
+
+// reia sesiunea dacă administratorul e deja autentificat (session persistă local)
+async function resumeSession(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session) return;
+  const { data: profile } = await sb.from('administratori').select('*').eq('id', session.user.id).single();
+  const displayName = profile ? adminName(profile) : (session.user.email || 'Administrator');
+  await enterApp(session.user.id, displayName);
+}
+applyStaticI18n();
+resumeSession();
+
+/* ══════════════════════ NAV ══════════════════════ */
+const NAV = [
+  {id:'dashboard', key:'nav_dashboard', icon:'▣'},
+  {id:'participanti', key:'nav_participanti', icon:'◉'},
+  {id:'intarzieri', key:'nav_intarzieri', icon:'◷'},
+  {id:'vestimentatie', key:'nav_vestimentatie', icon:'▤'},
+  {id:'serviciu', key:'nav_serviciu', icon:'▦'},
+  {id:'spalatorie', key:'nav_spalatorie', icon:'♨'},
+  {id:'hostel', key:'nav_hostel', icon:'⌂'},
+  {id:'lenjerie', key:'nav_lenjerie', icon:'▧'},
+  {id:'medical', key:'nav_medical', icon:'✚'},
+  {id:'daune', key:'nav_daune', icon:'⚠'},
+  {id:'arbitraj', key:'nav_arbitraj', icon:'●'},
+  {id:'inventar', key:'nav_inventar', icon:'▣'},
+  {id:'sarcini', key:'nav_sarcini', icon:'✓'},
+  {id:'observatii', key:'nav_observatii', icon:'✎'},
+  {id:'rapoarte', key:'nav_rapoarte', icon:'▥'},
+  {id:'setari', key:'nav_setari', icon:'⚙'},
+];
+
+function buildSidebar(){
+  const nav = document.getElementById('sb-nav');
+  nav.innerHTML = NAV.map(item => {
+    const badge = navBadge(item.id);
+    return `<button class="sb-item" data-view="${item.id}" onclick="navigate('${item.id}')">
+      <span class="sb-icon">${item.icon}</span><span>${esc(t(item.key))}</span>
+      ${badge ? `<span class="sb-badge">${badge}</span>` : ''}
+    </button>`;
+  }).join('');
+}
+function navBadge(id){
+  if(!DB) return 0;
+  if(id==='medical') return medicalAlerts().length || '';
+  if(id==='sarcini') return DB.sarcini.filter(s=>s.status!=='soluționat').length || '';
+  if(id==='inventar') return lowStockItems().length || '';
+  return '';
+}
+
+function navigate(view){
+  currentView = view;
+  document.querySelectorAll('.sb-item').forEach(el => el.classList.toggle('active', el.dataset.view===view));
+  const navItem = NAV.find(n=>n.id===view);
+  document.getElementById('header-title').textContent = navItem ? t(navItem.key) : '';
+  toggleSidebar(false);
+  render();
+}
+function toggleSidebar(force){
+  const sb = document.getElementById('sidebar'), scrim = document.getElementById('sb-scrim');
+  const open = force===undefined ? !sb.classList.contains('open') : force;
+  sb.classList.toggle('open', open); scrim.classList.toggle('visible', open);
+}
+
+/* ══════════════════════ DERIVED / ALERTS ══════════════════════ */
+function medicalRows(){
+  return DB.participanti.filter(p=>p.statut==='activ' && p.dataAvizMedical).map(p=>{
+    const expira = addMonths(p.dataAvizMedical, 6);
+    const zile = daysDiff(expira);
+    let status = 'valabil';
+    if(zile < 0) status = 'expirat'; else if(zile <= 30) status = 'expiră curând';
+    return { participantId:p.id, nume:participantName(p.id), dataAviz:p.dataAvizMedical, dataExpirare:expira, zile, status };
+  }).sort((a,b)=>a.zile-b.zile);
+}
+function medicalAlerts(){ return medicalRows().filter(r=>r.zile<=7); }
+function lowStockItems(){ return DB.inventar.filter(i=> (i.cantitateInitiala+i.intrari-i.iesiri) < i.cantitateMinima); }
+function staleTasks(){ return DB.sarcini.filter(s=>s.status!=='soluționat' && daysDiff(s.dataInreg) <= -2); }
+function frequentLate(){
+  const counts = {};
+  DB.intarzieri.forEach(i=>{ if(daysDiff(i.data) >= -30){ counts[i.participantId]=(counts[i.participantId]||0)+1; } });
+  return Object.entries(counts).filter(([,c])=>c>=3).map(([pid,c])=>({participantId:pid, count:c}));
+}
+function inventoryCurrent(item){ return item.cantitateInitiala + item.intrari - item.iesiri; }
+
+function buildAlerts(){
+  const alerts = [];
+  medicalAlerts().forEach(r=>{
+    alerts.push({ level: r.zile<0?'red':'yellow', text: r.zile<0
+      ? t('al_medExpired')(r.nume)
+      : t('al_medSoon')(r.nume, r.zile) });
+  });
+  lowStockItems().forEach(i=>{
+    alerts.push({ level:'yellow', text: t('al_lowStock')(`${i.denumire}${i.marime!=='—'?' '+i.marime:''}`, inventoryCurrent(i), i.um, i.cantitateMinima) });
+  });
+  staleTasks().forEach(t2=>{
+    alerts.push({ level:'red', text: t('al_staleTask')(t2.descriere) });
+  });
+  frequentLate().forEach(f=>{
+    alerts.push({ level:'yellow', text: t('al_frequentLate')(participantName(f.participantId), f.count) });
+  });
+  return alerts;
+}
+
+/* ══════════════════════ RENDER DISPATCH ══════════════════════ */
+function render(){
+  buildSidebar();
+  document.querySelectorAll('.sb-item').forEach(el => el.classList.toggle('active', el.dataset.view===currentView));
+  const main = document.getElementById('main');
+  const fns = {
+    dashboard: renderDashboard, participanti: renderParticipanti, intarzieri: renderIntarzieri,
+    vestimentatie: renderVestimentatie, serviciu: renderServiciu, spalatorie: renderSpalatorie,
+    hostel: renderHostel, lenjerie: renderLenjerie, medical: renderMedical, daune: renderDaune,
+    arbitraj: renderArbitraj, inventar: renderInventar, sarcini: renderSarcini, observatii: renderObservatii,
+    rapoarte: renderRapoarte, setari: renderSetari,
+  };
+  main.innerHTML = fns[currentView] ? fns[currentView]() : '';
+}
+function participantOptions(selectedId){
+  return DB.participanti.filter(p=>p.statut==='activ').map(p=>`<option value="${p.id}" ${p.id===selectedId?'selected':''}>${esc(p.nume)} ${esc(p.prenume)}</option>`).join('');
+}
+function disabledAttr(){ return ''; }
+
+/* ══════════════════════ DASHBOARD ══════════════════════ */
+function renderDashboard(){
+  const alerts = buildAlerts();
+  const cazatiAcum = DB.hostel.filter(h=>!DB.lenjerie.some(()=>false)).length; // placeholder not used
+  const medExpirate = medicalRows().filter(r=>r.status==='expirat').length;
+  const medCurand = medicalRows().filter(r=>r.status==='expiră curând').length;
+  return `
+  <div class="view-head"><div class="view-title">${t('da_title')}</div></div>
+  <div class="view-sub">${fmtDate(todayISO())} · ${t('sb_shift').toLowerCase()}: ${esc(currentAdmin)}</div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">${t('da_stat_activi')}</div><div class="stat-value">${DB.participanti.filter(p=>p.statut==='activ').length}</div><div class="stat-sub">${DB.participanti.length} ${t('da_total_inreg')}</div></div>
+    <div class="stat-card ${medExpirate?'crit':medCurand?'warn':''}"><div class="stat-label">${t('da_stat_medical')}</div><div class="stat-value ${medExpirate?'c-red':medCurand?'c-yellow':''}">${medExpirate}</div><div class="stat-sub">${trEnum('expirat')} · ${medCurand} ${t('da_expira30')} &lt;30${LANG==='ru'?' дн.':' zile'}</div></div>
+    <div class="stat-card ${lowStockItems().length?'warn':''}"><div class="stat-label">${t('da_stat_stoc')}</div><div class="stat-value ${lowStockItems().length?'c-yellow':''}">${lowStockItems().length}</div><div class="stat-sub">${t('da_din')} ${DB.inventar.length} ${t('da_categorii')}</div></div>
+    <div class="stat-card ${staleTasks().length?'crit':''}"><div class="stat-label">${t('da_stat_sarcini')}</div><div class="stat-value ${staleTasks().length?'c-red':''}">${staleTasks().length}</div><div class="stat-sub">${DB.sarcini.filter(s=>s.status!=='soluționat').length} ${t('da_total_lucru')}</div></div>
+    <div class="stat-card"><div class="stat-label">${t('da_stat_hostel')}</div><div class="stat-value">${DB.hostel.filter(h=>h.dataCazare===todayISO()).length}</div><div class="stat-sub">${t('da_total_inregistrari')}: ${DB.hostel.length}</div></div>
+  </div>
+
+  <div class="alerts-panel">
+    <div class="alerts-panel-head">${t('da_alerts_title')}</div>
+    ${alerts.length ? alerts.map(a=>`<div class="alert-row"><span class="alert-dot ${a.level}"></span><span>${esc(a.text)}</span></div>`).join('') : `<div class="alert-empty">${t('da_alerts_empty')}</div>`}
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${t('da_jurnal_title')}</div></div>
+    <div class="table-scroll recent-actions-scroll"><table>
+      <thead><tr><th>${t('th_cont')}</th><th>${t('th_data')}</th><th>${t('th_actiune')}</th></tr></thead>
+      <tbody>
+        ${DB.jurnal.slice(0,100).map(j=>`<tr><td class="td-muted">${esc(j.cont)}</td><td class="td-muted">${fmtDate(j.data)}</td><td>${esc(j.actiune)}</td></tr>`).join('')}
+      </tbody>
+    </table></div>
+  </div>`;
+}
+
+/* ══════════════════════ PARTICIPANȚI ══════════════════════ */
+function renderParticipanti(){
+  return `
+  <div class="view-head"><div class="view-title">${t('pa_title')}</div></div>
+  <div class="view-sub">${t('pa_sub')}</div>
+
+  <div class="add-form">
+    <div class="form-title">${t('pa_addTitle')}</div>
+    <div class="form-grid" style="grid-template-columns:repeat(6,1fr)">
+      <div class="field"><label>${t('pa_dulap')}</label><input id="pf-dulap" placeholder="${t('pa_dulapPh')}"></div>
+      <div class="field"><label>${t('pa_nume')}</label><input id="pf-nume" placeholder="${t('pa_nume')}"></div>
+      <div class="field"><label>${t('pa_prenume')}</label><input id="pf-prenume" placeholder="${t('pa_prenume')}"></div>
+      <div class="field"><label>${t('pa_nastere')}</label><input id="pf-nastere" type="date"></div>
+      <div class="field"><label>${t('pa_telefon')}</label><input id="pf-telefon" placeholder="${t('pa_telefonPh')}"></div>
+      <div class="field"><label>${t('pa_email')}</label><input id="pf-email" placeholder="${t('pa_emailPh')}"></div>
+      <div class="field"><label>${t('pa_adresa')}</label><input id="pf-adresa" placeholder="${t('pa_adresaPh')}"></div>
+      <div class="field"><label>${t('pa_aviz')}</label><input id="pf-aviz" type="date" value="${todayISO()}"></div>
+      <div class="field"><label>${t('pa_marime')}</label><select id="pf-marime">${CLOTHING_SIZES.map(s=>`<option>${s}</option>`).join('')}</select></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addParticipant()">${t('pa_btnAdd')}</button></div>
+    </div>
+  </div>
+
+  <div class="search-bar">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <input id="p-search" placeholder="${t('pa_searchPh')}" oninput="render()">
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${DB.participanti.length} ${t('pa_countSuffix')}</div></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>${t('pa_th_dulap')}</th><th>${t('pa_nume')}</th><th>${t('pa_prenume')}</th><th>${t('pa_th_naștere')}</th><th>${t('pa_telefon')}</th><th>${t('pa_th_avizMed')}</th><th>${t('pa_th_marime')}</th><th>${t('th_statut')}</th></tr></thead>
+      <tbody>${participantiRows()}</tbody>
+    </table></div>
+  </div>`;
+}
+function participantiRows(){
+  const q = (document.getElementById('p-search')?.value || '').toLowerCase().trim();
+  const rows = DB.participanti.filter(p => !q || `${p.nume} ${p.prenume} ${p.telefon} ${p.nrDulap}`.toLowerCase().includes(q));
+  if(!rows.length) return `<tr><td class="td-empty" colspan="8">${t('pa_none')}</td></tr>`;
+  return rows.map(p=>`
+    <tr class="clickable" onclick="openProfile('${p.id}')">
+      <td class="td-muted">${esc(p.nrDulap)}</td>
+      <td class="td-name">${esc(p.nume)}</td>
+      <td>${esc(p.prenume)}</td>
+      <td class="td-muted">${fmtDate(p.dataNasterii)}</td>
+      <td class="td-muted">${esc(p.telefon)}</td>
+      <td class="td-muted">${fmtDate(p.dataAvizMedical)}</td>
+      <td>${p.marime ? `<span class="badge muted">${esc(p.marime)}</span>` : '—'}</td>
+      <td><span class="badge ${p.statut==='activ'?'green':'muted'}">${trEnum(p.statut)}</span></td>
+    </tr>`).join('');
+}
+async function addParticipant(){
+  const nume = document.getElementById('pf-nume').value.trim();
+  const prenume = document.getElementById('pf-prenume').value.trim();
+  if(!nume || !prenume){ alert(t('pa_needNumePrenume')); return; }
+  const row = {
+    nr_dulap: document.getElementById('pf-dulap').value.trim() || null,
+    nume, prenume,
+    data_nasterii: document.getElementById('pf-nastere').value || null,
+    adresa: document.getElementById('pf-adresa').value.trim() || null,
+    telefon: document.getElementById('pf-telefon').value.trim() || null,
+    email: document.getElementById('pf-email').value.trim() || null,
+    data_aviz_medical: document.getElementById('pf-aviz').value || todayISO(),
+    marime: document.getElementById('pf-marime').value,
+    statut: 'activ',
+  };
+  const { data, error } = await sb.from('participanti').insert(row).select().single();
+  if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
+  DB.participanti.unshift({
+    id:data.id, nrDulap:data.nr_dulap, nume:data.nume, prenume:data.prenume, dataNasterii:data.data_nasterii,
+    adresa:data.adresa, telefon:data.telefon, email:data.email, dataAvizMedical:data.data_aviz_medical,
+    marime:data.marime, statut:data.statut, dataInregistrarii:data.data_inregistrarii,
+  });
+  await logAction(`A înregistrat participant nou: ${nume} ${prenume}`);
+  render();
+}
+
+function openProfile(id){
+  currentProfileId = id;
+  renderProfile(false);
+  openModal('profile-modal');
+}
+
+function renderProfile(editing = false){
+  const id = currentProfileId;
+  const p = participant(id); if(!p) return;
+  document.getElementById('profile-modal-title').textContent = `${p.nume} ${p.prenume}`;
+  const editBtn = document.getElementById('profile-edit-btn');
+  editBtn.style.display = editing ? 'none' : '';
+  editBtn.title = t('pa_editTitle');
+
+  if(editing){
+    document.getElementById('profile-modal-body').innerHTML = `
+      <div class="profile-edit-grid">
+        <div class="field"><label>${t('pa_dulap')}</label><input id="ep-dulap" value="${esc(p.nrDulap)}" placeholder="${t('pa_dulapPh')}"></div>
+        <div class="field"><label>${t('th_statut')}</label><select id="ep-statut">
+          <option value="activ" ${p.statut==='activ'?'selected':''}>${trEnum('activ')}</option>
+          <option value="inactiv" ${p.statut==='inactiv'?'selected':''}>${trEnum('inactiv')}</option>
+        </select></div>
+        <div class="field"><label>${t('pa_nume')}</label><input id="ep-nume" value="${esc(p.nume)}"></div>
+        <div class="field"><label>${t('pa_prenume')}</label><input id="ep-prenume" value="${esc(p.prenume)}"></div>
+        <div class="field"><label>${t('pa_nastere')}</label><input id="ep-nastere" type="date" value="${esc(p.dataNasterii)}"></div>
+        <div class="field"><label>${t('pa_marime')}</label><select id="ep-marime">
+          <option value="">${t('pa_nespecificata')}</option>
+          ${CLOTHING_SIZES.map(s=>`<option value="${s}" ${p.marime===s?'selected':''}>${s}</option>`).join('')}
+        </select></div>
+        <div class="field"><label>${t('pa_telefon')}</label><input id="ep-telefon" value="${esc(p.telefon)}"></div>
+        <div class="field"><label>${t('pa_email')}</label><input id="ep-email" type="email" value="${esc(p.email)}"></div>
+        <div class="field"><label>${t('pa_adresa')}</label><input id="ep-adresa" value="${esc(p.adresa)}"></div>
+        <div class="field"><label>${t('pa_aviz')}</label><input id="ep-aviz" type="date" value="${esc(p.dataAvizMedical)}"></div>
+      </div>
+      <div class="profile-edit-actions">
+        <button class="btn-ghost" onclick="renderProfile(false)">${t('btn_cancel')}</button>
+        <button class="btn-primary" onclick="saveParticipantProfile()">${t('btn_save')}</button>
+      </div>`;
+    return;
+  }
+
+  const expira = p.dataAvizMedical ? addMonths(p.dataAvizMedical, 6) : null;
+  const zile = expira ? daysDiff(expira) : null;
+  const medicalInfo = expira
+    ? `${fmtDate(p.dataAvizMedical)} → ${fmtDate(expira)} <span class="badge ${zile<0?'red':zile<=30?'yellow':'green'}">${zile<0?trEnum('expirat'):zile+' '+t('pa_expiraLa')}</span>`
+    : `<span class="badge muted">${t('pa_faraAviz')}</span>`;
+  const list = (arr, mapFn) => arr.length ? `<div class="mini-list">${arr.map(mapFn).join('')}</div>` : `<div class="mini-empty">${t('pa_fara_inreg')}</div>`;
+
+  document.getElementById('profile-modal-body').innerHTML = `
+    <div class="profile-grid">
+      <div><div class="k">${t('pa_dulap')}</div><div class="v">${esc(p.nrDulap)}</div></div>
+      <div><div class="k">${t('th_statut')}</div><div class="v"><span class="badge ${p.statut==='activ'?'green':'muted'}">${trEnum(p.statut)}</span></div></div>
+      <div><div class="k">${t('pa_nastere')}</div><div class="v">${fmtDate(p.dataNasterii)}</div></div>
+      <div><div class="k">${t('pa_marime')}</div><div class="v">${esc(p.marime)||'—'}</div></div>
+      <div><div class="k">${t('pa_adresa')}</div><div class="v">${esc(p.adresa)||'—'}</div></div>
+      <div><div class="k">${t('pa_telefon')}</div><div class="v">${esc(p.telefon)||'—'}</div></div>
+      <div><div class="k">${t('pa_email')}</div><div class="v">${esc(p.email)||'—'}</div></div>
+      <div><div class="k">${t('pa_aviz')} / ${LANG==='ru'?'истекает':'expiră'}</div><div class="v">${medicalInfo}</div></div>
+    </div>
+
+    <div class="profile-history-grid">
+      <section class="profile-section"><div class="profile-section-title">${t('pa_k_intarzieri')}</div>
+        ${list(DB.intarzieri.filter(i=>i.participantId===id).sort((a,b)=>b.data.localeCompare(a.data)), r=>`<div class="mini-row"><span>${t('pa_intarziere_word')}</span><span>${fmtDate(r.data)}</span></div>`)}
+      </section>
+      <section class="profile-section"><div class="profile-section-title">${t('pa_k_vestimentatie')}</div>
+        ${list(DB.vestimentatie.filter(v=>v.participantId===id), r=>`<div class="mini-row"><span>${esc(trEnum(r.tip))} · ${esc(r.marime)} × ${r.cantitate}</span><span>${fmtDate(r.data)}</span></div>`)}
+      </section>
+      <section class="profile-section"><div class="profile-section-title">${t('pa_k_cazari')}</div>
+        ${list(DB.hostel.filter(h=>h.participantId===id), r=>`<div class="mini-row"><span>${esc(r.observatii)||t('pa_cazare_word')}</span><span>${fmtDate(r.dataCazare)}</span></div>`)}
+      </section>
+      <section class="profile-section"><div class="profile-section-title">${t('pa_k_lenjerie')}</div>
+        ${list(DB.lenjerie.filter(l=>l.participantId===id), r=>`<div class="mini-row"><span>${t('pa_eliberat_returnat')}</span><span>${fmtDate(r.dataEliberare)} → ${r.dataReturnare?fmtDate(r.dataReturnare):t('pa_nereturnat')}</span></div>`)}
+      </section>
+      <section class="profile-section"><div class="profile-section-title">${t('pa_k_daune')}</div>
+        ${list(DB.daune.filter(d=>d.participantId===id), r=>`<div class="mini-row"><span>${esc(r.inventarAfectat)} — ${esc(r.natura)}</span><span>${fmtDate(r.data)}</span></div>`)}
+      </section>
+      <section class="profile-section"><div class="profile-section-title">${t('pa_k_observatii')}</div>
+        ${list(DB.observatii.filter(o=>o.participantId===id), r=>`<div class="mini-row"><span>${esc(trEnum(r.categorie))}: ${esc(r.descriere)}</span><span>${fmtDate(r.data)}</span></div>`)}
+      </section>
+    </div>
+  `;
+}
+
+async function saveParticipantProfile(){
+  const p = participant(currentProfileId); if(!p) return;
+  const nume = document.getElementById('ep-nume').value.trim();
+  const prenume = document.getElementById('ep-prenume').value.trim();
+  if(!nume || !prenume){ alert(t('pa_needNumePrenume2')); return; }
+  const row = {
+    nr_dulap: document.getElementById('ep-dulap').value.trim() || null,
+    nume,
+    prenume,
+    data_nasterii: document.getElementById('ep-nastere').value || null,
+    adresa: document.getElementById('ep-adresa').value.trim() || null,
+    telefon: document.getElementById('ep-telefon').value.trim() || null,
+    email: document.getElementById('ep-email').value.trim() || null,
+    data_aviz_medical: document.getElementById('ep-aviz').value || null,
+    marime: document.getElementById('ep-marime').value || null,
+    statut: document.getElementById('ep-statut').value,
+  };
+  const saveBtn = document.querySelector('#profile-modal-body .btn-primary');
+  if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = t('btn_saving'); }
+  const { data, error } = await sb.from('participanti').update(row).eq('id', p.id).select().single();
+  if(error){
+    alert('Actualizarea a eșuat: ' + error.message);
+    if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = t('btn_save'); }
+    return;
+  }
+  Object.assign(p, {
+    nrDulap:data.nr_dulap, nume:data.nume, prenume:data.prenume, dataNasterii:data.data_nasterii,
+    adresa:data.adresa, telefon:data.telefon, email:data.email, dataAvizMedical:data.data_aviz_medical,
+    marime:data.marime, statut:data.statut,
+  });
+  await logAction(`A actualizat profilul participantului ${data.nume} ${data.prenume}`);
+  render();
+  renderProfile(false);
+}
+function openModal(id){ document.getElementById(id).classList.add('visible'); }
+function closeModal(id){ document.getElementById(id).classList.remove('visible'); }
+
+/* ══════════════════════ ÎNTÂRZIERI ══════════════════════ */
+function renderIntarzieri(){
+  const perMonth = {};
+  DB.intarzieri.forEach(i=>{ const m=i.data.slice(0,7); perMonth[m]=(perMonth[m]||0)+1; });
+  const top = frequentLate().sort((a,b)=>b.count-a.count);
+  return `
+  <div class="view-head"><div class="view-title">${t('it_title')}</div></div>
+  <div class="view-sub">${t('it_sub')}</div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">${t('it_totalInreg')}</div><div class="stat-value">${DB.intarzieri.length}</div></div>
+    <div class="stat-card"><div class="stat-label">${t('it_lunaCurenta')}</div><div class="stat-value">${perMonth[todayISO().slice(0,7)]||0}</div></div>
+    <div class="stat-card ${top.length?'warn':''}"><div class="stat-label">${t('it_frecventi')}</div><div class="stat-value ${top.length?'c-yellow':''}">${top.length}</div></div>
+  </div>
+
+  <div class="add-form">
+    <div class="form-title">${t('it_addTitle')}</div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr auto">
+      <div class="field"><label>${t('th_participant')}</label><select id="if-participant">${participantOptions()}</select></div>
+      <div class="field"><label>${t('th_data')}</label><input id="if-data" type="date" value="${todayISO()}"></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addIntarziere()">${t('btn_add')}</button></div>
+    </div>
+  </div>
+
+  ${top.length ? `<div class="table-wrap"><div class="table-header"><div class="table-title">${t('it_topTitle')}</div></div>
+    <div class="table-scroll"><table><thead><tr><th>${t('th_participant')}</th><th>${t('it_nrIntarzieri')}</th></tr></thead><tbody>
+      ${top.map(row=>`<tr><td class="td-name" onclick="openProfile('${row.participantId}')">${esc(participantName(row.participantId))}</td><td class="td-gold">${row.count}</td></tr>`).join('')}
+    </tbody></table></div></div>` : ''}
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${t('it_allTitle')}</div></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>${t('th_data')}</th><th>${t('th_participant')}</th><th></th></tr></thead>
+      <tbody>${DB.intarzieri.length ? DB.intarzieri.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(i=>`
+        <tr><td class="td-muted">${fmtDate(i.data)}</td><td class="td-name" onclick="openProfile('${i.participantId}')">${esc(participantName(i.participantId))}</td>
+        <td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('intarzieri','${i.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="3">${t('it_none')}</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+async function addIntarziere(){
+  const participantId = document.getElementById('if-participant').value;
+  const data = document.getElementById('if-data').value || todayISO();
+  if(!participantId) return;
+  const { data:row, error } = await sb.from('intarzieri').insert({ participant_id:participantId, data }).select().single();
+  if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
+  DB.intarzieri.unshift({id:row.id, participantId:row.participant_id, data:row.data});
+  await logAction(`A înregistrat o întârziere pentru ${participantName(participantId)}`);
+  render();
+}
+async function removeRow(collection, id){
+  const { error } = await sb.from(collection).delete().eq('id', id);
+  if(error){ alert('Ștergerea a eșuat: ' + error.message); return; }
+  DB[collection] = DB[collection].filter(r=>r.id!==id);
+  await logAction(`A șters o înregistrare din „${collection}”`);
+  render();
+}
+
+/* ══════════════════════ VESTIMENTAȚIE ══════════════════════ */
+function renderVestimentatie(){
+  return `
+  <div class="view-head"><div class="view-title">${t('ve_title')}</div></div>
+  <div class="view-sub">${t('ve_sub')}</div>
+
+  <div class="add-form">
+    <div class="form-title">${t('ve_addTitle')}</div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr 0.7fr 0.7fr 0.6fr auto">
+      <div class="field"><label>${t('th_participant')}</label><select id="vf-participant">${participantOptions()}</select></div>
+      <div class="field"><label>${t('ve_tip')}</label><select id="vf-tip">${CLOTHING_TYPES.map(ct=>`<option value="${ct}">${trEnum(ct)}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('ve_marime')}</label><select id="vf-marime">${CLOTHING_SIZES.map(s=>`<option>${s}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('ve_cantitate')}</label><input id="vf-cantitate" type="number" min="1" value="1"></div>
+      <div class="field"><label>${t('ve_data')}</label><input id="vf-data" type="date" value="${todayISO()}"></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addVestimentatie()">${t('ve_btnAdd')}</button></div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${DB.vestimentatie.length} ${t('ve_countSuffix')}</div></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>${t('th_data')}</th><th>${t('th_participant')}</th><th>${t('ve_th_tip')}</th><th>${t('ve_marime')}</th><th>${t('ve_th_cantitate')}</th><th>${t('ve_th_returnare')}</th><th></th></tr></thead>
+      <tbody>${DB.vestimentatie.length ? DB.vestimentatie.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(v=>`
+        <tr>
+          <td class="td-muted">${fmtDate(v.data)}</td>
+          <td class="td-name" onclick="openProfile('${v.participantId}')">${esc(participantName(v.participantId))}</td>
+          <td>${esc(trEnum(v.tip))}</td><td><span class="badge muted">${v.marime}</span></td>
+          <td class="td-gold">${v.cantitate}</td>
+          <td class="td-muted">${v.dataReturnare?fmtDate(v.dataReturnare):'—'}</td>
+          <td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('vestimentatie','${v.id}')">${t('btn_delete')}</button></td>
+        </tr>`).join('') : `<tr><td class="td-empty" colspan="7">${t('ve_none')}</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+async function addVestimentatie(){
+  const participantId = document.getElementById('vf-participant').value;
+  if(!participantId) return;
+  const tip = document.getElementById('vf-tip').value;
+  const marime = document.getElementById('vf-marime').value;
+  const cantitate = parseInt(document.getElementById('vf-cantitate').value)||1;
+  const data = document.getElementById('vf-data').value || todayISO();
+  const culoare = tip.includes('roșu') ? 'Roșu' : 'Albastru';
+  const { data:row, error } = await sb.from('vestimentatie')
+    .insert({ data, participant_id:participantId, tip, culoare, marime, cantitate })
+    .select().single();
+  if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
+  DB.vestimentatie.unshift({id:row.id, data:row.data, participantId:row.participant_id, tip:row.tip, culoare:row.culoare, marime:row.marime, cantitate:row.cantitate, dataReturnare:row.data_returnare});
+  await refetchInventar(); // un trigger în bază a scăzut deja stocul
+  await logAction(`A eliberat ${cantitate}× ${tip} (${marime}) către ${participantName(participantId)}`);
+  render();
+}
+
+/* ══════════════════════ SERVICIU ══════════════════════ */
+function renderServiciu(){
+  const perAdmin = {};
+  DB.serviciu.forEach(s=>{ perAdmin[s.administrator]=(perAdmin[s.administrator]||0)+1; });
+  const overlaps = (() => {
+    const byDate = {};
+    DB.serviciu.forEach(s=>{ byDate[s.data]=byDate[s.data]||[]; byDate[s.data].push(s.administrator); });
+    return Object.entries(byDate).filter(([,a])=>a.length>1);
+  })();
+  return `
+  <div class="view-head"><div class="view-title">${t('se_title')}</div></div>
+  <div class="view-sub">${t('se_sub')}</div>
+
+  ${overlaps.length ? `<div class="locked-banner" style="border-color:rgba(248,81,73,.35);color:var(--red);background:rgba(248,81,73,.08)">${t('se_overlap')} ${overlaps.map(([d])=>fmtDate(d)).join(', ')}</div>` : ''}
+
+  <div class="add-form">
+    <div class="form-title">${t('se_addTitle')}</div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr auto">
+      <div class="field"><label>${t('th_data')}</label><input id="sf-data" type="date" value="${todayISO()}"></div>
+      <div class="field"><label>${t('th_administrator')}</label><select id="sf-admin">${visibleAdmins().map(a=>`<option value="${a.id}">${esc(adminName(a))}</option>`).join('')}</select></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addServiciu()">${t('btn_add')}</button></div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${t('se_raportTitle')}</div></div>
+    <div class="table-scroll"><table><thead><tr><th>${t('th_administrator')}</th><th>${t('se_nrSchimburi')}</th></tr></thead><tbody>
+      ${Object.entries(perAdmin).map(([a,c])=>`<tr><td>${esc(a)}</td><td class="td-gold">${c}</td></tr>`).join('')}
+    </tbody></table></div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${t('se_calendarTitle')}</div></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>${t('th_data')}</th><th>${t('th_administrator')}</th><th></th></tr></thead>
+      <tbody>${DB.serviciu.length ? DB.serviciu.slice().sort((a,b)=>a.data.localeCompare(b.data)).map(s=>`
+        <tr><td class="td-muted">${fmtDate(s.data)}</td><td>${esc(s.administrator)}</td>
+        <td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('serviciu','${s.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="3">${t('se_none')}</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+async function addServiciu(){
+  const data = document.getElementById('sf-data').value || todayISO();
+  const administratorId = document.getElementById('sf-admin').value;
+  const { data:row, error } = await sb.from('serviciu').insert({ data, administrator_id:administratorId }).select().single();
+  if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
+  const adminObj = DB.administratori.find(a=>a.id===administratorId);
+  DB.serviciu.push({id:row.id, data:row.data, administratorId:row.administrator_id, administrator: publicAdminName(adminObj)});
+  await logAction(`A programat schimb pentru ${publicAdminName(adminObj)} pe ${fmtDate(data)}`);
+  render();
+}
+
+/* ══════════════════════ SPĂLĂTORIE ══════════════════════ */
+function renderSpalatorie(){
+  const total = DB.spalatorie.reduce((s,r)=>s+Number(r.suma||0),0);
+  return `
+  <div class="view-head"><div class="view-title">${t('sp_title')}</div></div>
+  <div class="view-sub">${t('sp_sub')}</div>
+
+  <div class="stats-row"><div class="stat-card"><div class="stat-label">${t('sp_totalChelt')}</div><div class="stat-value">${total} MDL</div><div class="stat-sub">${DB.spalatorie.length} ${t('sp_operatiuni')}</div></div></div>
+
+  <div class="add-form">
+    <div class="form-title">${t('sp_addTitle')}</div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr 0.8fr 0.6fr auto">
+      <div class="field"><label>${t('th_participant')}</label><select id="sp-participant">${participantOptions()}</select></div>
+      <div class="field"><label>${t('sp_tipArt')}</label><input id="sp-tip" placeholder="${t('sp_tipArtPh')}"></div>
+      <div class="field"><label>${t('sp_dataPredarii')}</label><input id="sp-data" type="date" value="${todayISO()}"></div>
+      <div class="field"><label>${t('sp_suma')}</label><input id="sp-suma" type="number" min="0" placeholder="0"></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addSpalatorie()">${t('btn_add')}</button></div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${DB.spalatorie.length} ${t('sp_countSuffix')}</div></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>${t('th_data')}</th><th>${t('th_participant')}</th><th>${t('sp_th_articole')}</th><th>${t('sp_th_suma')}</th><th></th></tr></thead>
+      <tbody>${DB.spalatorie.length ? DB.spalatorie.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(r=>`
+        <tr><td class="td-muted">${fmtDate(r.data)}</td><td class="td-name" onclick="openProfile('${r.participantId}')">${esc(participantName(r.participantId))}</td>
+        <td>${esc(r.tipArticole)}</td><td class="td-gold">${r.suma} MDL</td>
+        <td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('spalatorie','${r.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="5">${t('sp_none')}</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+async function addSpalatorie(){
+  const participantId = document.getElementById('sp-participant').value;
+  if(!participantId) return;
+  const row = { data: document.getElementById('sp-data').value||todayISO(), participant_id:participantId, tip_articole: document.getElementById('sp-tip').value.trim()||'—', suma: Number(document.getElementById('sp-suma').value)||0 };
+  const { data, error } = await sb.from('spalatorie').insert(row).select().single();
+  if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
+  DB.spalatorie.unshift({id:data.id, data:data.data, participantId:data.participant_id, tipArticole:data.tip_articole, suma:Number(data.suma)});
+  await logAction(`A înregistrat spălătorie pentru ${participantName(participantId)}`);
+  render();
+}
+
+/* ══════════════════════ HOSTEL ══════════════════════ */
+function renderHostel(){
+  const nights = {};
+  DB.hostel.forEach(h=>{ nights[h.participantId]=(nights[h.participantId]||0)+1; });
+  const cazatiAzi = DB.hostel.filter(h=>h.dataCazare===todayISO());
+  return `
+  <div class="view-head"><div class="view-title">${t('ho_title')}</div></div>
+  <div class="view-sub">${t('ho_sub')}</div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">${t('ho_cazatiAzi')}</div><div class="stat-value">${cazatiAzi.length}</div></div>
+    <div class="stat-card"><div class="stat-label">${t('ho_totalNopti')}</div><div class="stat-value">${DB.hostel.length}</div></div>
+  </div>
+
+  <div class="add-form">
+    <div class="form-title">${t('ho_addTitle')}</div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr 1.4fr auto">
+      <div class="field"><label>${t('th_participant')}</label><select id="hf-participant">${participantOptions()}</select></div>
+      <div class="field"><label>${t('ho_dataCazarii')}</label><input id="hf-data" type="date" value="${todayISO()}"></div>
+      <div class="field"><label>${t('ho_observatii')}</label><input id="hf-obs" placeholder="${t('ho_observatiiPh')}"></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addHostel()">${t('btn_add')}</button></div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${t('ho_noptiTitle')}</div></div>
+    <div class="table-scroll"><table><thead><tr><th>${t('th_participant')}</th><th>${t('ho_nrNopti')}</th></tr></thead><tbody>
+      ${Object.entries(nights).map(([pid,c])=>`<tr><td class="td-name" onclick="openProfile('${pid}')">${esc(participantName(pid))}</td><td class="td-gold">${c}</td></tr>`).join('') || `<tr><td class="td-empty" colspan="2">${t('ho_faraDate')}</td></tr>`}
+    </tbody></table></div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${t('ho_toateCazarile')}</div></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>${t('th_data')}</th><th>${t('th_participant')}</th><th>${t('ho_th_observatii')}</th><th></th></tr></thead>
+      <tbody>${DB.hostel.length ? DB.hostel.slice().sort((a,b)=>b.dataCazare.localeCompare(a.dataCazare)).map(h=>`
+        <tr><td class="td-muted">${fmtDate(h.dataCazare)}</td><td class="td-name" onclick="openProfile('${h.participantId}')">${esc(participantName(h.participantId))}</td>
+        <td class="td-muted">${esc(h.observatii)||'—'}</td><td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('hostel','${h.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="4">${t('ho_none')}</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+async function addHostel(){
+  const participantId = document.getElementById('hf-participant').value;
+  if(!participantId) return;
+  const row = { participant_id:participantId, data_cazare: document.getElementById('hf-data').value||todayISO(), observatii: document.getElementById('hf-obs').value.trim() || null };
+  const { data, error } = await sb.from('hostel').insert(row).select().single();
+  if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
+  DB.hostel.unshift({id:data.id, participantId:data.participant_id, dataCazare:data.data_cazare, observatii:data.observatii});
+  await logAction(`A înregistrat cazare hostel pentru ${participantName(participantId)}`);
+  render();
+}
+
+/* ══════════════════════ LENJERIE ══════════════════════ */
+function renderLenjerie(){
+  return `
+  <div class="view-head"><div class="view-title">${t('le_title')}</div></div>
+  <div class="view-sub">${t('le_sub')}</div>
+
+  <div class="add-form">
+    <div class="form-title">${t('le_addTitle')}</div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr auto">
+      <div class="field"><label>${t('th_participant')}</label><select id="lf-participant">${participantOptions()}</select></div>
+      <div class="field"><label>${t('le_dataElib')}</label><input id="lf-eliberare" type="date" value="${todayISO()}"></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addLenjerie()">${t('btn_add')}</button></div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header">
+      <div class="table-title">${DB.lenjerie.length} ${t('le_countSuffix')}</div>
+      <div class="table-hint">${t('le_hint')}</div>
+    </div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>${t('th_participant')}</th><th>${t('le_th_eliberare')}</th><th>${t('le_th_returnare')}</th><th>${t('th_statut')}</th><th></th></tr></thead>
+      <tbody>${DB.lenjerie.length ? DB.lenjerie.slice().sort((a,b)=>b.dataEliberare.localeCompare(a.dataEliberare)).map(l=>`
+        <tr><td class="td-name" onclick="openProfile('${l.participantId}')">${esc(participantName(l.participantId))}</td>
+        <td class="td-muted">${fmtDate(l.dataEliberare)}</td><td class="td-muted">${l.dataReturnare?fmtDate(l.dataReturnare):'—'}</td>
+        <td><button type="button" class="badge ${l.dataReturnare?'green':'yellow'}" ${disabledAttr()} onclick="toggleLenjerieReturn('${l.id}')" title="${t('le_hint')}">${trEnum(l.dataReturnare?'returnat':'nereturnat')}</button></td>
+        <td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('lenjerie','${l.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="5">${t('le_none')}</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+async function addLenjerie(){
+  const participantId = document.getElementById('lf-participant').value;
+  if(!participantId) return;
+  const row = { participant_id:participantId, data_eliberare: document.getElementById('lf-eliberare').value||todayISO(), data_returnare:null };
+  const { data, error } = await sb.from('lenjerie').insert(row).select().single();
+  if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
+  DB.lenjerie.unshift({id:data.id, participantId:data.participant_id, dataEliberare:data.data_eliberare, dataReturnare:data.data_returnare});
+  await refetchInventar(); // trigger a scăzut automat un set din stoc
+  await logAction(`A eliberat lenjerie pentru ${participantName(participantId)}`);
+  render();
+}
+async function toggleLenjerieReturn(id){
+  const item = DB.lenjerie.find(l=>l.id===id);
+  if(!item) return;
+  const dataReturnare = item.dataReturnare ? null : todayISO();
+  const { error } = await sb.from('lenjerie').update({ data_returnare:dataReturnare }).eq('id', id);
+  if(error){ alert('Actualizarea statutului a eșuat: ' + error.message); return; }
+  item.dataReturnare = dataReturnare;
+  await logAction(`${dataReturnare?'A marcat ca returnată':'A marcat ca nereturnată'} lenjeria lui ${participantName(item.participantId)}`);
+  render();
+}
+
+/* ══════════════════════ MEDICAL ══════════════════════ */
+function renderMedical(){
+  const rows = medicalRows();
+  return `
+  <div class="view-head"><div class="view-title">${t('me_title')}</div></div>
+  <div class="view-sub">${t('me_sub')}</div>
+
+  <div class="stats-row">
+    <div class="stat-card crit"><div class="stat-label">${t('me_expirate')}</div><div class="stat-value c-red">${rows.filter(r=>r.status==='expirat').length}</div></div>
+    <div class="stat-card warn"><div class="stat-label">${t('me_expira30')}</div><div class="stat-value c-yellow">${rows.filter(r=>r.status==='expiră curând').length}</div></div>
+    <div class="stat-card"><div class="stat-label">${t('me_valabile')}</div><div class="stat-value c-green">${rows.filter(r=>r.status==='valabil').length}</div></div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${t('me_tableTitle')}</div></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>${t('th_participant')}</th><th>${t('me_th_dataAvizului')}</th><th>${t('me_th_dataExpirarii')}</th><th>${t('me_th_zileRamase')}</th><th>${t('th_statut')}</th></tr></thead>
+      <tbody>${rows.map(r=>{
+        const flag = r.zile<0 ? 'flag-red' : (r.zile<=30 ? 'flag-yellow' : '');
+        const dot = r.zile<0 ? 'red' : (r.zile<=30?'yellow':'');
+        const badgeClass = r.zile<0?'red':(r.zile<=30?'yellow':'green');
+        return `<tr class="${flag}">
+          <td class="td-name" onclick="openProfile('${r.participantId}')">${dot?`<span class="row-flag ${dot}"></span>`:''}${esc(r.nume)}</td>
+          <td class="td-muted">${fmtDate(r.dataAviz)}</td>
+          <td class="td-muted">${fmtDate(r.dataExpirare)}</td>
+          <td class="td-gold">${r.zile}</td>
+          <td><span class="badge ${badgeClass}">${trEnum(r.status)}</span></td>
+        </tr>`;
+      }).join('') || `<tr><td class="td-empty" colspan="5">${t('me_none')}</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+
+/* ══════════════════════ DAUNE ══════════════════════ */
+function renderDaune(){
+  return `
+  <div class="view-head"><div class="view-title">${t('da2_title')}</div></div>
+  <div class="view-sub">${t('da2_sub')}</div>
+
+  <div class="add-form">
+    <div class="form-title">${t('da2_addTitle')}</div>
+    <div class="form-grid" style="grid-template-columns:0.8fr 1fr 1fr 1fr 0.8fr auto">
+      <div class="field"><label>${t('th_data')}</label><input id="df-data" type="date" value="${todayISO()}"></div>
+      <div class="field"><label>${t('th_participant')}</label><select id="df-participant">${participantOptions()}</select></div>
+      <div class="field"><label>${t('da2_inventarAfectat')}</label><input id="df-inventar" placeholder="${t('da2_inventarAfectatPh')}"></div>
+      <div class="field"><label>${t('da2_natura')}</label><input id="df-natura" placeholder="${t('da2_naturaPh')}"></div>
+      <div class="field"><label>${t('da2_stareBun')}</label><select id="df-stare"><option value="deteriorat">${trEnum('deteriorat')}</option><option value="distrus">${trEnum('distrus')}</option></select></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addDauna()">${t('btn_add')}</button></div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${DB.daune.length} ${t('da2_countSuffix')}</div></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>${t('th_data')}</th><th>${t('th_participant')}</th><th>${t('da2_th_inventarAfectat')}</th><th>${t('da2_th_natura')}</th><th>${t('th_stare')}</th><th></th></tr></thead>
+      <tbody>${DB.daune.length ? DB.daune.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(d=>`
+        <tr><td class="td-muted">${fmtDate(d.data)}</td><td class="td-name" onclick="openProfile('${d.participantId}')">${esc(participantName(d.participantId))}</td>
+        <td>${esc(d.inventarAfectat)}</td><td class="td-muted">${esc(d.natura)}</td>
+        <td><span class="badge ${d.bunDeterioratDistrus==='distrus'?'red':'yellow'}">${trEnum(d.bunDeterioratDistrus)}</span></td>
+        <td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('daune','${d.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="6">${t('da2_none')}</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+async function addDauna(){
+  const participantId = document.getElementById('df-participant').value;
+  if(!participantId) return;
+  const row = {
+    data: document.getElementById('df-data').value||todayISO(), participant_id:participantId,
+    inventar_afectat: document.getElementById('df-inventar').value.trim()||'—',
+    natura: document.getElementById('df-natura').value.trim()||'—',
+    stare: document.getElementById('df-stare').value,
+  };
+  const { data, error } = await sb.from('daune').insert(row).select().single();
+  if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
+  DB.daune.unshift({id:data.id, data:data.data, participantId:data.participant_id, inventarAfectat:data.inventar_afectat, natura:data.natura, bunDeterioratDistrus:data.stare, observatii:data.observatii});
+  await logAction(`A înregistrat o daună provocată de ${participantName(participantId)}`);
+  render();
+}
+
+/* ══════════════════════ ARBITRAJ ══════════════════════ */
+function renderArbitraj(){
+  return `
+  <div class="view-head"><div class="view-title">${t('ar_title')}</div></div>
+  <div class="view-sub">${t('ar_sub')}</div>
+
+  <div class="add-form">
+    <div class="form-title">${t('ar_addTitle')}</div>
+    <div class="form-grid" style="grid-template-columns:0.8fr 1.2fr 1fr 0.7fr auto">
+      <div class="field"><label>${t('th_data')}</label><input id="af-data" type="date" value="${todayISO()}"></div>
+      <div class="field"><label>${t('ar_numeArbitru')}</label><input id="af-arbitru" placeholder="${t('ar_numeArbitruPh')}"></div>
+      <div class="field"><label>${t('ar_turneu')}</label><select id="af-turneu">${TOURNAMENTS.map(tour=>`<option>${tour}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('ar_mingiNoi')}</label><input id="af-mingi" type="number" min="1" value="1"></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addArbitraj()">${t('btn_add')}</button></div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${DB.arbitraj.length} ${t('ar_countSuffix')}</div></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>${t('th_data')}</th><th>${t('ar_th_arbitru')}</th><th>${t('ar_th_turneu')}</th><th>${t('ar_th_mingiNoi')}</th><th></th></tr></thead>
+      <tbody>${DB.arbitraj.length ? DB.arbitraj.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(a=>`
+        <tr><td class="td-muted">${fmtDate(a.data)}</td><td>${esc(a.arbitru)}</td><td><span class="badge gold">${esc(a.turneu)}</span></td>
+        <td class="td-gold">${a.cantitateMingi}</td><td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('arbitraj','${a.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="5">${t('ar_none')}</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+async function addArbitraj(){
+  const arbitru = document.getElementById('af-arbitru').value.trim();
+  if(!arbitru){ alert(t('ar_needNume')); return; }
+  const turneu = document.getElementById('af-turneu').value;
+  const cantitateMingi = parseInt(document.getElementById('af-mingi').value)||1;
+  const data = document.getElementById('af-data').value || todayISO();
+  const { data:row, error } = await sb.from('arbitraj').insert({ data, arbitru, turneu, cantitate_mingi:cantitateMingi }).select().single();
+  if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
+  DB.arbitraj.unshift({id:row.id, data:row.data, arbitru:row.arbitru, turneu:row.turneu, cantitateMingi:row.cantitate_mingi, observatii:row.observatii});
+  await refetchInventar(); // trigger a scăzut deja mingile din stoc
+  await logAction(`A eliberat ${cantitateMingi} mingi noi lui ${arbitru} (${turneu})`);
+  render();
+}
+
+/* ══════════════════════ INVENTAR ══════════════════════ */
+function renderInventar(){
+  return `
+  <div class="view-head"><div class="view-title">${t('iv_title')}</div></div>
+  <div class="view-sub">${t('iv_sub')}</div>
+
+  ${lowStockItems().length ? `<div class="locked-banner" style="border-color:rgba(210,166,74,.4)">⚠ ${lowStockItems().length} ${t('iv_lowStock')}</div>` : ''}
+
+  <div class="add-form">
+    <div class="form-title">${t('iv_addTitle')}</div>
+    <div class="form-grid" style="grid-template-columns:1.4fr 0.8fr 0.8fr auto">
+      <div class="field"><label>${t('iv_articol')}</label><select id="if2-item">${DB.inventar.map(i=>`<option value="${i.id}">${esc(i.denumire)}${i.marime!=='—'?' — '+i.marime:''}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('iv_tipMiscare')}</label><select id="if2-tip"><option value="intrare">${t('iv_intrare')}</option><option value="iesire">${t('iv_iesire')}</option></select></div>
+      <div class="field"><label>${t('ve_cantitate')}</label><input id="if2-cant" type="number" min="1" value="1"></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="adjustInventory()">${t('iv_btnAdd')}</button></div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${t('iv_structTitle')}</div></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>${t('iv_th_articol')}</th><th>${t('iv_th_culoare')}</th><th>${t('iv_th_marime')}</th><th>${t('iv_th_um')}</th><th>${t('iv_th_initial')}</th><th>${t('iv_th_intrari')}</th><th>${t('iv_th_iesiri')}</th><th>${t('iv_th_curent')}</th><th>${t('iv_th_minim')}</th><th>${t('iv_th_stare')}</th></tr></thead>
+      <tbody>${DB.inventar.map(i=>{
+        const curent = inventoryCurrent(i);
+        const low = curent < i.cantitateMinima;
+        return `<tr class="${low?'flag-yellow':''}">
+          <td class="td-name">${low?'<span class="row-flag yellow"></span>':''}${esc(i.denumire)}</td>
+          <td class="td-muted">${esc(trEnum(i.culoare))}</td>
+          <td>${i.marime && i.marime!=='—' ? `<span class="inventory-size">${esc(i.marime)}</span>` : '<span class="td-muted">—</span>'}</td>
+          <td class="td-muted">${esc(i.um)}</td>
+          <td class="td-muted">${i.cantitateInitiala}</td><td class="td-muted">${i.intrari}</td><td class="td-muted">${i.iesiri}</td>
+          <td class="td-gold">${curent}</td><td class="td-muted">${i.cantitateMinima}</td>
+          <td><span class="badge ${low?'yellow':'green'}">${esc(trEnum(i.stare))}</span></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>
+  </div>`;
+}
+async function adjustInventory(){
+  const id = document.getElementById('if2-item').value;
+  const tip = document.getElementById('if2-tip').value;
+  const cant = parseInt(document.getElementById('if2-cant').value)||1;
+  const item = DB.inventar.find(i=>i.id===id); if(!item) return;
+  const field = tip==='intrare' ? 'intrari' : 'iesiri';
+  const { error } = await sb.from('inventar').update({ [field]: item[field] + cant }).eq('id', id);
+  if(error){ alert('Actualizarea a eșuat: ' + error.message); return; }
+  await sb.from('inventar_miscari').insert({ inventar_id:id, tip, cantitate:cant, motiv:'Ajustare manuală din pagina Inventar', administrator_id: currentAdminId });
+  item[field] += cant;
+  await logAction(`A înregistrat ${tip === 'intrare' ? 'o intrare' : 'o ieșire'} de ${cant} ${item.um} — ${item.denumire}`);
+  render();
+}
+
+/* ══════════════════════ SARCINI ══════════════════════ */
+function renderSarcini(){
+  return `
+  <div class="view-head"><div class="view-title">${t('ta_title')}</div></div>
+  <div class="view-sub">${t('ta_sub')}</div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">${t('ta_total')}</div><div class="stat-value">${DB.sarcini.length}</div></div>
+    <div class="stat-card warn"><div class="stat-label">${t('ta_nesolutionate')}</div><div class="stat-value c-yellow">${DB.sarcini.filter(s=>s.status!=='soluționat').length}</div></div>
+    <div class="stat-card crit"><div class="stat-label">${t('ta_restante')}</div><div class="stat-value c-red">${staleTasks().length}</div></div>
+  </div>
+
+  <div class="add-form">
+    <div class="form-title">${t('ta_addTitle')}</div>
+    <div class="form-grid" style="grid-template-columns:0.8fr 1fr 2fr auto">
+      <div class="field"><label>${t('th_data')}</label><input id="taf-data" type="date" value="${todayISO()}"></div>
+      <div class="field"><label>${t('th_administrator')}</label><select id="taf-admin">${visibleAdmins().map(a=>`<option value="${a.id}" ${a.id===currentAdminId?'selected':''}>${esc(adminName(a))}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('ta_descriere')}</label><input id="taf-desc" placeholder="${t('ta_descrierePh')}"></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addSarcina()">${t('btn_add')}</button></div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${DB.sarcini.length} ${t('ta_countSuffix')}</div></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>${t('th_data')}</th><th>${t('ta_th_inregDe')}</th><th>${t('th_descriere')}</th><th>${t('ta_th_status')}</th><th>${t('ta_th_solDe')}</th><th></th></tr></thead>
+      <tbody>${DB.sarcini.length ? DB.sarcini.slice().sort((a,b)=>b.dataInreg.localeCompare(a.dataInreg)).map(task=>{
+        const stale = task.status!=='soluționat' && daysDiff(task.dataInreg)<=-2;
+        return `<tr class="${stale?'flag-red':''}">
+          <td class="td-muted">${stale?'<span class="row-flag red"></span>':''}${fmtDate(task.dataInreg)}</td>
+          <td class="td-muted">${esc(task.adminInreg)}</td><td>${esc(task.descriere)}</td>
+          <td>
+            <select onchange="updateTaskStatus('${task.id}', this.value)" ${disabledAttr()} style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:5px;font-size:12px;padding:4px 6px">
+              <option value="nesoluționat" ${task.status==='nesoluționat'?'selected':''}>${trEnum('nesoluționat')}</option>
+              <option value="în lucru" ${task.status==='în lucru'?'selected':''}>${trEnum('în lucru')}</option>
+              <option value="soluționat" ${task.status==='soluționat'?'selected':''}>${trEnum('soluționat')}</option>
+            </select>
+          </td>
+          <td class="td-muted">${esc(task.adminSolutionare)||'—'}</td>
+          <td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('sarcini','${task.id}')">${t('btn_delete')}</button></td>
+        </tr>`;
+      }).join('') : `<tr><td class="td-empty" colspan="6">${t('ta_none')}</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+async function addSarcina(){
+  const desc = document.getElementById('taf-desc').value.trim();
+  if(!desc){ alert(t('ta_needDesc')); return; }
+  const adminInregId = document.getElementById('taf-admin').value;
+  const row = { data_inreg: document.getElementById('taf-data').value||todayISO(), admin_inreg_id:adminInregId, descriere: desc, status:'nesoluționat' };
+  const { data, error } = await sb.from('sarcini').insert(row).select().single();
+  if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
+  const adminObj = DB.administratori.find(a=>a.id===adminInregId);
+  DB.sarcini.unshift({id:data.id, dataInreg:data.data_inreg, adminInreg:publicAdminName(adminObj), descriere:data.descriere, status:data.status, actiuni:data.actiuni, dataSolutionare:data.data_solutionare, adminSolutionare:''});
+  await logAction(`A înregistrat sarcina: ${desc}`);
+  render();
+}
+async function updateTaskStatus(id, status){
+  const t = DB.sarcini.find(s=>s.id===id); if(!t) return;
+  const patch = { status };
+  if(status==='soluționat'){ patch.data_solutionare = todayISO(); patch.admin_solutionare_id = currentAdminId; }
+  const { error } = await sb.from('sarcini').update(patch).eq('id', id);
+  if(error){ alert('Actualizarea a eșuat: ' + error.message); return; }
+  t.status = status;
+  if(status==='soluționat'){ t.dataSolutionare = todayISO(); t.adminSolutionare = publicAdminName(DB.administratori.find(a=>a.id===currentAdminId)); }
+  await logAction(`A schimbat statutul sarcinii „${t.descriere}” în „${status}”`);
+  render();
+}
+
+/* ══════════════════════ OBSERVAȚII ══════════════════════ */
+function renderObservatii(){
+  const counts = {};
+  DB.observatii.forEach(o=>{ counts[o.categorie]=(counts[o.categorie]||0)+1; });
+  return `
+  <div class="view-head"><div class="view-title">${t('ob_title')}</div></div>
+  <div class="view-sub">${t('ob_sub')}</div>
+
+  <div style="margin-bottom:20px">${OBS_CATEGORIES.map(c=>`<span class="tag">${trEnum(c)} · ${counts[c]||0}</span>`).join('')}</div>
+
+  <div class="add-form">
+    <div class="form-title">${t('ob_addTitle')}</div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr 1.4fr auto">
+      <div class="field"><label>${t('th_participant')}</label><select id="of-participant">${participantOptions()}</select></div>
+      <div class="field"><label>${t('ob_categorie')}</label><select id="of-categorie">${OBS_CATEGORIES.map(c=>`<option value="${c}">${trEnum(c)}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('ob_descScurta')}</label><input id="of-desc" placeholder="${t('ob_descScurtaPh')}"></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addObservatie()">${t('btn_add')}</button></div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${DB.observatii.length} ${t('ob_countSuffix')}</div></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>${t('th_data')}</th><th>${t('th_participant')}</th><th>${t('ob_categorie')}</th><th>${t('th_descriere')}</th><th></th></tr></thead>
+      <tbody>${DB.observatii.length ? DB.observatii.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(o=>`
+        <tr><td class="td-muted">${fmtDate(o.data)}</td><td class="td-name" onclick="openProfile('${o.participantId}')">${esc(participantName(o.participantId))}</td>
+        <td><span class="badge muted">${esc(trEnum(o.categorie))}</span></td><td>${esc(o.descriere)}</td>
+        <td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('observatii','${o.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="5">${t('ob_none')}</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+async function addObservatie(){
+  const participantId = document.getElementById('of-participant').value;
+  if(!participantId) return;
+  const categorie = document.getElementById('of-categorie').value;
+  const row = { data: todayISO(), participant_id:participantId, categorie, descriere: document.getElementById('of-desc').value.trim() || null };
+  const { data, error } = await sb.from('observatii').insert(row).select().single();
+  if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
+  DB.observatii.unshift({id:data.id, data:data.data, participantId:data.participant_id, categorie:data.categorie, descriere:data.descriere});
+  await logAction(`A înregistrat o observație (${categorie}) pentru ${participantName(participantId)}`);
+  render();
+}
+
+/* ══════════════════════ RAPOARTE ══════════════════════ */
+function renderRapoarte(){
+  return `
+  <div class="view-head"><div class="view-title">${t('re_title')}</div></div>
+  <div class="view-sub">${t('re_sub')}</div>
+
+  <div class="add-form">
+    <div class="form-title">${t('re_perioada')}</div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr auto auto auto">
+      <div class="field"><label>${t('re_de_la')}</label><input id="report-from" type="date" value="${addDays(todayISO(),-30)}"></div>
+      <div class="field"><label>${t('re_pana_la')}</label><input id="report-to" type="date" value="${todayISO()}"></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-ghost" onclick="exportExcelReport()"><svg class="btn-icon" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 19h14"/></svg>${t('re_excel')}</button></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-ghost" onclick="exportPdfReport()"><svg class="btn-icon" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 19h14"/></svg>${t('re_pdf')}</button></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" onclick="printReport()"><svg class="btn-icon" viewBox="0 0 24 24"><path d="M7 9V3h10v6"/><path d="M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><path d="M7 14h10v7H7z"/></svg>${t('re_print')}</button></div>
+    </div>
+  </div>
+
+  <div class="report-card">
+    <div class="form-title" style="margin-bottom:10px">${t('re_sect_participanti')}</div>
+    <div class="report-row"><span>${t('re_r_intarzieri')}</span><span class="td-gold">${DB.intarzieri.length}</span></div>
+    <div class="report-row"><span>${t('re_r_obsAbs')}</span><span class="td-gold">${DB.observatii.length}</span></div>
+    <div class="report-row"><span>${t('re_r_cazariHostel')}</span><span class="td-gold">${DB.hostel.length}</span></div>
+    <div class="report-row"><span>${t('re_r_vestElib')}</span><span class="td-gold">${DB.vestimentatie.reduce((s,v)=>s+v.cantitate,0)} buc</span></div>
+    <div class="report-row"><span>${t('re_r_avizeExp')}</span><span class="td-gold">${medicalRows().filter(r=>r.status==='expirat').length}</span></div>
+    <div class="report-row"><span>${t('re_r_dauneProv')}</span><span class="td-gold">${DB.daune.length}</span></div>
+  </div>
+
+  <div class="report-card">
+    <div class="form-title" style="margin-bottom:10px">${t('re_sect_admin')}</div>
+    <div class="report-row"><span>${t('re_r_schimburi')}</span><span class="td-gold">${DB.serviciu.length}</span></div>
+    <div class="report-row"><span>${t('re_r_sarciniInreg')}</span><span class="td-gold">${DB.sarcini.length}</span></div>
+    <div class="report-row"><span>${t('re_r_sarciniSol')}</span><span class="td-gold">${DB.sarcini.filter(s=>s.status==='soluționat').length}</span></div>
+  </div>
+
+  <div class="report-card">
+    <div class="form-title" style="margin-bottom:10px">${t('re_sect_fin')}</div>
+    <div class="report-row"><span>${t('re_r_cheltSpal')}</span><span class="td-gold">${DB.spalatorie.reduce((s,r)=>s+Number(r.suma||0),0)} MDL</span></div>
+  </div>
+
+  <div class="report-card">
+    <div class="form-title" style="margin-bottom:10px">${t('re_sect_inv')}</div>
+    ${DB.inventar.map(i=>`<div class="report-row"><span>${esc(i.denumire)}${i.marime!=='—'?' — '+i.marime:''}</span><span class="td-gold">${inventoryCurrent(i)} ${i.um}</span></div>`).join('')}
+  </div>`;
+}
+
+function reportRange(){
+  const from = document.getElementById('report-from')?.value || addDays(todayISO(),-30);
+  const to = document.getElementById('report-to')?.value || todayISO();
+  return { from, to, includes: iso => !!iso && iso >= from && iso <= to };
+}
+function reportSections(){
+  const range = reportRange();
+  const sections = [
+    { title:'Participanți', rows:[
+      ['Întârzieri înregistrate', DB.intarzieri.filter(r=>range.includes(r.data)).length],
+      ['Observații / absențe', DB.observatii.filter(r=>range.includes(r.data)).length],
+      ['Cazări hostel', DB.hostel.filter(r=>range.includes(r.dataCazare)).length],
+      ['Vestimentație eliberată', DB.vestimentatie.filter(r=>range.includes(r.data)).reduce((s,v)=>s+v.cantitate,0)+' buc'],
+      ['Avize medicale expirate', medicalRows().filter(r=>r.status==='expirat').length],
+      ['Daune provocate', DB.daune.filter(r=>range.includes(r.data)).length],
+    ]},
+    { title:'Administrativ', rows:[
+      ['Schimburi programate', DB.serviciu.filter(r=>range.includes(r.data)).length],
+      ['Sarcini înregistrate', DB.sarcini.filter(r=>range.includes(r.dataInreg)).length],
+      ['Sarcini soluționate', DB.sarcini.filter(r=>r.status==='soluționat' && range.includes(r.dataSolutionare)).length],
+    ]},
+    { title:'Financiar', rows:[
+      ['Cheltuieli spălătorie', DB.spalatorie.filter(r=>range.includes(r.data)).reduce((s,r)=>s+Number(r.suma||0),0)+' MDL'],
+    ]},
+    { title:'Inventar', rows:DB.inventar.map(i=>[
+      `${i.denumire}${i.marime!=='—'?' — '+i.marime:''}`,
+      `${inventoryCurrent(i)} ${i.um}`,
+    ])},
+  ];
+  return { ...range, sections };
+}
+function reportFileBase(from,to){ return `raport_${from}_${to}`; }
+function excelReportRows(report){
+  const rows = [];
+  const add = (data, sectiune, tip, persoana='', detalii='', valoare='', unitate='', statut='', dataFinala='') => {
+    rows.push({ data:data||'', sectiune, tip, persoana, detalii, valoare, unitate, statut, dataFinala:dataFinala||'' });
+  };
+
+  DB.participanti.filter(p=>report.includes(p.dataInregistrarii)).forEach(p=>add(
+    p.dataInregistrarii, 'Participanți', 'Participant înregistrat', `${p.nume} ${p.prenume}`,
+    [
+      p.nrDulap ? `dulap ${p.nrDulap}` : '',
+      p.dataNasterii ? `născut(ă) ${fmtDate(p.dataNasterii)}` : '',
+      p.telefon || '', p.email || '', p.adresa || '',
+      p.marime ? `mărime ${p.marime}` : '',
+    ].filter(Boolean).join(' · '), '', '', p.statut
+  ));
+  DB.participanti.forEach(p=>{
+    const expirare = p.dataAvizMedical ? addMonths(p.dataAvizMedical, 6) : '';
+    if(!p.dataAvizMedical || report.includes(p.dataAvizMedical) || report.includes(expirare) || expirare < report.to){
+      add(p.dataAvizMedical || report.to, 'Medical', 'Aviz medical', `${p.nume} ${p.prenume}`,
+        p.dataAvizMedical ? `Expiră la ${fmtDate(expirare)}` : 'Fără aviz medical înregistrat',
+        '', '', !p.dataAvizMedical ? 'lipsă' : expirare < report.to ? 'expirat' : 'valabil', expirare);
+    }
+  });
+  DB.intarzieri.filter(r=>report.includes(r.data)).forEach(r=>add(
+    r.data, 'Întârzieri', 'Întârziere', participantName(r.participantId)
+  ));
+  DB.vestimentatie.filter(r=>report.includes(r.data) || report.includes(r.dataReturnare)).forEach(r=>add(
+    r.data, 'Vestimentație', 'Eliberare vestimentație', participantName(r.participantId),
+    [r.tip, r.culoare, r.marime].filter(Boolean).join(' · '), Number(r.cantitate||0), 'buc',
+    r.dataReturnare ? 'returnat' : 'eliberat', r.dataReturnare
+  ));
+  DB.serviciu.filter(r=>report.includes(r.data)).forEach(r=>add(
+    r.data, 'Serviciu administratori', 'Schimb programat', r.administrator
+  ));
+  DB.spalatorie.filter(r=>report.includes(r.data)).forEach(r=>add(
+    r.data, 'Spălătorie', 'Operațiune spălătorie', participantName(r.participantId),
+    r.tipArticole || '', Number(r.suma||0), 'MDL'
+  ));
+  DB.hostel.filter(r=>report.includes(r.dataCazare)).forEach(r=>add(
+    r.dataCazare, 'Hostel', 'Cazare', participantName(r.participantId), r.observatii || ''
+  ));
+  DB.lenjerie.filter(r=>report.includes(r.dataEliberare) || report.includes(r.dataReturnare)).forEach(r=>add(
+    r.dataEliberare, 'Lenjerie', 'Eliberare lenjerie', participantName(r.participantId),
+    '', 1, 'set', r.dataReturnare ? 'returnat' : 'nereturnat', r.dataReturnare
+  ));
+  DB.daune.filter(r=>report.includes(r.data)).forEach(r=>add(
+    r.data, 'Daune și recuperări', 'Daună', participantName(r.participantId),
+    [r.inventarAfectat, r.natura, r.observatii].filter(Boolean).join(' · '),
+    '', '', r.bunDeterioratDistrus || ''
+  ));
+  DB.arbitraj.filter(r=>report.includes(r.data)).forEach(r=>add(
+    r.data, 'Arbitraj', 'Eliberare mingi', r.arbitru,
+    [r.turneu, r.observatii].filter(Boolean).join(' · '), Number(r.cantitateMingi||0), 'buc'
+  ));
+  DB.sarcini.filter(r=>report.includes(r.dataInreg) || report.includes(r.dataSolutionare)).forEach(r=>add(
+    r.dataInreg, 'Sarcini', 'Sarcină', r.adminInreg,
+    [r.descriere, r.actiuni].filter(Boolean).join(' · '), '', '', r.status,
+    r.dataSolutionare
+  ));
+  DB.observatii.filter(r=>report.includes(r.data)).forEach(r=>add(
+    r.data, 'Observații', r.categorie || 'Observație', participantName(r.participantId), r.descriere || ''
+  ));
+  DB.jurnal.filter(r=>report.includes(r.data)).forEach(r=>add(
+    r.data, 'Jurnal activitate', 'Acțiune administrator', r.cont, r.actiune || ''
+  ));
+  DB.inventar.forEach(i=>add(
+    report.to, 'Inventar', 'Situație la finalul perioadei', i.denumire,
+    [
+      i.culoare && i.culoare!=='—' ? `culoare ${i.culoare}` : '',
+      i.marime && i.marime!=='—' ? `mărime ${i.marime}` : '',
+      `inițial ${i.cantitateInitiala}`,
+      `intrări ${i.intrari}`,
+      `ieșiri ${i.iesiri}`,
+      `minim ${i.cantitateMinima}`,
+      i.observatii || '',
+    ].filter(Boolean).join(' · '),
+    inventoryCurrent(i), i.um, i.stare || ''
+  ));
+
+  return rows.sort((a,b)=>String(b.data).localeCompare(String(a.data)) || a.sectiune.localeCompare(b.sectiune));
+}
+function exportExcelReport(){
+  if(!window.XLSX){ alert(t('re_noExcel')); return; }
+  const report = reportSections();
+  const detailRows = excelReportRows(report);
+  const workbook = XLSX.utils.book_new();
+  const cheltuieli = DB.spalatorie.filter(r=>report.includes(r.data)).reduce((s,r)=>s+Number(r.suma||0),0);
+  const rows = [
+    ['RAPORT COMPLET — REGISTRU ELECTRONIC ATTP'],
+    [`Perioada: ${fmtDate(report.from)} — ${fmtDate(report.to)}`],
+    [],
+    ['Înregistrări incluse', detailRows.length, 'Participanți noi', DB.participanti.filter(p=>report.includes(p.dataInregistrarii)).length, 'Cheltuieli spălătorie', cheltuieli, 'MDL'],
+    ['Articole inventar', DB.inventar.length, 'Sarcini', DB.sarcini.filter(r=>report.includes(r.dataInreg)).length, 'Daune', DB.daune.filter(r=>report.includes(r.data)).length],
+    [],
+    ['Data','Secțiune','Tip înregistrare','Participant / responsabil','Detalii complete','Valoare','UM','Statut / rezultat','Finalizare / returnare'],
+    ...detailRows.map(r=>[
+      r.data ? new Date(`${r.data}T12:00:00`) : '',
+      r.sectiune, r.tip, r.persoana, r.detalii, r.valoare, r.unitate, r.statut,
+      r.dataFinala ? new Date(`${r.dataFinala}T12:00:00`) : '',
+    ]),
+  ];
+  const sheet = XLSX.utils.aoa_to_sheet(rows, { cellDates:true });
+  sheet['!merges'] = [
+    XLSX.utils.decode_range('A1:I1'),
+    XLSX.utils.decode_range('A2:I2'),
+  ];
+  sheet['!cols'] = [
+    {wch:13}, {wch:24}, {wch:27}, {wch:28}, {wch:64},
+    {wch:13}, {wch:10}, {wch:20}, {wch:18},
+  ];
+  sheet['!rows'] = [{hpt:28},{hpt:21},{hpt:8},{hpt:22},{hpt:22},{hpt:8},{hpt:26}];
+  sheet['!autofilter'] = { ref:`A7:I${Math.max(7, rows.length)}` };
+  sheet['!freeze'] = { xSplit:0, ySplit:7, topLeftCell:'A8', activePane:'bottomLeft', state:'frozen' };
+  sheet['!margins'] = { left:.25, right:.25, top:.5, bottom:.5, header:.2, footer:.2 };
+  sheet['!pageSetup'] = { orientation:'landscape', fitToWidth:1, fitToHeight:0, paperSize:9 };
+  for(let row=8; row<=rows.length; row++){
+    const dateCell = sheet[`A${row}`];
+    const finalCell = sheet[`I${row}`];
+    if(dateCell) dateCell.z = 'dd.mm.yyyy';
+    if(finalCell) finalCell.z = 'dd.mm.yyyy';
+  }
+  const titleStyle = { font:{bold:true,sz:18,color:{rgb:'C8A96E'}}, fill:{fgColor:{rgb:'111820'}}, alignment:{horizontal:'left',vertical:'center'} };
+  const subtitleStyle = { font:{bold:true,sz:11,color:{rgb:'5B6573'}}, fill:{fgColor:{rgb:'E9EDF2'}}, alignment:{horizontal:'left',vertical:'center'} };
+  const headerStyle = { font:{bold:true,color:{rgb:'FFFFFF'}}, fill:{fgColor:{rgb:'343D49'}}, alignment:{horizontal:'center',vertical:'center',wrapText:true} };
+  if(sheet.A1) sheet.A1.s = titleStyle;
+  if(sheet.A2) sheet.A2.s = subtitleStyle;
+  for(let col=0; col<9; col++){
+    const cell = sheet[XLSX.utils.encode_cell({r:6,c:col})];
+    if(cell) cell.s = headerStyle;
+  }
+  XLSX.utils.book_append_sheet(workbook, sheet, 'Raport complet');
+  XLSX.writeFile(workbook, reportFileBase(report.from,report.to)+'.xlsx');
+}
+function exportPdfReport(){
+  if(!window.jspdf?.jsPDF){ alert(t('re_noPdf')); return; }
+  const report = reportSections();
+  const doc = new window.jspdf.jsPDF();
+  const pdfSafe = value => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[șş]/g,'s').replace(/[țţ]/g,'t').replace(/[ȘŞ]/g,'S').replace(/[ȚŢ]/g,'T').replace(/[—–]/g,'-');
+  const body = [];
+  report.sections.forEach(section=>{
+    body.push([{content:pdfSafe(section.title), colSpan:2, styles:{fillColor:[232,235,240], textColor:[35,42,52], fontStyle:'bold', cellPadding:2.3}}]);
+    section.rows.forEach(row=>body.push([pdfSafe(row[0]), pdfSafe(row[1])]));
+  });
+  doc.setFontSize(16); doc.text('Raport si statistici', 12, 14);
+  doc.setFontSize(9); doc.setTextColor(85); doc.text(`Perioada: ${fmtDate(report.from)} - ${fmtDate(report.to)}`, 12, 20);
+  doc.autoTable({
+    startY:25,
+    head:[['Indicator','Valoare']],
+    body,
+    theme:'grid',
+    margin:{left:12,right:12,top:12,bottom:12},
+    styles:{fontSize:8.2, cellPadding:2.1, lineColor:[205,210,218], lineWidth:.15, overflow:'linebreak'},
+    headStyles:{fillColor:[55,65,81], textColor:255, fontStyle:'bold', cellPadding:2.4},
+    columnStyles:{0:{cellWidth:145},1:{cellWidth:41, halign:'right'}},
+    rowPageBreak:'avoid',
+  });
+  doc.save(reportFileBase(report.from,report.to)+'.pdf');
+}
+function printReport(){
+  const report = reportSections();
+  const popup = window.open('', '_blank', 'width=900,height=700');
+  if(!popup){ alert(t('re_popupBlocked')); return; }
+  const sectionsHtml = report.sections.map(section=>`
+    <section><h2>${esc(section.title)}</h2><table><thead><tr><th>Indicator</th><th>Valoare</th></tr></thead>
+    <tbody>${section.rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join('')}</tbody></table></section>`).join('');
+  popup.document.write(`<!doctype html><html lang="ro"><head><meta charset="utf-8"><title>Raport</title>
+    <style>body{font-family:Arial,sans-serif;color:#111;margin:32px}h1{margin:0 0 6px}p{color:#555;margin:0 0 24px}
+    h2{font-size:16px;margin:24px 0 8px}table{width:100%;border-collapse:collapse}th,td{padding:8px 10px;border:1px solid #ccc;text-align:left}
+    th:last-child,td:last-child{text-align:right}@media print{body{margin:12mm}section{break-inside:avoid}}</style></head>
+    <body><h1>Raport și statistici</h1><p>Perioada: ${fmtDate(report.from)} — ${fmtDate(report.to)}</p>${sectionsHtml}</body></html>`);
+  popup.document.close();
+  popup.focus();
+  setTimeout(()=>popup.print(), 300);
+}
+
+/* ══════════════════════ SETĂRI ══════════════════════ */
+function renderSetari(){
+  return `
+  <div class="view-head"><div class="view-title">${t('st_title')}</div></div>
+  <div class="view-sub">${t('st_sub')}</div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${t('st_admins')}</div></div>
+    <div class="table-scroll"><table><thead><tr><th>${t('pa_nume')}</th><th>${t('st_rol')}</th></tr></thead><tbody>
+      ${visibleAdmins().map(a=>`<tr><td>${esc(adminName(a))}${a.id===currentAdminId?` <span class="badge gold">${t('st_activAcum')}</span>`:''}</td><td class="td-muted">${t('st_rolValue')}</td></tr>`).join('')}
+    </tbody></table></div>
+  </div>
+
+  <div class="add-form">
+    <div class="form-title">${t('st_praguri')}</div>
+    <div class="profile-grid">
+      <div><div class="k">${t('st_p_medAlerta')}</div><div class="v">${t('st_p_medAlertaV')}</div></div>
+      <div><div class="k">${t('st_p_medVal')}</div><div class="v">${t('st_p_medValV')}</div></div>
+      <div><div class="k">${t('st_p_sarciniRest')}</div><div class="v">${t('st_p_sarciniRestV')}</div></div>
+      <div><div class="k">${t('st_p_intarzieri')}</div><div class="v">${t('st_p_intarzieriV')}</div></div>
+      <div><div class="k">${t('st_p_inactiv')}</div><div class="v">${t('st_p_inactivV')}</div></div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header">
+      <div class="table-title">${t('st_jurnalTitle')}</div>
+    </div>
+    <div class="table-scroll recent-actions-scroll"><table>
+      <thead><tr><th>${t('th_cont')}</th><th>${t('th_data')}</th><th>${t('th_actiune')}</th></tr></thead>
+      <tbody>${DB.jurnal.slice(0,100).map(j=>`<tr><td class="td-muted">${esc(j.cont)}</td><td class="td-muted">${fmtDate(j.data)}</td><td>${esc(j.actiune)}</td></tr>`).join('')}</tbody>
+    </table></div>
+  </div>`;
+}
+
+/* ══════════════════════ INIT ══════════════════════ */
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeModal('profile-modal'); } });
+</script>
+</body>
+</html>
