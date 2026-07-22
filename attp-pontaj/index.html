@@ -393,6 +393,9 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const TOURNAMENTS = ['RIO','MEXICO Day','MEXICO Night'];
 const REFEREES = ['Bambuleac Cristian','Barancean Iulia','Bulat Mihai','Calev Leonid','Ciubinidze Miroslav','Gribcov Dmitri','Iamandi Nadejda','Leu Igor','Malcoci Mihai','Melintii Vladimir','Meriacri Aurel','Mocreac Ilarion','Rusu Svetlana'];
+const TRAINERS = ['Dubrovin','Turcan','Iasciuc'];
+const TRAINING_SUMA_JUCATOR = 100;
+const TRAINING_SUMA_ANTRENOR = 200;
 const CLOTHING_TYPES = ['Maiou roșu','Maiou albastru'];
 const CLOTHING_SIZES = ['M','L','XL','XXL','XXXL'];
 const SPORT_CATEGORIES = ['MS','CMS','Categoria I','Categoria II','Categoria III','Amator'];
@@ -454,7 +457,7 @@ ro: {
   nav_dashboard:'Tablou de bord', nav_participanti:'Participanți', nav_intarzieri:'Întârzieri',
   nav_vestimentatie:'Vestimentație', nav_serviciu:'Serviciu administratori', nav_spalatorie:'Spălătorie',
   nav_hostel:'Hostel', nav_lenjerie:'Lenjerie', nav_medical:'Medical', nav_daune:'Daune și recuperări',
-  nav_arbitraj:'Arbitraj', nav_inventar:'Inventar', nav_sarcini:'Sarcini', nav_observatii:'Observații',
+  nav_arbitraj:'Arbitraj', nav_antrenamente:'Antrenamente', nav_inventar:'Inventar', nav_sarcini:'Sarcini', nav_observatii:'Observații',
   nav_rapoarte:'Rapoarte', nav_setari:'Setări',
   sb_sub:'Registru · ATTP', sb_shift:'Schimb curent', hdr_logout:'Ieșire',
 
@@ -489,6 +492,7 @@ ro: {
   pa_fisa:'Fișă participant', pa_statut:'Statut', pa_faraAviz:'fără aviz înregistrat',
   pa_expiraLa:'zile', pa_k_intarzieri:'Întârzieri', pa_k_vestimentatie:'Vestimentație primită', pa_k_cazari:'Cazări hostel',
   pa_k_lenjerie:'Lenjerie', pa_k_daune:'Daune provocate', pa_k_observatii:'Observații', pa_fara_inreg:'Fără înregistrări.',
+  pa_k_antrenamente:'Antrenamente',
   pa_intarziere_word:'Întârziere', pa_cazare_word:'Cazare', pa_eliberat_returnat:'Eliberat → returnat',
   pa_nereturnat:'nereturnat',
 
@@ -542,6 +546,16 @@ ro: {
   ar_marcaMingi:'Marcă', ar_th_marcaMingi:'Marcă',
   ar_countSuffix:'eliberări', ar_none:'Nicio eliberare.', ar_needNume:'Introduceți numele arbitrului.',
 
+  an_title:'Antrenamente', an_sub:'Sesiuni de antrenament individual — 100 MDL/sesiune de la jucător, 200 MDL/sesiune pentru antrenor.',
+  an_totalSesiuni:'Sesiuni totale', an_totalIncasat:'Încasat de la jucători', an_sumarAntrenori:'Sumar pe antrenor',
+  an_addTitle:'Înregistrare antrenament', an_jucator:'Jucător', an_antrenor:'Antrenor', an_ora:'Ora (opțional)',
+  an_btnAdd:'+ Înregistrează', an_th_jucator:'Jucător', an_th_antrenor:'Antrenor', an_th_ora:'Ora',
+  an_th_sumaJucator:'Sumă jucător', an_th_sumaAntrenor:'Sumă antrenor', an_countSuffix:'sesiuni', an_none:'Nicio sesiune înregistrată.',
+  an_eligibiliTitle:'Jucători eligibili pentru antrenament', an_eligibiliSub:'Doar acești jucători apar în formularul de mai sus. Alegeți din toți participanții.',
+  an_adaugaEligibil:'Adaugă jucător eligibil', an_eligibilAdaugat:'+ Adaugă', an_eligibilNone:'Niciun jucător eligibil încă.',
+  an_needJucator:'Selectați un jucător eligibil.', an_neeligibil:'Acest jucător nu este marcat eligibil pentru antrenament.',
+  an_perioada:'Filtrează după perioadă',
+
   iv_title:'Inventar', iv_sub:'Stocul bunurilor aflate la locație. Cantitatea curentă scade automat la eliberări.',
   iv_lowStock:'articole sub stocul minim admis.', iv_addTitle:'Intrare / corectare stoc', iv_articol:'Articol',
   iv_tipMiscare:'Tip mișcare', iv_intrare:'intrare', iv_iesire:'ieșire', iv_corectare:'corecție', iv_coloana:'Coloană corectată', iv_btnAdd:'+ Înregistrează',
@@ -572,9 +586,10 @@ ro: {
   re_popupBlocked:'Browserul a blocat fereastra de imprimare. Permiteți ferestrele pop-up pentru acest fișier.',
   re_tipRaport:'Tip raport', re_type_total:'Raport complet', re_type_intarzieri:'Întârzieri',
   re_type_spalatorie:'Spălătorie', re_type_medical:'Medical', re_type_daune:'Daune și recuperări',
-  re_type_arbitraj:'Arbitraj', re_type_inventar:'Inventar',
+  re_type_arbitraj:'Arbitraj', re_type_antrenamente:'Antrenamente', re_type_inventar:'Inventar',
   re_sect_intarzieri:'Rapoarte întârzieri', re_sect_spalatorie:'Rapoarte spălătorie', re_sect_medical:'Rapoarte medicale',
-  re_sect_daune:'Rapoarte daune și recuperări', re_sect_arbitraj:'Rapoarte arbitraj',
+  re_sect_daune:'Rapoarte daune și recuperări', re_sect_arbitraj:'Rapoarte arbitraj', re_sect_antrenamente:'Rapoarte antrenamente',
+  re_m_totalSesiuniAntrenament:'Total sesiuni antrenament', re_m_incasatAntrenament:'Încasat de la jucători',
   re_m_totalIntarzieri:'Total întârzieri', re_m_totalMinute:'Total minute întârziere', re_m_frecventi:'Participanți frecvenți (≥3/30 zile)',
   re_m_operatiuniSpal:'Operațiuni spălătorie', re_m_cantitateArt:'Cantitate articole', re_m_cheltuieliTotale:'Cheltuieli totale',
   re_m_aviziPerioada:'Avize în perioadă', re_m_valabile:'Valabile', re_m_expiraCurand:'Expiră curând', re_m_expirate:'Expirate',
@@ -620,7 +635,7 @@ ru: {
   nav_dashboard:'Панель управления', nav_participanti:'Участники', nav_intarzieri:'Опоздания',
   nav_vestimentatie:'Форма', nav_serviciu:'Смены администраторов', nav_spalatorie:'Прачечная',
   nav_hostel:'Хостел', nav_lenjerie:'Постельное бельё', nav_medical:'Медицина', nav_daune:'Ущерб и возмещение',
-  nav_arbitraj:'Судейство', nav_inventar:'Инвентарь', nav_sarcini:'Задачи', nav_observatii:'Замечания',
+  nav_arbitraj:'Судейство', nav_antrenamente:'Тренировки', nav_inventar:'Инвентарь', nav_sarcini:'Задачи', nav_observatii:'Замечания',
   nav_rapoarte:'Отчёты', nav_setari:'Настройки',
   sb_sub:'Журнал · ATTP', sb_shift:'Текущая смена', hdr_logout:'Выход',
 
@@ -655,6 +670,7 @@ ru: {
   pa_fisa:'Карточка участника', pa_statut:'Статус', pa_faraAviz:'справка не зарегистрирована',
   pa_expiraLa:'дней', pa_k_intarzieri:'Опоздания', pa_k_vestimentatie:'Полученная форма', pa_k_cazari:'Проживание в хостеле',
   pa_k_lenjerie:'Бельё', pa_k_daune:'Причинённый ущерб', pa_k_observatii:'Замечания', pa_fara_inreg:'Нет записей.',
+  pa_k_antrenamente:'Тренировки',
   pa_intarziere_word:'Опоздание', pa_cazare_word:'Заселение', pa_eliberat_returnat:'Выдано → возвращено',
   pa_nereturnat:'не возвращено',
 
@@ -708,6 +724,16 @@ ru: {
   ar_marcaMingi:'Марка', ar_th_marcaMingi:'Марка',
   ar_countSuffix:'выдач', ar_none:'Выдач нет.', ar_needNume:'Введите имя судьи.',
 
+  an_title:'Тренировки', an_sub:'Индивидуальные тренировки — 100 MDL/сессию от игрока, 200 MDL/сессию тренеру.',
+  an_totalSesiuni:'Всего сессий', an_totalIncasat:'Получено от игроков', an_sumarAntrenori:'Сводка по тренерам',
+  an_addTitle:'Регистрация тренировки', an_jucator:'Игрок', an_antrenor:'Тренер', an_ora:'Время (необязательно)',
+  an_btnAdd:'+ Зарегистрировать', an_th_jucator:'Игрок', an_th_antrenor:'Тренер', an_th_ora:'Время',
+  an_th_sumaJucator:'Сумма игрока', an_th_sumaAntrenor:'Сумма тренера', an_countSuffix:'сессий', an_none:'Сессий нет.',
+  an_eligibiliTitle:'Игроки, допущенные к тренировкам', an_eligibiliSub:'Только эти игроки появляются в форме выше. Выберите из всех участников.',
+  an_adaugaEligibil:'Добавить допущенного игрока', an_eligibilAdaugat:'+ Добавить', an_eligibilNone:'Пока нет допущенных игроков.',
+  an_needJucator:'Выберите допущенного игрока.', an_neeligibil:'Этот игрок не отмечен как допущенный к тренировкам.',
+  an_perioada:'Фильтр по периоду',
+
   iv_title:'Инвентарь', iv_sub:'Запас товаров на локации. Текущее количество автоматически снижается при выдаче.',
   iv_lowStock:'товаров ниже допустимого минимума.', iv_addTitle:'Приход / корректировка склада', iv_articol:'Товар',
   iv_tipMiscare:'Тип операции', iv_intrare:'приход', iv_iesire:'расход', iv_corectare:'корректировка', iv_coloana:'Исправляемая колонка', iv_btnAdd:'+ Зарегистрировать',
@@ -738,9 +764,10 @@ ru: {
   re_popupBlocked:'Браузер заблокировал окно печати. Разрешите всплывающие окна для этого сайта.',
   re_tipRaport:'Тип отчёта', re_type_total:'Полный отчёт', re_type_intarzieri:'Опоздания',
   re_type_spalatorie:'Прачечная', re_type_medical:'Медицина', re_type_daune:'Ущерб и восстановление',
-  re_type_arbitraj:'Арбитраж', re_type_inventar:'Склад',
+  re_type_arbitraj:'Арбитраж', re_type_antrenamente:'Тренировки', re_type_inventar:'Склад',
   re_sect_intarzieri:'Отчёт по опозданиям', re_sect_spalatorie:'Отчёт по прачечной', re_sect_medical:'Медицинский отчёт',
-  re_sect_daune:'Отчёт по ущербу и восстановлению', re_sect_arbitraj:'Отчёт по арбитражу',
+  re_sect_daune:'Отчёт по ущербу и восстановлению', re_sect_arbitraj:'Отчёт по арбитражу', re_sect_antrenamente:'Отчёт по тренировкам',
+  re_m_totalSesiuniAntrenament:'Всего тренировок', re_m_incasatAntrenament:'Получено от игроков',
   re_m_totalIntarzieri:'Всего опозданий', re_m_totalMinute:'Всего минут опоздания', re_m_frecventi:'Частые опоздания (≥3/30 дней)',
   re_m_operatiuniSpal:'Операций прачечной', re_m_cantitateArt:'Количество изделий', re_m_cheltuieliTotale:'Общие расходы',
   re_m_aviziPerioada:'Справок за период', re_m_valabile:'Действительны', re_m_expiraCurand:'Скоро истекают', re_m_expirate:'Истекли',
@@ -794,7 +821,7 @@ function realAdmins(){ return DB.administratori.filter(a=>!a.ascuns && a.rol==='
 async function fetchAll(){
   const [
     administratoriR, participantiR, intarzieriR, vestimentatieR, serviciuR, spalatorieR,
-    hostelR, lenjerieR, dauneR, arbitrajR, inventarR, sarciniR, observatiiR, jurnalR, trustedIpsR
+    hostelR, lenjerieR, dauneR, arbitrajR, inventarR, sarciniR, observatiiR, jurnalR, trustedIpsR, treninguriR
   ] = await Promise.all([
     sb.from('administratori').select('*'),
     sb.from('participanti').select('*').order('created_at', {ascending:false}),
@@ -811,6 +838,7 @@ async function fetchAll(){
     sb.from('observatii').select('*').order('data', {ascending:false}),
     sb.from('jurnal').select('*').order('data', {ascending:false}).limit(200),
     sb.from('trusted_ips').select('*').order('created_at', {ascending:false}),
+    sb.from('treninguri').select('*').order('data', {ascending:false}),
   ]);
 
   const administratori = administratoriR.data || [];
@@ -822,6 +850,7 @@ async function fetchAll(){
       id:p.id, nrDulap:p.nr_dulap, nume:p.nume, prenume:p.prenume, dataNasterii:p.data_nasterii,
       adresa:p.adresa, telefon:p.telefon, email:p.email, dataAvizMedical:p.data_aviz_medical,
       marime:p.marime, categorieSportiva:p.categorie_sportiva, statut:p.statut, dataInregistrarii:p.data_inregistrarii,
+      eligibilAntrenament:p.eligibil_antrenament,
     })),
     intarzieri: (intarzieriR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, data:r.data, minuteIntarziere:r.minute_intarziere, motiv:r.motiv})),
     vestimentatie: (vestimentatieR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, tip:r.tip, culoare:r.culoare, marime:r.marime, cantitate:r.cantitate, dataReturnare:r.data_returnare, stareReturnare:r.stare_returnare})),
@@ -836,6 +865,7 @@ async function fetchAll(){
     observatii: (observatiiR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, categorie:r.categorie, descriere:r.descriere})),
     jurnal: (jurnalR.data||[]).map(r=>({id:r.id, cont: publicAdminName(adminById[r.administrator_id]), data:String(r.data).slice(0,10), actiune:r.actiune})),
     trustedIps: (trustedIpsR.data||[]).map(r=>({id:r.id, ip:r.ip, eticheta:r.eticheta, createdAt:r.created_at})),
+    treninguri: (treninguriR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, antrenor:r.antrenor, data:r.data, ora:r.ora, sumaJucator:Number(r.suma_jucator), sumaAntrenor:Number(r.suma_antrenor), observatii:r.observatii})),
   };
 }
 
@@ -969,6 +999,7 @@ const NAV = [
   {id:'medical', key:'nav_medical', icon:'✚'},
   {id:'daune', key:'nav_daune', icon:'⚠'},
   {id:'arbitraj', key:'nav_arbitraj', icon:'●'},
+  {id:'antrenamente', key:'nav_antrenamente', icon:'★'},
   {id:'inventar', key:'nav_inventar', icon:'▣'},
   {id:'sarcini', key:'nav_sarcini', icon:'✓'},
   {id:'observatii', key:'nav_observatii', icon:'✎'},
@@ -1085,7 +1116,7 @@ function render(){
     dashboard: renderDashboard, participanti: renderParticipanti, intarzieri: renderIntarzieri,
     vestimentatie: renderVestimentatie, serviciu: renderServiciu, spalatorie: renderSpalatorie,
     hostel: renderHostel, lenjerie: renderLenjerie, medical: renderMedical, daune: renderDaune,
-    arbitraj: renderArbitraj, inventar: renderInventar, sarcini: renderSarcini, observatii: renderObservatii,
+    arbitraj: renderArbitraj, antrenamente: renderAntrenamente, inventar: renderInventar, sarcini: renderSarcini, observatii: renderObservatii,
     rapoarte: renderRapoarte, setari: renderSetari,
   };
   main.innerHTML = fns[currentView] ? fns[currentView]() : '';
@@ -1348,6 +1379,9 @@ function renderProfile(editing = false){
       </section>
       <section class="profile-section"><div class="profile-section-title">${t('pa_k_observatii')}</div>
         ${list(DB.observatii.filter(o=>o.participantId===id), r=>`<div class="mini-row"><span>${esc(trEnum(r.categorie))}: ${esc(r.descriere)}</span><span>${fmtDate(r.data)}</span></div>`)}
+      </section>
+      <section class="profile-section"><div class="profile-section-title">${t('pa_k_antrenamente')}</div>
+        ${list(DB.treninguri.filter(x=>x.participantId===id).sort((a,b)=>b.data.localeCompare(a.data)), r=>`<div class="mini-row"><span>${esc(r.antrenor)}${r.ora?' · '+String(r.ora).slice(0,5):''}</span><span>${fmtDate(r.data)}</span></div>`)}
       </section>
     </div>
   `;
@@ -1860,6 +1894,111 @@ async function addArbitraj(){
   render();
 }
 
+/* ══════════════════════ ANTRENAMENTE ══════════════════════ */
+let antrenamenteFilter = { from:'', to:'' };
+function eligibleTrainingParticipants(){
+  return DB.participanti.filter(p=>p.eligibilAntrenament).sort((a,b)=>a.nume.localeCompare(b.nume,'ro')||a.prenume.localeCompare(b.prenume,'ro'));
+}
+function trainingSessionsFiltered(){
+  const { from, to } = antrenamenteFilter;
+  return DB.treninguri.filter(r => (!from || r.data >= from) && (!to || r.data <= to));
+}
+function renderAntrenamente(){
+  const rows = trainingSessionsFiltered();
+  const totalIncasat = rows.reduce((s,r)=>s+Number(r.sumaJucator||0),0);
+  const perAntrenor = TRAINERS.map(tr=>({
+    antrenor: tr,
+    sesiuni: rows.filter(r=>r.antrenor===tr).length,
+    suma: rows.filter(r=>r.antrenor===tr).reduce((s,r)=>s+Number(r.sumaAntrenor||0),0),
+  }));
+  const eligibili = eligibleTrainingParticipants();
+  const neeligibili = DB.participanti.filter(p=>p.statut==='activ' && !p.eligibilAntrenament).sort((a,b)=>a.nume.localeCompare(b.nume,'ro')||a.prenume.localeCompare(b.prenume,'ro'));
+  return `
+  <div class="view-head"><div class="view-title">${t('an_title')}</div></div>
+  <div class="view-sub">${t('an_sub')}</div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">${t('an_totalSesiuni')}</div><div class="stat-value">${rows.length}</div></div>
+    <div class="stat-card"><div class="stat-label">${t('an_totalIncasat')}</div><div class="stat-value">${totalIncasat} MDL</div></div>
+    ${perAntrenor.map(p=>`<div class="stat-card"><div class="stat-label">${esc(p.antrenor)}</div><div class="stat-value">${p.suma} MDL</div><div class="stat-sub">${p.sesiuni} ${t('an_countSuffix')}</div></div>`).join('')}
+  </div>
+
+  <div class="add-form">
+    <div class="form-title">${t('an_addTitle')}</div>
+    <div class="form-grid" style="grid-template-columns:1.2fr 0.8fr 0.8fr 0.7fr auto">
+      <div class="field"><label>${t('an_jucator')}</label><select id="tf-jucator">${eligibili.map(p=>`<option value="${p.id}">${esc(p.nume)} ${esc(p.prenume)}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('an_antrenor')}</label><select id="tf-antrenor">${TRAINERS.map(tr=>`<option>${tr}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('th_data')}</label><input id="tf-data" type="date" value="${todayISO()}"></div>
+      <div class="field"><label>${t('an_ora')}</label><input id="tf-ora" type="time"></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addTraining()">${t('an_btnAdd')}</button></div>
+    </div>
+  </div>
+
+  ${isFullAdmin() ? `<div class="add-form">
+    <div class="form-title">${t('an_eligibiliTitle')}</div>
+    <div class="view-sub" style="margin:-4px 0 14px">${t('an_eligibiliSub')}</div>
+    <div class="form-grid" style="grid-template-columns:1fr auto">
+      <div class="field"><label>${t('an_adaugaEligibil')}</label><select id="tf-add-eligibil">${neeligibili.map(p=>`<option value="${p.id}">${esc(p.nume)} ${esc(p.prenume)}</option>`).join('')}</select></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" onclick="addEligibleParticipant()">${t('an_eligibilAdaugat')}</button></div>
+    </div>
+    <div class="mini-list" style="margin-top:14px">
+      ${eligibili.length ? eligibili.map(p=>`<div class="mini-row"><span class="td-name" onclick="openProfile('${p.id}')">${esc(p.nume)} ${esc(p.prenume)}</span><button class="btn-danger" onclick="removeEligibleParticipant('${p.id}')">${t('btn_delete')}</button></div>`).join('') : `<div class="mini-empty">${t('an_eligibilNone')}</div>`}
+    </div>
+  </div>` : ''}
+
+  <div class="add-form">
+    <div class="form-title">${t('an_perioada')}</div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr auto">
+      <div class="field"><label>${t('re_de_la')}</label><input type="date" value="${antrenamenteFilter.from}" onchange="antrenamenteFilter.from=this.value; render();"></div>
+      <div class="field"><label>${t('re_pana_la')}</label><input type="date" value="${antrenamenteFilter.to}" onchange="antrenamenteFilter.to=this.value; render();"></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-ghost" onclick="antrenamenteFilter={from:'',to:''}; render();">${t('sp_toatePerioadele')}</button></div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${rows.length} ${t('an_countSuffix')}</div></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>${t('th_data')}</th><th>${t('an_th_jucator')}</th><th>${t('an_th_antrenor')}</th><th>${t('an_th_ora')}</th><th>${t('an_th_sumaJucator')}</th><th>${t('an_th_sumaAntrenor')}</th><th></th></tr></thead>
+      <tbody>${rows.length ? rows.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(r=>`
+        <tr><td class="td-muted">${fmtDate(r.data)}</td><td class="td-name" onclick="openProfile('${r.participantId}')">${esc(participantName(r.participantId))}</td>
+        <td>${esc(r.antrenor)}</td><td class="td-muted">${r.ora ? String(r.ora).slice(0,5) : '—'}</td>
+        <td class="td-gold">${r.sumaJucator} MDL</td><td class="td-gold">${r.sumaAntrenor} MDL</td>
+        <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('treninguri','${r.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="7">${t('an_none')}</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+async function addTraining(){
+  const participantId = document.getElementById('tf-jucator').value;
+  if(!participantId){ alert(t('an_needJucator')); return; }
+  const antrenor = document.getElementById('tf-antrenor').value;
+  const data = document.getElementById('tf-data').value || todayISO();
+  const ora = document.getElementById('tf-ora').value || null;
+  const row = { participant_id:participantId, antrenor, data, ora, suma_jucator:TRAINING_SUMA_JUCATOR, suma_antrenor:TRAINING_SUMA_ANTRENOR };
+  const { data:saved, error } = await sb.from('treninguri').insert(row).select().single();
+  if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
+  DB.treninguri.unshift({id:saved.id, participantId:saved.participant_id, antrenor:saved.antrenor, data:saved.data, ora:saved.ora, sumaJucator:Number(saved.suma_jucator), sumaAntrenor:Number(saved.suma_antrenor), observatii:saved.observatii});
+  await logAction(`A înregistrat un antrenament pentru ${participantName(participantId)} cu ${antrenor}`);
+  render();
+}
+async function addEligibleParticipant(){
+  const id = document.getElementById('tf-add-eligibil').value;
+  if(!id) return;
+  const { data, error } = await sb.from('participanti').update({ eligibil_antrenament:true }).eq('id', id).select();
+  if(error){ alert('Actualizarea a eșuat: ' + error.message); return; }
+  if(!data || !data.length){ alert('Actualizarea a eșuat: nu aveți permisiunea necesară.'); return; }
+  const p = participant(id); if(p) p.eligibilAntrenament = true;
+  await logAction(`A adăugat ${participantName(id)} la lista de eligibilitate pentru antrenamente`);
+  render();
+}
+async function removeEligibleParticipant(id){
+  const { data, error } = await sb.from('participanti').update({ eligibil_antrenament:false }).eq('id', id).select();
+  if(error){ alert('Actualizarea a eșuat: ' + error.message); return; }
+  if(!data || !data.length){ alert('Actualizarea a eșuat: nu aveți permisiunea necesară.'); return; }
+  const p = participant(id); if(p) p.eligibilAntrenament = false;
+  await logAction(`A eliminat ${participantName(id)} din lista de eligibilitate pentru antrenamente`);
+  render();
+}
+
 /* ══════════════════════ INVENTAR ══════════════════════ */
 let inventarAddState = { tip:'intrare', coloana:'intrare' };
 function renderInventar(){
@@ -2050,7 +2189,7 @@ async function addObservatie(){
 
 /* ══════════════════════ RAPOARTE ══════════════════════ */
 let reportState = { type:'total', from: addDays(todayISO(),-30), to: todayISO() };
-const REPORT_TYPES = ['total','intarzieri','spalatorie','medical','daune','arbitraj','inventar'];
+const REPORT_TYPES = ['total','intarzieri','spalatorie','medical','daune','arbitraj','antrenamente','inventar'];
 function updateReportDate(key, value){
   if(!value) return;
   reportState[key] = value;
@@ -2129,6 +2268,18 @@ function summaryArbitraj(range){
     [t('re_m_mingiJoola'), filtered.filter(r=>r.marcaMingi==='JOOLA').reduce((s,r)=>s+(r.cantitateMingi||0),0)],
   ];
 }
+function summaryAntrenamente(range){
+  const filtered = DB.treninguri.filter(r=>range.includes(r.data));
+  const rows = [
+    [t('re_m_totalSesiuniAntrenament'), filtered.length],
+    [t('re_m_incasatAntrenament'), filtered.reduce((s,r)=>s+Number(r.sumaJucator||0),0)+' MDL'],
+  ];
+  TRAINERS.forEach(tr=>{
+    const forTrainer = filtered.filter(r=>r.antrenor===tr);
+    rows.push([tr, forTrainer.reduce((s,r)=>s+Number(r.sumaAntrenor||0),0)+' MDL (' + forTrainer.length + ' ' + t('an_countSuffix') + ')']);
+  });
+  return rows;
+}
 function summaryInventar(){
   return inventarSorted().map(i=>[`${esc(trEnum(i.denumire))}${i.marime!=='—'?' — '+i.marime:''}`, `${inventoryCurrent(i)} ${i.um}`]);
 }
@@ -2163,6 +2314,7 @@ function reportSections(){
       medical: { title:t('re_sect_medical'), rows:summaryMedical(range) },
       daune: { title:t('re_sect_daune'), rows:summaryDaune(range) },
       arbitraj: { title:t('re_sect_arbitraj'), rows:summaryArbitraj(range) },
+      antrenamente: { title:t('re_sect_antrenamente'), rows:summaryAntrenamente(range) },
       inventar: { title:t('re_sect_inv'), rows:summaryInventar() },
     };
     sections = [builders[type]];
@@ -2241,6 +2393,12 @@ function excelReportRows(report){
     DB.arbitraj.filter(r=>report.includes(r.data)).forEach(r=>add(
       r.data, 'Arbitraj', 'Eliberare mingi', r.arbitru,
       [r.turneu, r.marcaMingi||'DHS', r.observatii].filter(Boolean).join(' · '), Number(r.cantitateMingi||0), 'buc'
+    ));
+  }
+  if(wants('antrenamente')){
+    DB.treninguri.filter(r=>report.includes(r.data)).forEach(r=>add(
+      r.data, 'Antrenamente', 'Sesiune antrenament', participantName(r.participantId),
+      [r.antrenor, r.ora?`ora ${String(r.ora).slice(0,5)}`:'', `jucător ${r.sumaJucator} MDL`, `antrenor ${r.sumaAntrenor} MDL`, r.observatii].filter(Boolean).join(' · ')
     ));
   }
   if(wants('total')){
