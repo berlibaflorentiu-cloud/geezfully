@@ -79,6 +79,14 @@
   .lang-btn { background: none; border: none; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .04em; padding: 5px 11px; border-radius: 16px; cursor: pointer; transition: all .15s; }
   .lang-btn.active { background: var(--gold); color: var(--bg); }
   .auth-lang { display: flex; justify-content: center; margin-top: 16px; }
+  .auth-mode-switch { display: flex; justify-content: center; margin-bottom: 20px; }
+  .auth-mode-switch .lang-btn { padding: 6px 16px; }
+  .auth-pin-input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 22px; letter-spacing: .3em; text-align: center; padding: 12px; outline: none; transition: border-color .15s;
+  }
+  .auth-pin-input:focus { border-color: var(--gold); }
+  .auth-ip-code { font-family: 'DM Sans', sans-serif; font-weight: 700; color: var(--gold); letter-spacing: .04em; }
 
   /* ══ APP SHELL ══ */
   #app-shell { display: none; min-height: 100dvh; }
@@ -124,6 +132,7 @@
   .btn-primary:disabled, .btn-ghost:disabled { opacity: .4; cursor: not-allowed; }
   .btn-danger { background: none; border: 1px solid rgba(248,81,73,.35); color: var(--red); border-radius: 6px; font-size: 12px; padding: 6px 10px; cursor: pointer; }
   .btn-danger:hover { background: rgba(248,81,73,.1); }
+  .btn-danger:disabled { opacity: .35; cursor: not-allowed; background: none; }
   .btn-sm { padding: 6px 12px; font-size: 12px; }
   .btn-icon { width: 15px; height: 15px; vertical-align: -2px; margin-right: 6px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
@@ -280,8 +289,14 @@
     <div class="auth-rule"></div>
     <div class="auth-sub" data-i18n="au_sub">Registru electronic · Locație ATTP</div>
   </div>
+  <div class="auth-mode-switch">
+    <div class="lang-switch">
+      <button class="lang-btn" id="auth-mode-admin" data-i18n="au_modeAdmin" onclick="setAuthMode('admin')">Administrator</button>
+      <button class="lang-btn" id="auth-mode-locatie" data-i18n="au_modeLocatie" onclick="setAuthMode('locatie')">Locație</button>
+    </div>
+  </div>
   <div class="auth-box">
-    <div class="auth-fields">
+    <div class="auth-fields" id="auth-form-admin">
       <div class="field">
         <label class="auth-label" data-i18n="au_email">E-mail</label>
         <input type="email" id="l-email" class="auth-input" data-i18n-ph="au_emailPh" placeholder="nume@exemplu.com" autocomplete="username" onkeydown="if(event.key==='Enter')login()">
@@ -292,6 +307,14 @@
       </div>
       <button class="auth-submit" id="login-btn" data-i18n="au_login" onclick="login()">Autentificare</button>
       <div class="auth-hint" id="login-msg"></div>
+    </div>
+    <div class="auth-fields" id="auth-form-locatie" style="display:none">
+      <div>
+        <label class="auth-label" data-i18n="au_pin">Cod PIN</label>
+        <input type="password" inputmode="numeric" id="l-pin" class="auth-pin-input" data-i18n-ph="au_pinPh" placeholder="••••••" autocomplete="off" onkeydown="if(event.key==='Enter')loginLocatie()">
+      </div>
+      <button class="auth-submit" id="login-locatie-btn" data-i18n="au_login" onclick="loginLocatie()">Autentificare</button>
+      <div class="auth-hint" id="login-locatie-msg"></div>
     </div>
   </div>
   <div class="auth-lang">
@@ -403,6 +426,19 @@ ro: {
   au_sub:'Registru electronic · Locație ATTP', au_email:'E-mail', au_pass:'Parolă', au_login:'Autentificare',
   au_loading:'Se autentifică…', au_needBoth:'Introduceți e-mail și parolă.', au_badCreds:'E-mail sau parolă incorectă.',
   au_emailPh:'nume@exemplu.com', au_passPh:'••••••••',
+  au_modeAdmin:'Administrator', au_modeLocatie:'Locație', au_pin:'Cod PIN', au_pinPh:'••••••',
+  au_pinNeed:'Introduceți codul PIN.', au_pinWrong:'PIN incorect.',
+  au_pinRateLimited:'Prea multe încercări greșite. Reîncercați peste 15 minute.',
+  au_pinNotTrusted:'Acest calculator nu este autorizat pentru contul de locație.',
+  au_pinNotTrustedHint:'Comunicați acest cod unui administrator pentru a autoriza acest calculator:',
+  au_pinServerError:'Eroare de conexiune. Încercați din nou.',
+
+  st_trustedIps:'Locații de încredere', st_trustedIpsSub:'Doar calculatoarele cu aceste adrese IP pot folosi contul de locație.',
+  st_ipAddr:'Adresă IP', st_ipAddrPh:'ex. 84.20.13.5', st_ipEticheta:'Etichetă (opțional)', st_ipEtichetaPh:'ex. Calculator recepție',
+  st_ipAdauga:'+ Adaugă', st_ipNone:'Nicio adresă autorizată încă.', st_ipAdaugat:'adăugat',
+  st_pinLocatie:'PIN cont locație', st_pinLocatieSub:'Codul folosit de manageri pentru a se conecta la contul comun de locație.',
+  st_pinNou:'PIN nou', st_pinSchimba:'Schimbă PIN-ul', st_pinSchimbat:'PIN-ul a fost schimbat.',
+  st_pinTooShort:'PIN-ul trebuie să aibă cel puțin 4 caractere.',
 
   nav_dashboard:'Tablou de bord', nav_participanti:'Participanți', nav_intarzieri:'Întârzieri',
   nav_vestimentatie:'Vestimentație', nav_serviciu:'Serviciu administratori', nav_spalatorie:'Spălătorie',
@@ -530,6 +566,7 @@ ro: {
 
   st_title:'Setări', st_sub:'Administratori, praguri de alertă și jurnal complet de activitate.',
   st_admins:'Administratori', st_rol:'Rol', st_rolValue:'Administrator locație', st_activAcum:'activ acum',
+  st_rolLocatieCont:'Cont comun de locație',
   st_praguri:'Praguri de alertă (informativ)', st_p_medAlerta:'Aviz medical — alertă', st_p_medAlertaV:'≤ 7 zile rămase',
   st_p_medVal:'Aviz medical — valabilitate', st_p_medValV:'6 luni', st_p_sarciniRest:'Sarcini restante',
   st_p_sarciniRestV:'> 48 ore', st_p_intarzieri:'Întârzieri frecvente', st_p_intarzieriV:'≥ 3 în 30 zile',
@@ -546,6 +583,19 @@ ru: {
   au_sub:'Электронный журнал · Локация ATTP', au_email:'Эл. почта', au_pass:'Пароль', au_login:'Войти',
   au_loading:'Вход…', au_needBoth:'Введите эл. почту и пароль.', au_badCreds:'Неверная эл. почта или пароль.',
   au_emailPh:'name@example.com', au_passPh:'••••••••',
+  au_modeAdmin:'Администратор', au_modeLocatie:'Локация', au_pin:'PIN-код', au_pinPh:'••••••',
+  au_pinNeed:'Введите PIN-код.', au_pinWrong:'Неверный PIN-код.',
+  au_pinRateLimited:'Слишком много неверных попыток. Повторите через 15 минут.',
+  au_pinNotTrusted:'Этот компьютер не авторизован для учётной записи локации.',
+  au_pinNotTrustedHint:'Сообщите этот код администратору, чтобы авторизовать этот компьютер:',
+  au_pinServerError:'Ошибка соединения. Попробуйте снова.',
+
+  st_trustedIps:'Доверенные локации', st_trustedIpsSub:'Только компьютеры с этими IP-адресами могут использовать учётную запись локации.',
+  st_ipAddr:'IP-адрес', st_ipAddrPh:'напр. 84.20.13.5', st_ipEticheta:'Метка (необязательно)', st_ipEtichetaPh:'напр. Компьютер на ресепшене',
+  st_ipAdauga:'+ Добавить', st_ipNone:'Пока нет авторизованных адресов.', st_ipAdaugat:'добавлен',
+  st_pinLocatie:'PIN учётной записи локации', st_pinLocatieSub:'Код, который менеджеры используют для входа в общую учётную запись локации.',
+  st_pinNou:'Новый PIN', st_pinSchimba:'Изменить PIN', st_pinSchimbat:'PIN изменён.',
+  st_pinTooShort:'PIN должен содержать не менее 4 символов.',
 
   nav_dashboard:'Панель управления', nav_participanti:'Участники', nav_intarzieri:'Опоздания',
   nav_vestimentatie:'Форма', nav_serviciu:'Смены администраторов', nav_spalatorie:'Прачечная',
@@ -673,6 +723,7 @@ ru: {
 
   st_title:'Настройки', st_sub:'Администраторы, пороги уведомлений и полный журнал активности.',
   st_admins:'Администраторы', st_rol:'Роль', st_rolValue:'Администратор локации', st_activAcum:'сейчас в сети',
+  st_rolLocatieCont:'Общая учётная запись локации',
   st_praguri:'Пороги уведомлений (справочно)', st_p_medAlerta:'Мед. справка — уведомление', st_p_medAlertaV:'≤ 7 дней осталось',
   st_p_medVal:'Мед. справка — срок действия', st_p_medValV:'6 месяцев', st_p_sarciniRest:'Просроченные задачи',
   st_p_sarciniRestV:'> 48 часов', st_p_intarzieri:'Частые опоздания', st_p_intarzieriV:'≥ 3 за 30 дней',
@@ -691,7 +742,9 @@ let DB = null;
 let currentView = 'dashboard';
 let currentAdmin = null;      // "Nume Prenume" afișat
 let currentAdminId = null;    // uuid din auth.users / administratori
+let currentRole = null;       // 'admin' | 'locatie'
 let currentProfileId = null;
+function isFullAdmin(){ return currentRole === 'admin'; }
 
 function todayISO(){ return new Date().toISOString().slice(0,10); }
 function uid(){ return Math.random().toString(36).slice(2,9); }
@@ -706,11 +759,13 @@ function adminName(a){ return a ? `${a.nume} ${a.prenume}` : '—'; }
 // nume afișat altor administratori — conturile marcate "ascuns" (proprietar, nu angajat) apar generic
 function publicAdminName(a){ return !a ? '—' : (a.ascuns ? (LANG==='ru'?'Администратор':'Administrator') : adminName(a)); }
 function visibleAdmins(){ return DB.administratori.filter(a=>!a.ascuns); }
+// pentru selectoare "asignat lui X" — exclude contul comun de locație, care nu e o persoană reală
+function realAdmins(){ return DB.administratori.filter(a=>!a.ascuns && a.rol==='admin'); }
 
 async function fetchAll(){
   const [
     administratoriR, participantiR, intarzieriR, vestimentatieR, serviciuR, spalatorieR,
-    hostelR, lenjerieR, dauneR, arbitrajR, inventarR, sarciniR, observatiiR, jurnalR
+    hostelR, lenjerieR, dauneR, arbitrajR, inventarR, sarciniR, observatiiR, jurnalR, trustedIpsR
   ] = await Promise.all([
     sb.from('administratori').select('*'),
     sb.from('participanti').select('*').order('created_at', {ascending:false}),
@@ -726,6 +781,7 @@ async function fetchAll(){
     sb.from('sarcini').select('*').order('data_inreg', {ascending:false}),
     sb.from('observatii').select('*').order('data', {ascending:false}),
     sb.from('jurnal').select('*').order('data', {ascending:false}).limit(200),
+    sb.from('trusted_ips').select('*').order('created_at', {ascending:false}),
   ]);
 
   const administratori = administratoriR.data || [];
@@ -750,6 +806,7 @@ async function fetchAll(){
     sarcini: (sarciniR.data||[]).map(r=>({id:r.id, dataInreg:r.data_inreg, adminInreg: publicAdminName(adminById[r.admin_inreg_id]), status:r.status, actiuni:r.actiuni, dataSolutionare:r.data_solutionare, adminSolutionare: r.admin_solutionare_id ? publicAdminName(adminById[r.admin_solutionare_id]) : '', descriere:r.descriere})),
     observatii: (observatiiR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, categorie:r.categorie, descriere:r.descriere})),
     jurnal: (jurnalR.data||[]).map(r=>({id:r.id, cont: publicAdminName(adminById[r.administrator_id]), data:String(r.data).slice(0,10), actiune:r.actiune})),
+    trustedIps: (trustedIpsR.data||[]).map(r=>({id:r.id, ip:r.ip, eticheta:r.eticheta, createdAt:r.created_at})),
   };
 }
 
@@ -769,28 +826,76 @@ function participant(id){ return DB.participanti.find(p=>p.id===id); }
 function participantName(id){ const p=participant(id); return p ? `${p.nume} ${p.prenume}` : '—'; }
 
 /* ══════════════════════ AUTH ══════════════════════ */
+function setAuthMode(mode){
+  document.getElementById('auth-form-admin').style.display = mode==='admin' ? '' : 'none';
+  document.getElementById('auth-form-locatie').style.display = mode==='locatie' ? '' : 'none';
+  document.getElementById('auth-mode-admin').classList.toggle('active', mode==='admin');
+  document.getElementById('auth-mode-locatie').classList.toggle('active', mode==='locatie');
+}
 async function login(){
   const email = document.getElementById('l-email').value.trim();
   const password = document.getElementById('l-password').value;
   const msg = document.getElementById('login-msg');
   const btn = document.getElementById('login-btn');
-  if(!email || !password){ msg.textContent = 'Introduceți e-mail și parolă.'; msg.style.color = 'var(--muted)'; return; }
-  btn.disabled = true; btn.textContent = 'Se autentifică…';
+  if(!email || !password){ msg.textContent = t('au_needBoth'); msg.style.color = 'var(--muted)'; return; }
+  btn.disabled = true; btn.textContent = t('au_loading');
   const { data, error } = await sb.auth.signInWithPassword({ email, password });
-  btn.disabled = false; btn.textContent = 'Autentificare';
+  btn.disabled = false; btn.textContent = t('au_login');
   if(error){
-    msg.textContent = 'E-mail sau parolă incorectă.';
+    msg.textContent = t('au_badCreds');
     msg.style.color = 'var(--red)';
     return;
   }
   const { data: profile } = await sb.from('administratori').select('*').eq('id', data.user.id).single();
   const displayName = profile ? adminName(profile) : (data.user.email || 'Administrator');
-  await enterApp(data.user.id, displayName);
+  await enterApp(data.user.id, displayName, profile?.rol || 'admin');
 }
 
-async function enterApp(userId, displayName){
+async function loginLocatie(){
+  const pin = document.getElementById('l-pin').value.trim();
+  const msg = document.getElementById('login-locatie-msg');
+  const btn = document.getElementById('login-locatie-btn');
+  msg.innerHTML = ''; msg.style.color = 'var(--muted)';
+  if(!pin){ msg.textContent = t('au_pinNeed'); return; }
+  btn.disabled = true; btn.textContent = t('au_loading');
+  let resp, result;
+  try {
+    resp = await fetch(`${SUPABASE_URL}/functions/v1/location-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin }),
+    });
+    result = await resp.json();
+  } catch(e){
+    btn.disabled = false; btn.textContent = t('au_login');
+    msg.textContent = t('au_pinServerError');
+    msg.style.color = 'var(--red)';
+    return;
+  }
+  btn.disabled = false; btn.textContent = t('au_login');
+  if(!resp.ok || result.error){
+    msg.style.color = 'var(--red)';
+    if(result.error === 'wrong_pin'){ msg.textContent = t('au_pinWrong'); }
+    else if(result.error === 'rate_limited'){ msg.textContent = t('au_pinRateLimited'); }
+    else if(result.error === 'ip_not_trusted'){
+      msg.innerHTML = `${esc(t('au_pinNotTrusted'))}<br>${esc(t('au_pinNotTrustedHint'))}<br><span class="auth-ip-code">${esc(result.ip||'—')}</span>`;
+    } else { msg.textContent = t('au_pinServerError'); }
+    return;
+  }
+  const { error: sessErr } = await sb.auth.setSession({ access_token: result.access_token, refresh_token: result.refresh_token });
+  if(sessErr){ msg.textContent = t('au_pinServerError'); msg.style.color = 'var(--red)'; return; }
+  document.getElementById('l-pin').value = '';
+  const { data:{ session } } = await sb.auth.getSession();
+  const { data: profile } = await sb.from('administratori').select('*').eq('id', session.user.id).single();
+  const displayName = profile ? adminName(profile) : 'Locație';
+  await enterApp(session.user.id, displayName, profile?.rol || 'locatie');
+}
+
+async function enterApp(userId, displayName, rol){
   currentAdminId = userId;
   currentAdmin = displayName;
+  currentRole = rol || 'admin';
+  document.body.classList.toggle('role-locatie', currentRole!=='admin');
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app-shell').classList.add('visible');
   document.getElementById('header-user').textContent = currentAdmin;
@@ -802,7 +907,8 @@ async function enterApp(userId, displayName){
 
 async function logout(){
   await sb.auth.signOut();
-  currentAdmin = null; currentAdminId = null; DB = null;
+  currentAdmin = null; currentAdminId = null; currentRole = null; DB = null;
+  document.body.classList.remove('role-locatie');
   document.getElementById('app-shell').classList.remove('visible');
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('login-msg').textContent = '';
@@ -815,9 +921,10 @@ async function resumeSession(){
   if(!session) return;
   const { data: profile } = await sb.from('administratori').select('*').eq('id', session.user.id).single();
   const displayName = profile ? adminName(profile) : (session.user.email || 'Administrator');
-  await enterApp(session.user.id, displayName);
+  await enterApp(session.user.id, displayName, profile?.rol || 'admin');
 }
 applyStaticI18n();
+setAuthMode('admin');
 resumeSession();
 
 /* ══════════════════════ NAV ══════════════════════ */
@@ -842,7 +949,7 @@ const NAV = [
 
 function buildSidebar(){
   const nav = document.getElementById('sb-nav');
-  nav.innerHTML = NAV.map(item => {
+  nav.innerHTML = NAV.filter(item => isFullAdmin() || item.id!=='setari').map(item => {
     const badge = navBadge(item.id);
     return `<button class="sb-item" data-view="${item.id}" onclick="navigate('${item.id}')">
       <span class="sb-icon">${item.icon}</span><span>${esc(t(item.key))}</span>
@@ -859,6 +966,7 @@ function navBadge(id){
 }
 
 function navigate(view){
+  if(view==='setari' && !isFullAdmin()) view = 'dashboard';
   currentView = view;
   document.querySelectorAll('.sb-item').forEach(el => el.classList.toggle('active', el.dataset.view===view));
   const navItem = NAV.find(n=>n.id===view);
@@ -946,7 +1054,7 @@ function render(){
 function participantOptions(selectedId){
   return DB.participanti.filter(p=>p.statut==='activ').map(p=>`<option value="${p.id}" ${p.id===selectedId?'selected':''}>${esc(p.nume)} ${esc(p.prenume)}</option>`).join('');
 }
-function disabledAttr(){ return ''; }
+function disabledAttr(adminOnly){ return (adminOnly && !isFullAdmin()) ? 'disabled' : ''; }
 
 /* ══════════════════════ DASHBOARD ══════════════════════ */
 function renderDashboard(){
@@ -988,7 +1096,7 @@ function renderParticipanti(){
   <div class="view-head"><div class="view-title">${t('pa_title')}</div></div>
   <div class="view-sub">${t('pa_sub')}</div>
 
-  <div class="add-form">
+  ${!isFullAdmin() ? '' : `<div class="add-form">
     <div class="form-title">${t('pa_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:repeat(6,1fr)">
       <div class="field"><label>${t('pa_dulap')}</label><input id="pf-dulap" placeholder="${t('pa_dulapPh')}"></div>
@@ -1001,9 +1109,9 @@ function renderParticipanti(){
       <div class="field"><label>${t('pa_aviz')}</label><input id="pf-aviz" type="date" value="${todayISO()}"></div>
       <div class="field"><label>${t('pa_marime')}</label><select id="pf-marime">${CLOTHING_SIZES.map(s=>`<option>${s}</option>`).join('')}</select></div>
       <div class="field"><label>${t('pa_categorieSp')}</label><select id="pf-categorie"><option value="">${t('pa_nespecificata')}</option>${SPORT_CATEGORIES.map(c=>`<option>${c}</option>`).join('')}</select></div>
-      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addParticipant()">${t('pa_btnAdd')}</button></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" onclick="addParticipant()">${t('pa_btnAdd')}</button></div>
     </div>
-  </div>
+  </div>`}
 
   <div class="search-bar">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -1080,7 +1188,7 @@ function renderProfile(editing = false){
   const p = participant(id); if(!p) return;
   document.getElementById('profile-modal-title').textContent = `${p.nume} ${p.prenume}`;
   const editBtn = document.getElementById('profile-edit-btn');
-  editBtn.style.display = editing ? 'none' : '';
+  editBtn.style.display = (editing || !isFullAdmin()) ? 'none' : '';
   editBtn.title = t('pa_editTitle');
 
   if(editing){
@@ -1233,7 +1341,7 @@ function renderIntarzieri(){
       <tbody>${DB.intarzieri.length ? DB.intarzieri.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(i=>`
         <tr><td class="td-muted">${fmtDate(i.data)}</td><td class="td-name" onclick="openProfile('${i.participantId}')">${esc(participantName(i.participantId))}</td>
         <td class="td-muted">${i.minuteIntarziere!=null?i.minuteIntarziere:'—'}</td><td class="td-muted">${esc(i.motiv||'—')}</td>
-        <td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('intarzieri','${i.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="5">${t('it_none')}</td></tr>`}</tbody>
+        <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('intarzieri','${i.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="5">${t('it_none')}</td></tr>`}</tbody>
     </table></div>
   </div>`;
 }
@@ -1251,8 +1359,9 @@ async function addIntarziere(){
   render();
 }
 async function removeRow(collection, id){
-  const { error } = await sb.from(collection).delete().eq('id', id);
+  const { data, error } = await sb.from(collection).delete().eq('id', id).select();
   if(error){ alert('Ștergerea a eșuat: ' + error.message); return; }
+  if(!data || !data.length){ alert('Ștergerea a eșuat: nu aveți permisiunea necesară.'); return; }
   DB[collection] = DB[collection].filter(r=>r.id!==id);
   await logAction(`A șters o înregistrare din „${collection}”`);
   render();
@@ -1287,7 +1396,7 @@ function renderVestimentatie(){
           <td>${esc(trEnum(v.tip))}</td><td><span class="badge muted">${v.marime}</span></td>
           <td class="td-gold">${v.cantitate}</td>
           <td class="td-muted">${v.dataReturnare?fmtDate(v.dataReturnare)+(v.stareReturnare?` (${esc(v.stareReturnare)})`:''):'—'}</td>
-          <td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('vestimentatie','${v.id}')">${t('btn_delete')}</button></td>
+          <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('vestimentatie','${v.id}')">${t('btn_delete')}</button></td>
         </tr>`).join('') : `<tr><td class="td-empty" colspan="7">${t('ve_none')}</td></tr>`}</tbody>
     </table></div>
   </div>`;
@@ -1329,8 +1438,8 @@ function renderServiciu(){
     <div class="form-title">${t('se_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:1fr 1fr auto">
       <div class="field"><label>${t('th_data')}</label><input id="sf-data" type="date" value="${todayISO()}"></div>
-      <div class="field"><label>${t('th_administrator')}</label><select id="sf-admin">${visibleAdmins().map(a=>`<option value="${a.id}">${esc(adminName(a))}</option>`).join('')}</select></div>
-      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addServiciu()">${t('btn_add')}</button></div>
+      <div class="field"><label>${t('th_administrator')}</label><select id="sf-admin">${realAdmins().map(a=>`<option value="${a.id}">${esc(adminName(a))}</option>`).join('')}</select></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr(true)} onclick="addServiciu()">${t('btn_add')}</button></div>
     </div>
   </div>
 
@@ -1347,7 +1456,7 @@ function renderServiciu(){
       <thead><tr><th>${t('th_data')}</th><th>${t('th_administrator')}</th><th></th></tr></thead>
       <tbody>${DB.serviciu.length ? DB.serviciu.slice().sort((a,b)=>a.data.localeCompare(b.data)).map(s=>`
         <tr><td class="td-muted">${fmtDate(s.data)}</td><td>${esc(s.administrator)}</td>
-        <td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('serviciu','${s.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="3">${t('se_none')}</td></tr>`}</tbody>
+        <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('serviciu','${s.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="3">${t('se_none')}</td></tr>`}</tbody>
     </table></div>
   </div>`;
 }
@@ -1390,7 +1499,7 @@ function renderSpalatorie(){
       <tbody>${DB.spalatorie.length ? DB.spalatorie.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(r=>`
         <tr><td class="td-muted">${fmtDate(r.data)}</td><td class="td-name" ${r.participantId?`onclick="openProfile('${r.participantId}')"`:''}>${r.participantId?esc(participantName(r.participantId)):t('sp_locatia')}</td>
         <td>${esc(r.tipArticole)}</td><td class="td-muted">${r.cantitate||1}</td><td class="td-gold">${r.suma} MDL</td>
-        <td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('spalatorie','${r.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="6">${t('sp_none')}</td></tr>`}</tbody>
+        <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('spalatorie','${r.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="6">${t('sp_none')}</td></tr>`}</tbody>
     </table></div>
   </div>`;
 }
@@ -1441,7 +1550,7 @@ function renderHostel(){
       <thead><tr><th>${t('th_data')}</th><th>${t('th_participant')}</th><th>${t('ho_th_observatii')}</th><th></th></tr></thead>
       <tbody>${DB.hostel.length ? DB.hostel.slice().sort((a,b)=>b.dataCazare.localeCompare(a.dataCazare)).map(h=>`
         <tr><td class="td-muted">${fmtDate(h.dataCazare)}</td><td class="td-name" onclick="openProfile('${h.participantId}')">${esc(participantName(h.participantId))}</td>
-        <td class="td-muted">${esc(h.observatii)||'—'}</td><td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('hostel','${h.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="4">${t('ho_none')}</td></tr>`}</tbody>
+        <td class="td-muted">${esc(h.observatii)||'—'}</td><td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('hostel','${h.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="4">${t('ho_none')}</td></tr>`}</tbody>
     </table></div>
   </div>`;
 }
@@ -1481,8 +1590,8 @@ function renderLenjerie(){
       <tbody>${DB.lenjerie.length ? DB.lenjerie.slice().sort((a,b)=>b.dataEliberare.localeCompare(a.dataEliberare)).map(l=>`
         <tr><td class="td-name" onclick="openProfile('${l.participantId}')">${esc(participantName(l.participantId))}</td>
         <td class="td-muted">${fmtDate(l.dataEliberare)}</td><td class="td-muted">${l.dataReturnare?fmtDate(l.dataReturnare):'—'}</td>
-        <td><button type="button" class="badge ${l.dataReturnare?'green':'yellow'}" ${disabledAttr()} onclick="toggleLenjerieReturn('${l.id}')" title="${t('le_hint')}">${trEnum(l.dataReturnare?'returnat':'nereturnat')}</button></td>
-        <td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('lenjerie','${l.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="5">${t('le_none')}</td></tr>`}</tbody>
+        <td><button type="button" class="badge ${l.dataReturnare?'green':'yellow'}" ${disabledAttr(true)} onclick="toggleLenjerieReturn('${l.id}')" title="${t('le_hint')}">${trEnum(l.dataReturnare?'returnat':'nereturnat')}</button></td>
+        <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('lenjerie','${l.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="5">${t('le_none')}</td></tr>`}</tbody>
     </table></div>
   </div>`;
 }
@@ -1501,8 +1610,9 @@ async function toggleLenjerieReturn(id){
   const item = DB.lenjerie.find(l=>l.id===id);
   if(!item) return;
   const dataReturnare = item.dataReturnare ? null : todayISO();
-  const { error } = await sb.from('lenjerie').update({ data_returnare:dataReturnare }).eq('id', id);
+  const { data, error } = await sb.from('lenjerie').update({ data_returnare:dataReturnare }).eq('id', id).select();
   if(error){ alert('Actualizarea statutului a eșuat: ' + error.message); return; }
+  if(!data || !data.length){ alert('Actualizarea a eșuat: nu aveți permisiunea necesară.'); return; }
   item.dataReturnare = dataReturnare;
   await logAction(`${dataReturnare?'A marcat ca returnată':'A marcat ca nereturnată'} lenjeria lui ${participantName(item.participantId)}`);
   render();
@@ -1567,7 +1677,7 @@ function renderDaune(){
         <tr><td class="td-muted">${fmtDate(d.data)}</td><td class="td-name" onclick="openProfile('${d.participantId}')">${esc(participantName(d.participantId))}</td>
         <td>${esc(d.inventarAfectat)}</td><td class="td-muted">${esc(d.natura)}</td>
         <td><span class="badge ${d.bunDeterioratDistrus==='distrus'?'red':'yellow'}">${trEnum(d.bunDeterioratDistrus)}</span></td>
-        <td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('daune','${d.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="6">${t('da2_none')}</td></tr>`}</tbody>
+        <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('daune','${d.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="6">${t('da2_none')}</td></tr>`}</tbody>
     </table></div>
   </div>`;
 }
@@ -1611,7 +1721,7 @@ function renderArbitraj(){
       <thead><tr><th>${t('th_data')}</th><th>${t('ar_th_arbitru')}</th><th>${t('ar_th_turneu')}</th><th>${t('ar_th_marcaMingi')}</th><th>${t('ar_th_mingiNoi')}</th><th></th></tr></thead>
       <tbody>${DB.arbitraj.length ? DB.arbitraj.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(a=>`
         <tr><td class="td-muted">${fmtDate(a.data)}</td><td>${esc(a.arbitru)}</td><td><span class="badge gold">${esc(a.turneu)}</span></td>
-        <td>${esc(a.marcaMingi||'DHS')}</td><td class="td-gold">${a.cantitateMingi}</td><td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('arbitraj','${a.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="6">${t('ar_none')}</td></tr>`}</tbody>
+        <td>${esc(a.marcaMingi||'DHS')}</td><td class="td-gold">${a.cantitateMingi}</td><td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('arbitraj','${a.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="6">${t('ar_none')}</td></tr>`}</tbody>
     </table></div>
   </div>`;
 }
@@ -1644,7 +1754,7 @@ function renderInventar(){
       <div class="field"><label>${t('iv_articol')}</label><select id="if2-item">${inventarSorted().map(i=>`<option value="${i.id}">${esc(trEnum(i.denumire))}${i.marime!=='—'?' — '+i.marime:''}</option>`).join('')}</select></div>
       <div class="field"><label>${t('iv_tipMiscare')}</label><select id="if2-tip"><option value="intrare">${t('iv_intrare')}</option><option value="iesire">${t('iv_iesire')}</option></select></div>
       <div class="field"><label>${t('ve_cantitate')}</label><input id="if2-cant" type="number" min="1" value="1"></div>
-      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="adjustInventory()">${t('iv_btnAdd')}</button></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr(true)} onclick="adjustInventory()">${t('iv_btnAdd')}</button></div>
     </div>
   </div>
 
@@ -1676,8 +1786,9 @@ async function adjustInventory(){
   const cant = parseInt(document.getElementById('if2-cant').value)||1;
   const item = DB.inventar.find(i=>i.id===id); if(!item) return;
   const field = tip==='intrare' ? 'intrari' : 'iesiri';
-  const { error } = await sb.from('inventar').update({ [field]: item[field] + cant }).eq('id', id);
+  const { data, error } = await sb.from('inventar').update({ [field]: item[field] + cant }).eq('id', id).select();
   if(error){ alert('Actualizarea a eșuat: ' + error.message); return; }
+  if(!data || !data.length){ alert('Actualizarea a eșuat: nu aveți permisiunea necesară.'); return; }
   await sb.from('inventar_miscari').insert({ inventar_id:id, tip, cantitate:cant, motiv:'Ajustare manuală din pagina Inventar', administrator_id: currentAdminId });
   item[field] += cant;
   await logAction(`A înregistrat ${tip === 'intrare' ? 'o intrare' : 'o ieșire'} de ${cant} ${item.um} — ${item.denumire}`);
@@ -1700,7 +1811,7 @@ function renderSarcini(){
     <div class="form-title">${t('ta_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:0.8fr 1fr 2fr auto">
       <div class="field"><label>${t('th_data')}</label><input id="taf-data" type="date" value="${todayISO()}"></div>
-      <div class="field"><label>${t('th_administrator')}</label><select id="taf-admin">${visibleAdmins().map(a=>`<option value="${a.id}" ${a.id===currentAdminId?'selected':''}>${esc(adminName(a))}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('th_administrator')}</label><select id="taf-admin">${realAdmins().map(a=>`<option value="${a.id}" ${a.id===currentAdminId?'selected':''}>${esc(adminName(a))}</option>`).join('')}</select></div>
       <div class="field"><label>${t('ta_descriere')}</label><input id="taf-desc" placeholder="${t('ta_descrierePh')}"></div>
       <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addSarcina()">${t('btn_add')}</button></div>
     </div>
@@ -1716,14 +1827,14 @@ function renderSarcini(){
           <td class="td-muted">${stale?'<span class="row-flag red"></span>':''}${fmtDate(task.dataInreg)}</td>
           <td class="td-muted">${esc(task.adminInreg)}</td><td>${esc(task.descriere)}</td>
           <td>
-            <select onchange="updateTaskStatus('${task.id}', this.value)" ${disabledAttr()} style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:5px;font-size:12px;padding:4px 6px">
+            <select onchange="updateTaskStatus('${task.id}', this.value)" ${disabledAttr(true)} style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:5px;font-size:12px;padding:4px 6px">
               <option value="nesoluționat" ${task.status==='nesoluționat'?'selected':''}>${trEnum('nesoluționat')}</option>
               <option value="în lucru" ${task.status==='în lucru'?'selected':''}>${trEnum('în lucru')}</option>
               <option value="soluționat" ${task.status==='soluționat'?'selected':''}>${trEnum('soluționat')}</option>
             </select>
           </td>
           <td class="td-muted">${esc(task.adminSolutionare)||'—'}</td>
-          <td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('sarcini','${task.id}')">${t('btn_delete')}</button></td>
+          <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('sarcini','${task.id}')">${t('btn_delete')}</button></td>
         </tr>`;
       }).join('') : `<tr><td class="td-empty" colspan="6">${t('ta_none')}</td></tr>`}</tbody>
     </table></div>
@@ -1745,8 +1856,9 @@ async function updateTaskStatus(id, status){
   const t = DB.sarcini.find(s=>s.id===id); if(!t) return;
   const patch = { status };
   if(status==='soluționat'){ patch.data_solutionare = todayISO(); patch.admin_solutionare_id = currentAdminId; }
-  const { error } = await sb.from('sarcini').update(patch).eq('id', id);
+  const { data, error } = await sb.from('sarcini').update(patch).eq('id', id).select();
   if(error){ alert('Actualizarea a eșuat: ' + error.message); return; }
+  if(!data || !data.length){ alert('Actualizarea a eșuat: nu aveți permisiunea necesară.'); return; }
   t.status = status;
   if(status==='soluționat'){ t.dataSolutionare = todayISO(); t.adminSolutionare = publicAdminName(DB.administratori.find(a=>a.id===currentAdminId)); }
   await logAction(`A schimbat statutul sarcinii „${t.descriere}” în „${status}”`);
@@ -1780,7 +1892,7 @@ function renderObservatii(){
       <tbody>${DB.observatii.length ? DB.observatii.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(o=>`
         <tr><td class="td-muted">${fmtDate(o.data)}</td><td class="td-name" onclick="openProfile('${o.participantId}')">${esc(participantName(o.participantId))}</td>
         <td><span class="badge muted">${esc(trEnum(o.categorie))}</span></td><td>${esc(o.descriere)}</td>
-        <td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('observatii','${o.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="5">${t('ob_none')}</td></tr>`}</tbody>
+        <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('observatii','${o.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="5">${t('ob_none')}</td></tr>`}</tbody>
     </table></div>
   </div>`;
 }
@@ -2123,7 +2235,7 @@ function renderSetari(){
   <div class="table-wrap">
     <div class="table-header"><div class="table-title">${t('st_admins')}</div></div>
     <div class="table-scroll"><table><thead><tr><th>${t('pa_nume')}</th><th>${t('st_rol')}</th></tr></thead><tbody>
-      ${visibleAdmins().map(a=>`<tr><td>${esc(adminName(a))}${a.id===currentAdminId?` <span class="badge gold">${t('st_activAcum')}</span>`:''}</td><td class="td-muted">${t('st_rolValue')}</td></tr>`).join('')}
+      ${visibleAdmins().map(a=>`<tr><td>${esc(adminName(a))}${a.id===currentAdminId?` <span class="badge gold">${t('st_activAcum')}</span>`:''}</td><td class="td-muted">${a.rol==='admin'?t('st_rolValue'):t('st_rolLocatieCont')}</td></tr>`).join('')}
     </tbody></table></div>
   </div>
 
@@ -2138,6 +2250,34 @@ function renderSetari(){
     </div>
   </div>
 
+  <div class="add-form">
+    <div class="form-title">${t('st_pinLocatie')}</div>
+    <div class="view-sub" style="margin:-4px 0 14px">${t('st_pinLocatieSub')}</div>
+    <div class="form-grid" style="grid-template-columns:1fr auto">
+      <div class="field"><label>${t('st_pinNou')}</label><input id="stf-pin" type="password" inputmode="numeric" placeholder="${t('au_pinPh')}"></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" onclick="rotateLocatiePin()">${t('st_pinSchimba')}</button></div>
+    </div>
+    <div class="auth-hint" id="stf-pin-msg" style="text-align:left;margin-top:8px"></div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${t('st_trustedIps')}</div></div>
+    <div class="view-sub" style="padding:0 20px;margin:8px 0 0">${t('st_trustedIpsSub')}</div>
+    <div class="add-form" style="border:none;box-shadow:none;padding:14px 20px">
+      <div class="form-grid" style="grid-template-columns:1fr 1fr auto">
+        <div class="field"><label>${t('st_ipAddr')}</label><input id="stf-ip" placeholder="${t('st_ipAddrPh')}"></div>
+        <div class="field"><label>${t('st_ipEticheta')}</label><input id="stf-ip-eticheta" placeholder="${t('st_ipEtichetaPh')}"></div>
+        <div class="field" style="justify-content:flex-end"><button class="btn-primary" onclick="addTrustedIp()">${t('st_ipAdauga')}</button></div>
+      </div>
+    </div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>${t('st_ipAddr')}</th><th>${t('st_ipEticheta')}</th><th>${t('th_data')}</th><th></th></tr></thead>
+      <tbody>${DB.trustedIps.length ? DB.trustedIps.map(ip=>`
+        <tr><td class="td-name">${esc(ip.ip)}</td><td class="td-muted">${esc(ip.eticheta)||'—'}</td><td class="td-muted">${fmtDate(String(ip.createdAt).slice(0,10))}</td>
+        <td><button class="btn-danger" onclick="removeRow('trusted_ips','${ip.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="4">${t('st_ipNone')}</td></tr>`}</tbody>
+    </table></div>
+  </div>
+
   <div class="table-wrap">
     <div class="table-header">
       <div class="table-title">${t('st_jurnalTitle')}</div>
@@ -2147,6 +2287,27 @@ function renderSetari(){
       <tbody>${DB.jurnal.slice(0,100).map(j=>`<tr><td class="td-muted">${esc(j.cont)}</td><td class="td-muted">${fmtDate(j.data)}</td><td>${esc(j.actiune)}</td></tr>`).join('')}</tbody>
     </table></div>
   </div>`;
+}
+async function addTrustedIp(){
+  const ip = document.getElementById('stf-ip').value.trim();
+  if(!ip) return;
+  const eticheta = document.getElementById('stf-ip-eticheta').value.trim() || null;
+  const { data, error } = await sb.from('trusted_ips').insert({ ip, eticheta, adaugat_de: currentAdminId }).select().single();
+  if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
+  DB.trustedIps.unshift({ id:data.id, ip:data.ip, eticheta:data.eticheta, createdAt:data.created_at });
+  await logAction(`A autorizat adresa IP ${ip} pentru contul de locație${eticheta?` (${eticheta})`:''}`);
+  render();
+}
+async function rotateLocatiePin(){
+  const pin = document.getElementById('stf-pin').value.trim();
+  const msg = document.getElementById('stf-pin-msg');
+  if(pin.length < 4){ msg.textContent = t('st_pinTooShort'); msg.style.color = 'var(--red)'; return; }
+  const { error } = await sb.rpc('set_locatie_pin', { nou_pin: pin });
+  if(error){ msg.textContent = 'Eroare: ' + error.message; msg.style.color = 'var(--red)'; return; }
+  document.getElementById('stf-pin').value = '';
+  msg.textContent = t('st_pinSchimbat');
+  msg.style.color = 'var(--green)';
+  await logAction('A schimbat PIN-ul contului de locație');
 }
 
 /* ══════════════════════ INIT ══════════════════════ */
