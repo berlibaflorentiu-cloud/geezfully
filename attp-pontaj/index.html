@@ -367,7 +367,8 @@
     <div class="modal-head">
       <div class="modal-title" id="profile-modal-title" data-i18n="pa_fisa">Fișă participant</div>
       <div class="modal-head-actions">
-        <button class="btn-ghost btn-sm" id="profile-edit-btn" data-i18n="pa_editBtn" onclick="renderProfile(true)">Editează datele</button>
+        <button class="btn-primary btn-sm" id="profile-edit-btn" data-i18n="pa_editBtn" onclick="renderProfile(true)">Editează datele</button>
+        <button class="btn-danger btn-sm" id="profile-delete-btn" data-i18n="pa_deleteBtn" onclick="deleteParticipant()">Șterge participant</button>
         <button class="modal-close" onclick="closeModal('profile-modal')">✕</button>
       </div>
     </div>
@@ -469,6 +470,8 @@ ro: {
   pa_none:'Niciun participant găsit.', pa_countSuffix:'participanți',
   pa_needNumePrenume:'Completați cel puțin nume și prenume.',
   pa_editTitle:'Modifică datele participantului', pa_editBtn:'Editează datele', pa_nespecificata:'Nespecificată',
+  pa_deleteBtn:'Șterge participant', pa_deleteTitle:'Șterge participantul din registru',
+  pa_deleteConfirm:(nume)=>`Ștergeți definitiv participantul ${nume}? Se vor șterge și toate înregistrările asociate (întârzieri, vestimentație, spălătorie, lenjerie, hostel, daune, observații). Această acțiune nu poate fi anulată.`,
   pa_needNumePrenume2:'Numele și prenumele sunt obligatorii.',
   pa_fisa:'Fișă participant', pa_statut:'Statut', pa_faraAviz:'fără aviz înregistrat',
   pa_expiraLa:'zile', pa_k_intarzieri:'Întârzieri', pa_k_vestimentatie:'Vestimentație primită', pa_k_cazari:'Cazări hostel',
@@ -627,6 +630,8 @@ ru: {
   pa_none:'Участник не найден.', pa_countSuffix:'участников',
   pa_needNumePrenume:'Заполните хотя бы фамилию и имя.',
   pa_editTitle:'Изменить данные участника', pa_editBtn:'Редактировать данные', pa_nespecificata:'Не указан',
+  pa_deleteBtn:'Удалить участника', pa_deleteTitle:'Удалить участника из реестра',
+  pa_deleteConfirm:(nume)=>`Окончательно удалить участника ${nume}? Будут удалены и все связанные записи (опоздания, форма, прачечная, бельё, хостел, ущерб, замечания). Это действие необратимо.`,
   pa_needNumePrenume2:'Фамилия и имя обязательны.',
   pa_fisa:'Карточка участника', pa_statut:'Статус', pa_faraAviz:'справка не зарегистрирована',
   pa_expiraLa:'дней', pa_k_intarzieri:'Опоздания', pa_k_vestimentatie:'Полученная форма', pa_k_cazari:'Проживание в хостеле',
@@ -1192,6 +1197,9 @@ function renderProfile(editing = false){
   const editBtn = document.getElementById('profile-edit-btn');
   editBtn.style.display = (editing || !isFullAdmin()) ? 'none' : '';
   editBtn.title = t('pa_editTitle');
+  const deleteBtn = document.getElementById('profile-delete-btn');
+  deleteBtn.style.display = (editing || !isFullAdmin()) ? 'none' : '';
+  deleteBtn.title = t('pa_deleteTitle');
 
   if(editing){
     document.getElementById('profile-modal-body').innerHTML = `
@@ -1301,6 +1309,18 @@ async function saveParticipantProfile(){
   await logAction(`A actualizat profilul participantului ${data.nume} ${data.prenume}`);
   render();
   renderProfile(false);
+}
+async function deleteParticipant(){
+  const p = participant(currentProfileId); if(!p) return;
+  const nume = `${p.nume} ${p.prenume}`;
+  if(!confirm(t('pa_deleteConfirm')(nume))) return;
+  const { data, error } = await sb.from('participanti').delete().eq('id', p.id).select();
+  if(error){ alert('Ștergerea a eșuat: ' + error.message); return; }
+  if(!data || !data.length){ alert('Ștergerea a eșuat: nu aveți permisiunea necesară.'); return; }
+  await logAction(`A șters participantul ${nume} (și toate înregistrările asociate)`);
+  closeModal('profile-modal');
+  await fetchAll();
+  render();
 }
 function openModal(id){ document.getElementById(id).classList.add('visible'); }
 function closeModal(id){ document.getElementById(id).classList.remove('visible'); }
