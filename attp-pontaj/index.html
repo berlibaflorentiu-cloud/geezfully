@@ -513,6 +513,16 @@ ro: {
   re_r_cheltSpal:'Cheltuieli spălătorie', re_noExcel:'Modulul Excel nu s-a încărcat. Verificați conexiunea la internet și reîncărcați pagina.',
   re_noPdf:'Modulul PDF nu s-a încărcat. Verificați conexiunea la internet și reîncărcați pagina.',
   re_popupBlocked:'Browserul a blocat fereastra de imprimare. Permiteți ferestrele pop-up pentru acest fișier.',
+  re_tipRaport:'Tip raport', re_type_total:'Raport complet', re_type_intarzieri:'Întârzieri',
+  re_type_spalatorie:'Spălătorie', re_type_medical:'Medical', re_type_daune:'Daune și recuperări',
+  re_type_arbitraj:'Arbitraj', re_type_inventar:'Inventar',
+  re_sect_intarzieri:'Rapoarte întârzieri', re_sect_spalatorie:'Rapoarte spălătorie', re_sect_medical:'Rapoarte medicale',
+  re_sect_daune:'Rapoarte daune și recuperări', re_sect_arbitraj:'Rapoarte arbitraj',
+  re_m_totalIntarzieri:'Total întârzieri', re_m_totalMinute:'Total minute întârziere', re_m_frecventi:'Participanți frecvenți (≥3/30 zile)',
+  re_m_operatiuniSpal:'Operațiuni spălătorie', re_m_cantitateArt:'Cantitate articole', re_m_cheltuieliTotale:'Cheltuieli totale',
+  re_m_aviziPerioada:'Avize în perioadă', re_m_valabile:'Valabile', re_m_expiraCurand:'Expiră curând', re_m_expirate:'Expirate',
+  re_m_totalDaune:'Total daune înregistrate', re_m_eliberariArb:'Eliberări înregistrate',
+  re_m_mingiDhs:'Mingi DHS eliberate', re_m_mingiJoola:'Mingi JOOLA eliberate',
 
   st_title:'Setări', st_sub:'Administratori, praguri de alertă și jurnal complet de activitate.',
   st_admins:'Administratori', st_rol:'Rol', st_rolValue:'Administrator locație', st_activAcum:'activ acum',
@@ -645,6 +655,16 @@ ru: {
   re_r_cheltSpal:'Расходы на прачечную', re_noExcel:'Модуль Excel не загрузился. Проверьте интернет-соединение и обновите страницу.',
   re_noPdf:'Модуль PDF не загрузился. Проверьте интернет-соединение и обновите страницу.',
   re_popupBlocked:'Браузер заблокировал окно печати. Разрешите всплывающие окна для этого сайта.',
+  re_tipRaport:'Тип отчёта', re_type_total:'Полный отчёт', re_type_intarzieri:'Опоздания',
+  re_type_spalatorie:'Прачечная', re_type_medical:'Медицина', re_type_daune:'Ущерб и восстановление',
+  re_type_arbitraj:'Арбитраж', re_type_inventar:'Склад',
+  re_sect_intarzieri:'Отчёт по опозданиям', re_sect_spalatorie:'Отчёт по прачечной', re_sect_medical:'Медицинский отчёт',
+  re_sect_daune:'Отчёт по ущербу и восстановлению', re_sect_arbitraj:'Отчёт по арбитражу',
+  re_m_totalIntarzieri:'Всего опозданий', re_m_totalMinute:'Всего минут опоздания', re_m_frecventi:'Частые опоздания (≥3/30 дней)',
+  re_m_operatiuniSpal:'Операций прачечной', re_m_cantitateArt:'Количество изделий', re_m_cheltuieliTotale:'Общие расходы',
+  re_m_aviziPerioada:'Справок за период', re_m_valabile:'Действительны', re_m_expiraCurand:'Скоро истекают', re_m_expirate:'Истекли',
+  re_m_totalDaune:'Всего зарегистрировано ущерба', re_m_eliberariArb:'Зарегистрированных выдач',
+  re_m_mingiDhs:'Выдано мячей DHS', re_m_mingiJoola:'Выдано мячей JOOLA',
 
   st_title:'Настройки', st_sub:'Администраторы, пороги уведомлений и полный журнал активности.',
   st_admins:'Администраторы', st_rol:'Роль', st_rolValue:'Администратор локации', st_activAcum:'сейчас в сети',
@@ -1738,160 +1758,215 @@ async function addObservatie(){
 }
 
 /* ══════════════════════ RAPOARTE ══════════════════════ */
+let reportState = { type:'total', from: addDays(todayISO(),-30), to: todayISO() };
+const REPORT_TYPES = ['total','intarzieri','spalatorie','medical','daune','arbitraj','inventar'];
 function renderRapoarte(){
+  const report = reportSections();
   return `
   <div class="view-head"><div class="view-title">${t('re_title')}</div></div>
   <div class="view-sub">${t('re_sub')}</div>
 
   <div class="add-form">
     <div class="form-title">${t('re_perioada')}</div>
-    <div class="form-grid" style="grid-template-columns:1fr 1fr auto auto auto">
-      <div class="field"><label>${t('re_de_la')}</label><input id="report-from" type="date" value="${addDays(todayISO(),-30)}"></div>
-      <div class="field"><label>${t('re_pana_la')}</label><input id="report-to" type="date" value="${todayISO()}"></div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr auto auto auto">
+      <div class="field"><label>${t('re_tipRaport')}</label><select id="report-type" onchange="reportState.type=this.value; render();">${REPORT_TYPES.map(rt=>`<option value="${rt}" ${rt===reportState.type?'selected':''}>${t('re_type_'+rt)}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('re_de_la')}</label><input id="report-from" type="date" value="${reportState.from}" onchange="reportState.from=this.value||reportState.from; render();"></div>
+      <div class="field"><label>${t('re_pana_la')}</label><input id="report-to" type="date" value="${reportState.to}" onchange="reportState.to=this.value||reportState.to; render();"></div>
       <div class="field" style="justify-content:flex-end"><button class="btn-ghost" onclick="exportExcelReport()"><svg class="btn-icon" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 19h14"/></svg>${t('re_excel')}</button></div>
       <div class="field" style="justify-content:flex-end"><button class="btn-ghost" onclick="exportPdfReport()"><svg class="btn-icon" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 19h14"/></svg>${t('re_pdf')}</button></div>
       <div class="field" style="justify-content:flex-end"><button class="btn-primary" onclick="printReport()"><svg class="btn-icon" viewBox="0 0 24 24"><path d="M7 9V3h10v6"/><path d="M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><path d="M7 14h10v7H7z"/></svg>${t('re_print')}</button></div>
     </div>
   </div>
 
+  ${report.sections.map(section=>`
   <div class="report-card">
-    <div class="form-title" style="margin-bottom:10px">${t('re_sect_participanti')}</div>
-    <div class="report-row"><span>${t('re_r_intarzieri')}</span><span class="td-gold">${DB.intarzieri.length}</span></div>
-    <div class="report-row"><span>${t('re_r_obsAbs')}</span><span class="td-gold">${DB.observatii.length}</span></div>
-    <div class="report-row"><span>${t('re_r_cazariHostel')}</span><span class="td-gold">${DB.hostel.length}</span></div>
-    <div class="report-row"><span>${t('re_r_vestElib')}</span><span class="td-gold">${DB.vestimentatie.reduce((s,v)=>s+v.cantitate,0)} buc</span></div>
-    <div class="report-row"><span>${t('re_r_avizeExp')}</span><span class="td-gold">${medicalRows().filter(r=>r.status==='expirat').length}</span></div>
-    <div class="report-row"><span>${t('re_r_dauneProv')}</span><span class="td-gold">${DB.daune.length}</span></div>
-  </div>
-
-  <div class="report-card">
-    <div class="form-title" style="margin-bottom:10px">${t('re_sect_admin')}</div>
-    <div class="report-row"><span>${t('re_r_schimburi')}</span><span class="td-gold">${DB.serviciu.length}</span></div>
-    <div class="report-row"><span>${t('re_r_sarciniInreg')}</span><span class="td-gold">${DB.sarcini.length}</span></div>
-    <div class="report-row"><span>${t('re_r_sarciniSol')}</span><span class="td-gold">${DB.sarcini.filter(s=>s.status==='soluționat').length}</span></div>
-  </div>
-
-  <div class="report-card">
-    <div class="form-title" style="margin-bottom:10px">${t('re_sect_fin')}</div>
-    <div class="report-row"><span>${t('re_r_cheltSpal')}</span><span class="td-gold">${DB.spalatorie.reduce((s,r)=>s+Number(r.suma||0),0)} MDL</span></div>
-  </div>
-
-  <div class="report-card">
-    <div class="form-title" style="margin-bottom:10px">${t('re_sect_inv')}</div>
-    ${inventarSorted().map(i=>`<div class="report-row"><span>${esc(trEnum(i.denumire))}${i.marime!=='—'?' — '+i.marime:''}</span><span class="td-gold">${inventoryCurrent(i)} ${i.um}</span></div>`).join('')}
-  </div>`;
+    <div class="form-title" style="margin-bottom:10px">${esc(section.title)}</div>
+    ${section.rows.map(row=>`<div class="report-row"><span>${esc(row[0])}</span><span class="td-gold">${esc(row[1])}</span></div>`).join('')}
+  </div>`).join('')}`;
 }
 
 function reportRange(){
-  const from = document.getElementById('report-from')?.value || addDays(todayISO(),-30);
-  const to = document.getElementById('report-to')?.value || todayISO();
+  const from = reportState.from, to = reportState.to;
   return { from, to, includes: iso => !!iso && iso >= from && iso <= to };
+}
+function summaryIntarzieri(range){
+  const filtered = DB.intarzieri.filter(r=>range.includes(r.data));
+  return [
+    [t('re_m_totalIntarzieri'), filtered.length],
+    [t('re_m_totalMinute'), filtered.reduce((s,r)=>s+(r.minuteIntarziere||0),0)],
+    [t('re_m_frecventi'), frequentLate().length],
+  ];
+}
+function summarySpalatorie(range){
+  const filtered = DB.spalatorie.filter(r=>range.includes(r.data));
+  return [
+    [t('re_m_operatiuniSpal'), filtered.length],
+    [t('re_m_cantitateArt'), filtered.reduce((s,r)=>s+(r.cantitate||1),0)],
+    [t('re_m_cheltuieliTotale'), filtered.reduce((s,r)=>s+Number(r.suma||0),0)+' MDL'],
+  ];
+}
+function summaryMedical(range){
+  const rows = medicalRows().filter(r=>range.includes(r.dataAviz) || range.includes(r.dataExpirare));
+  return [
+    [t('re_m_aviziPerioada'), rows.length],
+    [t('re_m_valabile'), rows.filter(r=>r.status==='valabil').length],
+    [t('re_m_expiraCurand'), rows.filter(r=>r.status==='expiră curând').length],
+    [t('re_m_expirate'), rows.filter(r=>r.status==='expirat').length],
+  ];
+}
+function summaryDaune(range){
+  return [[t('re_m_totalDaune'), DB.daune.filter(r=>range.includes(r.data)).length]];
+}
+function summaryArbitraj(range){
+  const filtered = DB.arbitraj.filter(r=>range.includes(r.data));
+  return [
+    [t('re_m_eliberariArb'), filtered.length],
+    [t('re_m_mingiDhs'), filtered.filter(r=>(r.marcaMingi||'DHS')==='DHS').reduce((s,r)=>s+(r.cantitateMingi||0),0)],
+    [t('re_m_mingiJoola'), filtered.filter(r=>r.marcaMingi==='JOOLA').reduce((s,r)=>s+(r.cantitateMingi||0),0)],
+  ];
+}
+function summaryInventar(){
+  return inventarSorted().map(i=>[`${esc(trEnum(i.denumire))}${i.marime!=='—'?' — '+i.marime:''}`, `${inventoryCurrent(i)} ${i.um}`]);
 }
 function reportSections(){
   const range = reportRange();
-  const sections = [
-    { title:'Participanți', rows:[
-      ['Întârzieri înregistrate', DB.intarzieri.filter(r=>range.includes(r.data)).length],
-      ['Observații / absențe', DB.observatii.filter(r=>range.includes(r.data)).length],
-      ['Cazări hostel', DB.hostel.filter(r=>range.includes(r.dataCazare)).length],
-      ['Vestimentație eliberată', DB.vestimentatie.filter(r=>range.includes(r.data)).reduce((s,v)=>s+v.cantitate,0)+' buc'],
-      ['Avize medicale expirate', medicalRows().filter(r=>r.status==='expirat').length],
-      ['Daune provocate', DB.daune.filter(r=>range.includes(r.data)).length],
-    ]},
-    { title:'Administrativ', rows:[
-      ['Schimburi programate', DB.serviciu.filter(r=>range.includes(r.data)).length],
-      ['Sarcini înregistrate', DB.sarcini.filter(r=>range.includes(r.dataInreg)).length],
-      ['Sarcini soluționate', DB.sarcini.filter(r=>r.status==='soluționat' && range.includes(r.dataSolutionare)).length],
-    ]},
-    { title:'Financiar', rows:[
-      ['Cheltuieli spălătorie', DB.spalatorie.filter(r=>range.includes(r.data)).reduce((s,r)=>s+Number(r.suma||0),0)+' MDL'],
-    ]},
-    { title:'Inventar', rows:inventarSorted().map(i=>[
-      `${i.denumire}${i.marime!=='—'?' — '+i.marime:''}`,
-      `${inventoryCurrent(i)} ${i.um}`,
-    ])},
-  ];
-  return { ...range, sections };
+  const type = reportState.type;
+  let sections;
+  if(type==='total'){
+    sections = [
+      { title:t('re_sect_participanti'), rows:[
+        [t('re_r_intarzieri'), DB.intarzieri.filter(r=>range.includes(r.data)).length],
+        [t('re_r_obsAbs'), DB.observatii.filter(r=>range.includes(r.data)).length],
+        [t('re_r_cazariHostel'), DB.hostel.filter(r=>range.includes(r.dataCazare)).length],
+        [t('re_r_vestElib'), DB.vestimentatie.filter(r=>range.includes(r.data)).reduce((s,v)=>s+v.cantitate,0)+' buc'],
+        [t('re_r_avizeExp'), medicalRows().filter(r=>r.status==='expirat').length],
+        [t('re_r_dauneProv'), DB.daune.filter(r=>range.includes(r.data)).length],
+      ]},
+      { title:t('re_sect_admin'), rows:[
+        [t('re_r_schimburi'), DB.serviciu.filter(r=>range.includes(r.data)).length],
+        [t('re_r_sarciniInreg'), DB.sarcini.filter(r=>range.includes(r.dataInreg)).length],
+        [t('re_r_sarciniSol'), DB.sarcini.filter(r=>r.status==='soluționat' && range.includes(r.dataSolutionare)).length],
+      ]},
+      { title:t('re_sect_fin'), rows:[
+        [t('re_r_cheltSpal'), DB.spalatorie.filter(r=>range.includes(r.data)).reduce((s,r)=>s+Number(r.suma||0),0)+' MDL'],
+      ]},
+      { title:t('re_sect_inv'), rows:summaryInventar() },
+    ];
+  } else {
+    const builders = {
+      intarzieri: { title:t('re_sect_intarzieri'), rows:summaryIntarzieri(range) },
+      spalatorie: { title:t('re_sect_spalatorie'), rows:summarySpalatorie(range) },
+      medical: { title:t('re_sect_medical'), rows:summaryMedical(range) },
+      daune: { title:t('re_sect_daune'), rows:summaryDaune(range) },
+      arbitraj: { title:t('re_sect_arbitraj'), rows:summaryArbitraj(range) },
+      inventar: { title:t('re_sect_inv'), rows:summaryInventar() },
+    };
+    sections = [builders[type]];
+  }
+  return { ...range, type, sections };
 }
-function reportFileBase(from,to){ return `raport_${from}_${to}`; }
+function reportFileBase(report){ return `raport_${report.type}_${report.from}_${report.to}`; }
 function excelReportRows(report){
   const rows = [];
+  const type = report.type;
+  const wants = domain => type==='total' || type===domain;
   const add = (data, sectiune, tip, persoana='', detalii='', valoare='', unitate='', statut='', dataFinala='') => {
     rows.push({ data:data||'', sectiune, tip, persoana, detalii, valoare, unitate, statut, dataFinala:dataFinala||'' });
   };
 
-  DB.participanti.filter(p=>report.includes(p.dataInregistrarii)).forEach(p=>add(
-    p.dataInregistrarii, 'Participanți', 'Participant înregistrat', `${p.nume} ${p.prenume}`,
-    [
-      p.nrDulap ? `dulap ${p.nrDulap}` : '',
-      p.dataNasterii ? `născut(ă) ${fmtDate(p.dataNasterii)}` : '',
-      p.telefon || '', p.email || '', p.adresa || '',
-      p.marime ? `mărime ${p.marime}` : '',
-    ].filter(Boolean).join(' · '), '', '', p.statut
-  ));
-  DB.participanti.forEach(p=>{
-    const expirare = p.dataAvizMedical ? addMonths(p.dataAvizMedical, 6) : '';
-    if(!p.dataAvizMedical || report.includes(p.dataAvizMedical) || report.includes(expirare) || expirare < report.to){
-      add(p.dataAvizMedical || report.to, 'Medical', 'Aviz medical', `${p.nume} ${p.prenume}`,
-        p.dataAvizMedical ? `Expiră la ${fmtDate(expirare)}` : 'Fără aviz medical înregistrat',
-        '', '', !p.dataAvizMedical ? 'lipsă' : expirare < report.to ? 'expirat' : 'valabil', expirare);
-    }
-  });
-  DB.intarzieri.filter(r=>report.includes(r.data)).forEach(r=>add(
-    r.data, 'Întârzieri', 'Întârziere', participantName(r.participantId)
-  ));
-  DB.vestimentatie.filter(r=>report.includes(r.data) || report.includes(r.dataReturnare)).forEach(r=>add(
-    r.data, 'Vestimentație', 'Eliberare vestimentație', participantName(r.participantId),
-    [r.tip, r.culoare, r.marime].filter(Boolean).join(' · '), Number(r.cantitate||0), 'buc',
-    r.dataReturnare ? 'returnat' : 'eliberat', r.dataReturnare
-  ));
-  DB.serviciu.filter(r=>report.includes(r.data)).forEach(r=>add(
-    r.data, 'Serviciu administratori', 'Schimb programat', r.administrator
-  ));
-  DB.spalatorie.filter(r=>report.includes(r.data)).forEach(r=>add(
-    r.data, 'Spălătorie', 'Operațiune spălătorie', participantName(r.participantId),
-    r.tipArticole || '', Number(r.suma||0), 'MDL'
-  ));
-  DB.hostel.filter(r=>report.includes(r.dataCazare)).forEach(r=>add(
-    r.dataCazare, 'Hostel', 'Cazare', participantName(r.participantId), r.observatii || ''
-  ));
-  DB.lenjerie.filter(r=>report.includes(r.dataEliberare) || report.includes(r.dataReturnare)).forEach(r=>add(
-    r.dataEliberare, 'Lenjerie', 'Eliberare lenjerie', participantName(r.participantId),
-    '', 1, 'set', r.dataReturnare ? 'returnat' : 'nereturnat', r.dataReturnare
-  ));
-  DB.daune.filter(r=>report.includes(r.data)).forEach(r=>add(
-    r.data, 'Daune și recuperări', 'Daună', participantName(r.participantId),
-    [r.inventarAfectat, r.natura, r.observatii].filter(Boolean).join(' · '),
-    '', '', r.bunDeterioratDistrus || ''
-  ));
-  DB.arbitraj.filter(r=>report.includes(r.data)).forEach(r=>add(
-    r.data, 'Arbitraj', 'Eliberare mingi', r.arbitru,
-    [r.turneu, r.observatii].filter(Boolean).join(' · '), Number(r.cantitateMingi||0), 'buc'
-  ));
-  DB.sarcini.filter(r=>report.includes(r.dataInreg) || report.includes(r.dataSolutionare)).forEach(r=>add(
-    r.dataInreg, 'Sarcini', 'Sarcină', r.adminInreg,
-    [r.descriere, r.actiuni].filter(Boolean).join(' · '), '', '', r.status,
-    r.dataSolutionare
-  ));
-  DB.observatii.filter(r=>report.includes(r.data)).forEach(r=>add(
-    r.data, 'Observații', r.categorie || 'Observație', participantName(r.participantId), r.descriere || ''
-  ));
-  DB.jurnal.filter(r=>report.includes(r.data)).forEach(r=>add(
-    r.data, 'Jurnal activitate', 'Acțiune administrator', r.cont, r.actiune || ''
-  ));
-  inventarSorted().forEach(i=>add(
-    report.to, 'Inventar', 'Situație la finalul perioadei', i.denumire,
-    [
-      i.culoare && i.culoare!=='—' ? `culoare ${i.culoare}` : '',
-      i.marime && i.marime!=='—' ? `mărime ${i.marime}` : '',
-      `inițial ${i.cantitateInitiala}`,
-      `intrări ${i.intrari}`,
-      `ieșiri ${i.iesiri}`,
-      `minim ${i.cantitateMinima}`,
-      i.observatii || '',
-    ].filter(Boolean).join(' · '),
-    inventoryCurrent(i), i.um, i.stare || ''
-  ));
+  if(wants('total')){
+    DB.participanti.filter(p=>report.includes(p.dataInregistrarii)).forEach(p=>add(
+      p.dataInregistrarii, 'Participanți', 'Participant înregistrat', `${p.nume} ${p.prenume}`,
+      [
+        p.nrDulap ? `dulap ${p.nrDulap}` : '',
+        p.dataNasterii ? `născut(ă) ${fmtDate(p.dataNasterii)}` : '',
+        p.telefon || '', p.email || '', p.adresa || '',
+        p.marime ? `mărime ${p.marime}` : '',
+      ].filter(Boolean).join(' · '), '', '', p.statut
+    ));
+  }
+  if(wants('medical')){
+    DB.participanti.forEach(p=>{
+      const expirare = p.dataAvizMedical ? addMonths(p.dataAvizMedical, 6) : '';
+      if(!p.dataAvizMedical || report.includes(p.dataAvizMedical) || report.includes(expirare) || expirare < report.to){
+        add(p.dataAvizMedical || report.to, 'Medical', 'Aviz medical', `${p.nume} ${p.prenume}`,
+          p.dataAvizMedical ? `Expiră la ${fmtDate(expirare)}` : 'Fără aviz medical înregistrat',
+          '', '', !p.dataAvizMedical ? 'lipsă' : expirare < report.to ? 'expirat' : 'valabil', expirare);
+      }
+    });
+  }
+  if(wants('intarzieri')){
+    DB.intarzieri.filter(r=>report.includes(r.data)).forEach(r=>add(
+      r.data, 'Întârzieri', 'Întârziere', participantName(r.participantId),
+      [r.minuteIntarziere!=null ? `${r.minuteIntarziere} min` : '', r.motiv || ''].filter(Boolean).join(' · ')
+    ));
+  }
+  if(wants('total')){
+    DB.vestimentatie.filter(r=>report.includes(r.data) || report.includes(r.dataReturnare)).forEach(r=>add(
+      r.data, 'Vestimentație', 'Eliberare vestimentație', participantName(r.participantId),
+      [r.tip, r.culoare, r.marime].filter(Boolean).join(' · '), Number(r.cantitate||0), 'buc',
+      r.dataReturnare ? 'returnat' : 'eliberat', r.dataReturnare
+    ));
+    DB.serviciu.filter(r=>report.includes(r.data)).forEach(r=>add(
+      r.data, 'Serviciu administratori', 'Schimb programat', r.administrator
+    ));
+  }
+  if(wants('spalatorie')){
+    DB.spalatorie.filter(r=>report.includes(r.data)).forEach(r=>add(
+      r.data, 'Spălătorie', 'Operațiune spălătorie', r.participantId ? participantName(r.participantId) : t('sp_locatia'),
+      r.tipArticole || '', Number(r.suma||0), 'MDL', `${r.cantitate||1} buc`
+    ));
+  }
+  if(wants('total')){
+    DB.hostel.filter(r=>report.includes(r.dataCazare)).forEach(r=>add(
+      r.dataCazare, 'Hostel', 'Cazare', participantName(r.participantId), r.observatii || ''
+    ));
+    DB.lenjerie.filter(r=>report.includes(r.dataEliberare) || report.includes(r.dataReturnare)).forEach(r=>add(
+      r.dataEliberare, 'Lenjerie', 'Eliberare lenjerie', participantName(r.participantId),
+      '', 1, 'set', r.dataReturnare ? 'returnat' : 'nereturnat', r.dataReturnare
+    ));
+  }
+  if(wants('daune')){
+    DB.daune.filter(r=>report.includes(r.data)).forEach(r=>add(
+      r.data, 'Daune și recuperări', 'Daună', participantName(r.participantId),
+      [r.inventarAfectat, r.natura, r.observatii].filter(Boolean).join(' · '),
+      '', '', r.bunDeterioratDistrus || ''
+    ));
+  }
+  if(wants('arbitraj')){
+    DB.arbitraj.filter(r=>report.includes(r.data)).forEach(r=>add(
+      r.data, 'Arbitraj', 'Eliberare mingi', r.arbitru,
+      [r.turneu, r.marcaMingi||'DHS', r.observatii].filter(Boolean).join(' · '), Number(r.cantitateMingi||0), 'buc'
+    ));
+  }
+  if(wants('total')){
+    DB.sarcini.filter(r=>report.includes(r.dataInreg) || report.includes(r.dataSolutionare)).forEach(r=>add(
+      r.dataInreg, 'Sarcini', 'Sarcină', r.adminInreg,
+      [r.descriere, r.actiuni].filter(Boolean).join(' · '), '', '', r.status,
+      r.dataSolutionare
+    ));
+    DB.observatii.filter(r=>report.includes(r.data)).forEach(r=>add(
+      r.data, 'Observații', r.categorie || 'Observație', participantName(r.participantId), r.descriere || ''
+    ));
+    DB.jurnal.filter(r=>report.includes(r.data)).forEach(r=>add(
+      r.data, 'Jurnal activitate', 'Acțiune administrator', r.cont, r.actiune || ''
+    ));
+  }
+  if(wants('inventar')){
+    inventarSorted().forEach(i=>add(
+      report.to, 'Inventar', 'Situație la finalul perioadei', i.denumire,
+      [
+        i.culoare && i.culoare!=='—' ? `culoare ${i.culoare}` : '',
+        i.marime && i.marime!=='—' ? `mărime ${i.marime}` : '',
+        `inițial ${i.cantitateInitiala}`,
+        `intrări ${i.intrari}`,
+        `ieșiri ${i.iesiri}`,
+        `minim ${i.cantitateMinima}`,
+        i.observatii || '',
+      ].filter(Boolean).join(' · '),
+      inventoryCurrent(i), i.um, i.stare || ''
+    ));
+  }
 
   return rows.sort((a,b)=>String(b.data).localeCompare(String(a.data)) || a.sectiune.localeCompare(b.sectiune));
 }
@@ -1900,15 +1975,23 @@ function exportExcelReport(){
   const report = reportSections();
   const detailRows = excelReportRows(report);
   const workbook = XLSX.utils.book_new();
-  const cheltuieli = DB.spalatorie.filter(r=>report.includes(r.data)).reduce((s,r)=>s+Number(r.suma||0),0);
-  const rows = [
-    ['RAPORT COMPLET — REGISTRU ELECTRONIC ATTP'],
+  const titleRo = report.type==='total' ? 'RAPORT COMPLET — REGISTRU ELECTRONIC ATTP' : `RAPORT — ${t('re_type_'+report.type).toUpperCase()} — REGISTRU ELECTRONIC ATTP`;
+  const summaryRow = report.type==='total'
+    ? ['Înregistrări incluse', detailRows.length, 'Participanți noi', DB.participanti.filter(p=>report.includes(p.dataInregistrarii)).length, 'Articole inventar', DB.inventar.length]
+    : ['Înregistrări incluse', detailRows.length];
+  const preHeaderRows = [
+    [titleRo],
     [`Perioada: ${fmtDate(report.from)} — ${fmtDate(report.to)}`],
     [],
-    ['Înregistrări incluse', detailRows.length, 'Participanți noi', DB.participanti.filter(p=>report.includes(p.dataInregistrarii)).length, 'Cheltuieli spălătorie', cheltuieli, 'MDL'],
-    ['Articole inventar', DB.inventar.length, 'Sarcini', DB.sarcini.filter(r=>report.includes(r.dataInreg)).length, 'Daune', DB.daune.filter(r=>report.includes(r.data)).length],
+    summaryRow,
     [],
-    ['Data','Secțiune','Tip înregistrare','Participant / responsabil','Detalii complete','Valoare','UM','Statut / rezultat','Finalizare / returnare'],
+  ];
+  const headerRow = ['Data','Secțiune','Tip înregistrare','Participant / responsabil','Detalii complete','Valoare','UM','Statut / rezultat','Finalizare / returnare'];
+  const headerIdx = preHeaderRows.length; // 0-based row index of headerRow
+  const headerRowNum = headerIdx + 1; // 1-based sheet row number
+  const rows = [
+    ...preHeaderRows,
+    headerRow,
     ...detailRows.map(r=>[
       r.data ? new Date(`${r.data}T12:00:00`) : '',
       r.sectiune, r.tip, r.persoana, r.detalii, r.valoare, r.unitate, r.statut,
@@ -1924,12 +2007,12 @@ function exportExcelReport(){
     {wch:13}, {wch:24}, {wch:27}, {wch:28}, {wch:64},
     {wch:13}, {wch:10}, {wch:20}, {wch:18},
   ];
-  sheet['!rows'] = [{hpt:28},{hpt:21},{hpt:8},{hpt:22},{hpt:22},{hpt:8},{hpt:26}];
-  sheet['!autofilter'] = { ref:`A7:I${Math.max(7, rows.length)}` };
-  sheet['!freeze'] = { xSplit:0, ySplit:7, topLeftCell:'A8', activePane:'bottomLeft', state:'frozen' };
+  sheet['!rows'] = [{hpt:28},{hpt:21},{hpt:8},{hpt:22},{hpt:8},{hpt:26}];
+  sheet['!autofilter'] = { ref:`A${headerRowNum}:I${Math.max(headerRowNum, rows.length)}` };
+  sheet['!freeze'] = { xSplit:0, ySplit:headerRowNum, topLeftCell:`A${headerRowNum+1}`, activePane:'bottomLeft', state:'frozen' };
   sheet['!margins'] = { left:.25, right:.25, top:.5, bottom:.5, header:.2, footer:.2 };
   sheet['!pageSetup'] = { orientation:'landscape', fitToWidth:1, fitToHeight:0, paperSize:9 };
-  for(let row=8; row<=rows.length; row++){
+  for(let row=headerRowNum+1; row<=rows.length; row++){
     const dateCell = sheet[`A${row}`];
     const finalCell = sheet[`I${row}`];
     if(dateCell) dateCell.z = 'dd.mm.yyyy';
@@ -1941,11 +2024,11 @@ function exportExcelReport(){
   if(sheet.A1) sheet.A1.s = titleStyle;
   if(sheet.A2) sheet.A2.s = subtitleStyle;
   for(let col=0; col<9; col++){
-    const cell = sheet[XLSX.utils.encode_cell({r:6,c:col})];
+    const cell = sheet[XLSX.utils.encode_cell({r:headerIdx,c:col})];
     if(cell) cell.s = headerStyle;
   }
-  XLSX.utils.book_append_sheet(workbook, sheet, 'Raport complet');
-  XLSX.writeFile(workbook, reportFileBase(report.from,report.to)+'.xlsx');
+  XLSX.utils.book_append_sheet(workbook, sheet, 'Raport');
+  XLSX.writeFile(workbook, reportFileBase(report)+'.xlsx');
 }
 function exportPdfReport(){
   if(!window.jspdf?.jsPDF){ alert(t('re_noPdf')); return; }
@@ -1958,7 +2041,8 @@ function exportPdfReport(){
     body.push([{content:pdfSafe(section.title), colSpan:2, styles:{fillColor:[232,235,240], textColor:[35,42,52], fontStyle:'bold', cellPadding:2.3}}]);
     section.rows.forEach(row=>body.push([pdfSafe(row[0]), pdfSafe(row[1])]));
   });
-  doc.setFontSize(16); doc.text('Raport si statistici', 12, 14);
+  const pdfTitle = report.type==='total' ? 'Raport si statistici' : `Raport - ${pdfSafe(t('re_type_'+report.type))}`;
+  doc.setFontSize(16); doc.text(pdfTitle, 12, 14);
   doc.setFontSize(9); doc.setTextColor(85); doc.text(`Perioada: ${fmtDate(report.from)} - ${fmtDate(report.to)}`, 12, 20);
   doc.autoTable({
     startY:25,
@@ -1971,12 +2055,13 @@ function exportPdfReport(){
     columnStyles:{0:{cellWidth:145},1:{cellWidth:41, halign:'right'}},
     rowPageBreak:'avoid',
   });
-  doc.save(reportFileBase(report.from,report.to)+'.pdf');
+  doc.save(reportFileBase(report)+'.pdf');
 }
 function printReport(){
   const report = reportSections();
   const popup = window.open('', '_blank', 'width=900,height=700');
   if(!popup){ alert(t('re_popupBlocked')); return; }
+  const printTitle = report.type==='total' ? t('re_title') : `${t('re_title')} — ${t('re_type_'+report.type)}`;
   const sectionsHtml = report.sections.map(section=>`
     <section><h2>${esc(section.title)}</h2><table><thead><tr><th>Indicator</th><th>Valoare</th></tr></thead>
     <tbody>${section.rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join('')}</tbody></table></section>`).join('');
@@ -1984,7 +2069,7 @@ function printReport(){
     <style>body{font-family:Arial,sans-serif;color:#111;margin:32px}h1{margin:0 0 6px}p{color:#555;margin:0 0 24px}
     h2{font-size:16px;margin:24px 0 8px}table{width:100%;border-collapse:collapse}th,td{padding:8px 10px;border:1px solid #ccc;text-align:left}
     th:last-child,td:last-child{text-align:right}@media print{body{margin:12mm}section{break-inside:avoid}}</style></head>
-    <body><h1>Raport și statistici</h1><p>Perioada: ${fmtDate(report.from)} — ${fmtDate(report.to)}</p>${sectionsHtml}</body></html>`);
+    <body><h1>${esc(printTitle)}</h1><p>Perioada: ${fmtDate(report.from)} — ${fmtDate(report.to)}</p>${sectionsHtml}</body></html>`);
   popup.document.close();
   popup.focus();
   setTimeout(()=>popup.print(), 300);
