@@ -390,6 +390,7 @@ const ENUM_RU = {
   'Conflict':'Конфликт', 'Altă situație':'Другая ситуация',
   'intrare':'приход', 'iesire':'расход', 'corectare':'корректировка',
   'Maiouri roșii':'Красные майки', 'Maiouri albastre':'Синие майки', 'Mingi noi':'Новые мячи',
+  'Mingi noi DHS':'Новые мячи DHS', 'Mingi noi JOOLA':'Новые мячи JOOLA',
   'Seturi lenjerie':'Комплекты белья', 'Inventar sportiv (mese, plase)':'Спортивный инвентарь (столы, сетки)',
 };
 function trEnum(v){ return (LANG==='ru' && ENUM_RU[v]) ? ENUM_RU[v] : v; }
@@ -481,6 +482,7 @@ ro: {
   ar_title:'Arbitraj', ar_sub:'Arbitrii de turneu și cantitatea de mingi noi eliberate — scade automat din inventar.',
   ar_addTitle:'Eliberare mingi arbitru', ar_numeArbitru:'Nume arbitru', ar_numeArbitruPh:'Nume arbitru',
   ar_turneu:'Turneu', ar_mingiNoi:'Mingi noi', ar_th_arbitru:'Arbitru', ar_th_turneu:'Turneu', ar_th_mingiNoi:'Mingi noi',
+  ar_marcaMingi:'Marcă', ar_th_marcaMingi:'Marcă',
   ar_countSuffix:'eliberări', ar_none:'Nicio eliberare.', ar_needNume:'Introduceți numele arbitrului.',
 
   iv_title:'Inventar', iv_sub:'Stocul bunurilor aflate la locație. Cantitatea curentă scade automat la eliberări.',
@@ -612,6 +614,7 @@ ru: {
   ar_title:'Судейство', ar_sub:'Судьи турниров и количество выданных новых мячей — автоматически списывается со склада.',
   ar_addTitle:'Выдача мячей судье', ar_numeArbitru:'Имя судьи', ar_numeArbitruPh:'Имя судьи',
   ar_turneu:'Турнир', ar_mingiNoi:'Новые мячи', ar_th_arbitru:'Судья', ar_th_turneu:'Турнир', ar_th_mingiNoi:'Новые мячи',
+  ar_marcaMingi:'Марка', ar_th_marcaMingi:'Марка',
   ar_countSuffix:'выдач', ar_none:'Выдач нет.', ar_needNume:'Введите имя судьи.',
 
   iv_title:'Инвентарь', iv_sub:'Запас товаров на локации. Текущее количество автоматически снижается при выдаче.',
@@ -717,7 +720,7 @@ async function fetchAll(){
     hostel: (hostelR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, dataCazare:r.data_cazare, observatii:r.observatii})),
     lenjerie: (lenjerieR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, dataEliberare:r.data_eliberare, dataReturnare:r.data_returnare})),
     daune: (dauneR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, inventarAfectat:r.inventar_afectat, natura:r.natura, bunDeterioratDistrus:r.stare, observatii:r.observatii})),
-    arbitraj: (arbitrajR.data||[]).map(r=>({id:r.id, data:r.data, arbitru:r.arbitru, turneu:r.turneu, cantitateMingi:r.cantitate_mingi, observatii:r.observatii})),
+    arbitraj: (arbitrajR.data||[]).map(r=>({id:r.id, data:r.data, arbitru:r.arbitru, turneu:r.turneu, marcaMingi:r.marca_mingi, cantitateMingi:r.cantitate_mingi, observatii:r.observatii})),
     inventar: (inventarR.data||[]).map(r=>({id:r.id, denumire:r.denumire, culoare:r.culoare, marime:r.marime, um:r.um, cantitateInitiala:r.cantitate_initiala, intrari:r.intrari, iesiri:r.iesiri, cantitateMinima:r.cantitate_minima, stare:r.stare, observatii:r.observatii})),
     sarcini: (sarciniR.data||[]).map(r=>({id:r.id, dataInreg:r.data_inreg, adminInreg: publicAdminName(adminById[r.admin_inreg_id]), status:r.status, actiuni:r.actiuni, dataSolutionare:r.data_solutionare, adminSolutionare: r.admin_solutionare_id ? publicAdminName(adminById[r.admin_solutionare_id]) : '', descriere:r.descriere})),
     observatii: (observatiiR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, categorie:r.categorie, descriere:r.descriere})),
@@ -863,7 +866,7 @@ function frequentLate(){
   return Object.entries(counts).filter(([,c])=>c>=3).map(([pid,c])=>({participantId:pid, count:c}));
 }
 function inventoryCurrent(item){ return item.cantitateInitiala + item.intrari - item.iesiri; }
-const INVENTAR_ORDER = { 'Mingi noi':0, 'Inventar sportiv (mese, plase)':1, 'Seturi lenjerie':2 };
+const INVENTAR_ORDER = { 'Mingi noi DHS':0, 'Mingi noi JOOLA':1, 'Inventar sportiv (mese, plase)':2, 'Seturi lenjerie':3 };
 function inventarSorted(){ return DB.inventar.slice().sort((a,b)=> (INVENTAR_ORDER[a.denumire]??3) - (INVENTAR_ORDER[b.denumire]??3)); }
 
 function buildAlerts(){
@@ -1535,10 +1538,11 @@ function renderArbitraj(){
 
   <div class="add-form">
     <div class="form-title">${t('ar_addTitle')}</div>
-    <div class="form-grid" style="grid-template-columns:0.8fr 1.2fr 1fr 0.7fr auto">
+    <div class="form-grid" style="grid-template-columns:0.8fr 1.2fr 1fr 0.6fr 0.7fr auto">
       <div class="field"><label>${t('th_data')}</label><input id="af-data" type="date" value="${todayISO()}"></div>
       <div class="field"><label>${t('ar_numeArbitru')}</label><input id="af-arbitru" placeholder="${t('ar_numeArbitruPh')}"></div>
       <div class="field"><label>${t('ar_turneu')}</label><select id="af-turneu">${TOURNAMENTS.map(tour=>`<option>${tour}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('ar_marcaMingi')}</label><select id="af-marca"><option value="DHS">DHS</option><option value="JOOLA">JOOLA</option></select></div>
       <div class="field"><label>${t('ar_mingiNoi')}</label><input id="af-mingi" type="number" min="1" value="1"></div>
       <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addArbitraj()">${t('btn_add')}</button></div>
     </div>
@@ -1547,10 +1551,10 @@ function renderArbitraj(){
   <div class="table-wrap">
     <div class="table-header"><div class="table-title">${DB.arbitraj.length} ${t('ar_countSuffix')}</div></div>
     <div class="table-scroll"><table>
-      <thead><tr><th>${t('th_data')}</th><th>${t('ar_th_arbitru')}</th><th>${t('ar_th_turneu')}</th><th>${t('ar_th_mingiNoi')}</th><th></th></tr></thead>
+      <thead><tr><th>${t('th_data')}</th><th>${t('ar_th_arbitru')}</th><th>${t('ar_th_turneu')}</th><th>${t('ar_th_marcaMingi')}</th><th>${t('ar_th_mingiNoi')}</th><th></th></tr></thead>
       <tbody>${DB.arbitraj.length ? DB.arbitraj.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(a=>`
         <tr><td class="td-muted">${fmtDate(a.data)}</td><td>${esc(a.arbitru)}</td><td><span class="badge gold">${esc(a.turneu)}</span></td>
-        <td class="td-gold">${a.cantitateMingi}</td><td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('arbitraj','${a.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="5">${t('ar_none')}</td></tr>`}</tbody>
+        <td>${esc(a.marcaMingi||'DHS')}</td><td class="td-gold">${a.cantitateMingi}</td><td><button class="btn-danger" ${disabledAttr()} onclick="removeRow('arbitraj','${a.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="6">${t('ar_none')}</td></tr>`}</tbody>
     </table></div>
   </div>`;
 }
@@ -1558,13 +1562,14 @@ async function addArbitraj(){
   const arbitru = document.getElementById('af-arbitru').value.trim();
   if(!arbitru){ alert(t('ar_needNume')); return; }
   const turneu = document.getElementById('af-turneu').value;
+  const marcaMingi = document.getElementById('af-marca').value;
   const cantitateMingi = parseInt(document.getElementById('af-mingi').value)||1;
   const data = document.getElementById('af-data').value || todayISO();
-  const { data:row, error } = await sb.from('arbitraj').insert({ data, arbitru, turneu, cantitate_mingi:cantitateMingi }).select().single();
+  const { data:row, error } = await sb.from('arbitraj').insert({ data, arbitru, turneu, marca_mingi:marcaMingi, cantitate_mingi:cantitateMingi }).select().single();
   if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
-  DB.arbitraj.unshift({id:row.id, data:row.data, arbitru:row.arbitru, turneu:row.turneu, cantitateMingi:row.cantitate_mingi, observatii:row.observatii});
+  DB.arbitraj.unshift({id:row.id, data:row.data, arbitru:row.arbitru, turneu:row.turneu, marcaMingi:row.marca_mingi, cantitateMingi:row.cantitate_mingi, observatii:row.observatii});
   await refetchInventar(); // trigger a scăzut deja mingile din stoc
-  await logAction(`A eliberat ${cantitateMingi} mingi noi lui ${arbitru} (${turneu})`);
+  await logAction(`A eliberat ${cantitateMingi} mingi ${marcaMingi} lui ${arbitru} (${turneu})`);
   render();
 }
 
