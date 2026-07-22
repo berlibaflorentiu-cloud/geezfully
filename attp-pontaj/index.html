@@ -383,7 +383,7 @@ const ENUM_RU = {
   'deteriorat':'повреждено', 'distrus':'уничтожено',
   'expirat':'истёк', 'expiră curând':'скоро истекает', 'valabil':'действителен',
   'returnat':'возвращено', 'nereturnat':'не возвращено',
-  'bună':'хорошее',
+  'bună':'хорошее', 'minim':'минимум', 'sub minim':'ниже минимума', 'zero':'ноль',
   'Maiou roșu':'Красная майка', 'Maiou albastru':'Синяя майка',
   'Roșu':'Красный', 'Albastru':'Синий', 'Albă':'Белый',
   'Joc pasiv':'Пассивная игра', 'Simptome de boală':'Симптомы болезни', 'Fără cartelă':'Без карты',
@@ -889,6 +889,12 @@ function frequentLate(){
   return Object.entries(counts).filter(([,c])=>c>=3).map(([pid,c])=>({participantId:pid, count:c}));
 }
 function inventoryCurrent(item){ return item.cantitateInitiala + item.intrari - item.iesiri; }
+function inventoryStare(curent, minima){
+  if(curent <= 0) return 'zero';
+  if(curent < minima) return 'sub minim';
+  if(curent === minima) return 'minim';
+  return 'bună';
+}
 const INVENTAR_TOP_ORDER = { 'Mingi noi DHS':0, 'Mingi noi JOOLA':1, 'Inventar sportiv (mese, plase)':2, 'Seturi lenjerie':3 };
 const INVENTAR_SIZE_ORDER = ['S','M','L','XL','XXL','XXXL'];
 function inventarHasVariant(i){ return i.culoare && i.culoare!=='—' && i.marime && i.marime!=='—'; }
@@ -1647,6 +1653,8 @@ function renderInventar(){
       <tbody>${inventarSorted().map(i=>{
         const curent = inventoryCurrent(i);
         const low = curent < i.cantitateMinima;
+        const stare = inventoryStare(curent, i.cantitateMinima);
+        const stareBadge = stare==='bună' ? 'green' : stare==='minim' ? 'yellow' : 'red';
         return `<tr class="${low?'flag-yellow':''}">
           <td class="td-name">${low?'<span class="row-flag yellow"></span>':''}${esc(trEnum(i.denumire))}</td>
           <td class="td-muted">${esc(trEnum(i.culoare))}</td>
@@ -1654,7 +1662,7 @@ function renderInventar(){
           <td class="td-muted">${esc(i.um)}</td>
           <td class="td-muted">${i.cantitateInitiala}</td><td class="td-muted">${i.intrari}</td><td class="td-muted">${i.iesiri}</td>
           <td class="td-gold">${curent}</td><td class="td-muted">${i.cantitateMinima}</td>
-          <td><span class="badge ${low?'yellow':'green'}">${esc(trEnum(i.stare))}</span></td>
+          <td><span class="badge ${stareBadge}">${esc(trEnum(stare))}</span></td>
         </tr>`;
       }).join('')}</tbody>
     </table></div>
@@ -1993,7 +2001,7 @@ function excelReportRows(report){
         `minim ${i.cantitateMinima}`,
         i.observatii || '',
       ].filter(Boolean).join(' · '),
-      inventoryCurrent(i), i.um, i.stare || ''
+      inventoryCurrent(i), i.um, inventoryStare(inventoryCurrent(i), i.cantitateMinima)
     ));
   }
 
