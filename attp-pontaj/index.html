@@ -227,6 +227,10 @@
   tr.flag-yellow td:first-child { border-left: 2px solid var(--yellow); }
 
   .tag { display: inline-block; font-size: 11px; padding: 3px 9px; border-radius: 20px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); margin: 2px 4px 2px 0; }
+  .category-filter-panel { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+  .category-filter-chip { appearance: none; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); border-radius: 20px; padding: 6px 12px; font: inherit; font-size: 12px; cursor: pointer; transition: all .15s; }
+  .category-filter-chip:hover { color: var(--text); border-color: var(--muted); }
+  .category-filter-chip.active { color: var(--bg); background: var(--gold); border-color: var(--gold); font-weight: 600; }
   .inventory-size {
     display: inline-flex; align-items: center; justify-content: center; min-width: 42px;
     padding: 4px 9px; border-radius: 6px; color: var(--gold); background: var(--gold-dim);
@@ -384,7 +388,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const TOURNAMENTS = ['RIO','MEXICO Day','MEXICO Night'];
 const CLOTHING_TYPES = ['Maiou roșu','Maiou albastru'];
-const CLOTHING_SIZES = ['S','M','L','XL','XXL','XXXL'];
+const CLOTHING_SIZES = ['M','L','XL','XXL','XXXL'];
 const SPORT_CATEGORIES = ['MS','CMS','Categoria I','Categoria II','Categoria III','Amator'];
 const OBS_CATEGORIES = ['Joc pasiv','Simptome de boală','Fără cartelă','Absent','Lipsă vestimentație','Comportament necorespunzător','Conflict','Altă situație'];
 
@@ -407,7 +411,7 @@ const ENUM_RU = {
   'activ':'активен', 'inactiv':'неактивен',
   'nesoluționat':'не решено', 'în lucru':'в работе', 'soluționat':'решено',
   'deteriorat':'повреждено', 'distrus':'уничтожено',
-  'expirat':'истёк', 'expiră curând':'скоро истекает', 'valabil':'действителен',
+  'expirat':'истёк', 'expiră curând':'скоро истекает', 'valabil':'действителен', 'fără aviz':'нет справки',
   'returnat':'возвращено', 'nereturnat':'не возвращено',
   'bună':'хорошее', 'minim':'минимум', 'sub minim':'ниже минимума', 'zero':'ноль',
   'Maiou roșu':'Красная майка', 'Maiou albastru':'Синяя майка',
@@ -467,8 +471,9 @@ ro: {
   pa_marime:'Mărime vestimentație', pa_btnAdd:'+ Adaugă participant', pa_searchPh:'Caută după nume, telefon sau nr. dulap...',
   pa_th_dulap:'Dulap', pa_th_naștere:'Naștere', pa_th_avizMed:'Aviz medical', pa_th_marime:'Mărime',
   pa_categorieSp:'Categorie sportivă', pa_th_categorieSp:'Categorie',
-  pa_sortare:'Sortare', pa_sortNume:'Nume (A-Z)', pa_sortStatut:'Statut (activ/inactiv)',
+  pa_sortare:'Sortare', pa_sortNume:'Nume (A-Z)', pa_sortStatut:'Statut (activ/inactiv)', pa_sortCategorie:'Filtrează după categorie',
   pa_inactivPrimii:'Inactivi primii', pa_inactivUltimii:'Inactivi ultimii',
+  pa_toateCategoriile:'Toate categoriile', pa_faraCategorie:'Fără categorie',
   pa_none:'Niciun participant găsit.', pa_countSuffix:'participanți',
   pa_needNumePrenume:'Completați cel puțin nume și prenume.',
   pa_editTitle:'Modifică datele participantului', pa_editBtn:'Editează datele', pa_nespecificata:'Nespecificată',
@@ -515,7 +520,7 @@ ro: {
   le_th_eliberare:'Eliberare', le_th_returnare:'Returnare', le_none:'Nicio înregistrare.',
 
   me_title:'Medical', me_sub:'Avize medicale, ordonate crescător după numărul zilelor rămase. Valabilitate: 6 luni.',
-  me_expirate:'Expirate', me_expira30:'Expiră < 30 zile', me_valabile:'Valabile',
+  me_expirate:'Expirate', me_expira30:'Expiră < 30 zile', me_valabile:'Valabile', me_faraAviz:'Activi fără aviz medical',
   me_tableTitle:'Avize medicale — toți participanții activi', me_th_dataAvizului:'Data avizului',
   me_th_dataExpirarii:'Data expirării', me_th_zileRamase:'Zile rămase', me_none:'Fără participanți activi.',
 
@@ -581,6 +586,7 @@ ro: {
 
   al_medExpired:(name)=>`Avizul medical al sportivului ${name} a expirat.`,
   al_medSoon:(name,days)=>`Avizul medical al sportivului ${name} expiră peste ${days} zile.`,
+  al_medMissing:(name)=>`Sportivul activ ${name} nu are aviz medical înregistrat.`,
   al_lowStock:(name,qty,um,min)=>`Stocul „${name}” a scăzut la ${qty} ${um} (minim ${min}).`,
   al_staleTask:(desc)=>`Sarcina „${desc}” înregistrată mai mult de 48 ore în urmă nu a fost soluționată.`,
   al_frequentLate:(name,count)=>`Sportivul ${name} a întârziat de ${count} ori în ultimele 30 de zile.`,
@@ -629,8 +635,9 @@ ru: {
   pa_marime:'Размер формы', pa_btnAdd:'+ Добавить участника', pa_searchPh:'Поиск по имени, телефону или № шкафчика...',
   pa_th_dulap:'Шкафчик', pa_th_naștere:'Рождение', pa_th_avizMed:'Мед. справка', pa_th_marime:'Размер',
   pa_categorieSp:'Спортивная категория', pa_th_categorieSp:'Категория',
-  pa_sortare:'Сортировка', pa_sortNume:'Имя (A-Z)', pa_sortStatut:'Статус (активен/неактивен)',
+  pa_sortare:'Сортировка', pa_sortNume:'Имя (A-Z)', pa_sortStatut:'Статус (активен/неактивен)', pa_sortCategorie:'Фильтр по категории',
   pa_inactivPrimii:'Неактивные сначала', pa_inactivUltimii:'Неактивные в конце',
+  pa_toateCategoriile:'Все категории', pa_faraCategorie:'Без категории',
   pa_none:'Участник не найден.', pa_countSuffix:'участников',
   pa_needNumePrenume:'Заполните хотя бы фамилию и имя.',
   pa_editTitle:'Изменить данные участника', pa_editBtn:'Редактировать данные', pa_nespecificata:'Не указан',
@@ -677,7 +684,7 @@ ru: {
   le_th_eliberare:'Выдача', le_th_returnare:'Возврат', le_none:'Записей нет.',
 
   me_title:'Медицина', me_sub:'Медицинские справки, по возрастанию оставшихся дней. Срок действия: 6 месяцев.',
-  me_expirate:'Истекли', me_expira30:'Истекают < 30 дней', me_valabile:'Действительны',
+  me_expirate:'Истекли', me_expira30:'Истекают < 30 дней', me_valabile:'Действительны', me_faraAviz:'Активные без мед. справки',
   me_tableTitle:'Медицинские справки — все активные участники', me_th_dataAvizului:'Дата справки',
   me_th_dataExpirarii:'Дата истечения', me_th_zileRamase:'Осталось дней', me_none:'Нет активных участников.',
 
@@ -743,6 +750,7 @@ ru: {
 
   al_medExpired:(name)=>`Медицинская справка спортсмена ${name} истекла.`,
   al_medSoon:(name,days)=>`Медицинская справка спортсмена ${name} истекает через ${days} дн.`,
+  al_medMissing:(name)=>`У активного спортсмена ${name} нет зарегистрированной медицинской справки.`,
   al_lowStock:(name,qty,um,min)=>`Запас «${name}» снизился до ${qty} ${um} (минимум ${min}).`,
   al_staleTask:(desc)=>`Задача «${desc}», зарегистрированная более 48 часов назад, не решена.`,
   al_frequentLate:(name,count)=>`Спортсмен ${name} опаздывал ${count} раз(а) за последние 30 дней.`,
@@ -993,15 +1001,24 @@ function toggleSidebar(force){
 
 /* ══════════════════════ DERIVED / ALERTS ══════════════════════ */
 function medicalRows(){
-  return DB.participanti.filter(p=>p.statut==='activ' && p.dataAvizMedical).map(p=>{
+  return DB.participanti.filter(p=>p.statut==='activ').map(p=>{
+    if(!p.dataAvizMedical){
+      return { participantId:p.id, nume:participantName(p.id), dataAviz:null, dataExpirare:null, zile:null, status:'fără aviz' };
+    }
     const expira = addMonths(p.dataAvizMedical, 6);
     const zile = daysDiff(expira);
     let status = 'valabil';
     if(zile < 0) status = 'expirat'; else if(zile <= 30) status = 'expiră curând';
     return { participantId:p.id, nume:participantName(p.id), dataAviz:p.dataAvizMedical, dataExpirare:expira, zile, status };
-  }).sort((a,b)=>a.zile-b.zile);
+  }).sort((a,b)=>{
+    if(a.status==='fără aviz' || b.status==='fără aviz'){
+      if(a.status===b.status) return a.nume.localeCompare(b.nume, LANG==='ru'?'ru':'ro');
+      return a.status==='fără aviz' ? 1 : -1;
+    }
+    return a.zile-b.zile;
+  });
 }
-function medicalAlerts(){ return medicalRows().filter(r=>r.zile<=7); }
+function medicalAlerts(){ return medicalRows().filter(r=>r.status!=='fără aviz' && r.zile<=7); }
 function lowStockItems(){ return DB.inventar.filter(i=> (i.cantitateInitiala+i.intrari-i.iesiri) < i.cantitateMinima); }
 function staleTasks(){ return DB.sarcini.filter(s=>s.status!=='soluționat' && daysDiff(s.dataInreg) <= -2); }
 function frequentLate(){
@@ -1017,7 +1034,7 @@ function inventoryStare(curent, minima){
   return 'bună';
 }
 const INVENTAR_TOP_ORDER = { 'Mingi noi DHS':0, 'Mingi noi JOOLA':1, 'Inventar sportiv (mese, plase)':2, 'Seturi lenjerie':3 };
-const INVENTAR_SIZE_ORDER = ['S','M','L','XL','XXL','XXXL'];
+const INVENTAR_SIZE_ORDER = ['M','L','XL','XXL','XXXL'];
 function inventarHasVariant(i){ return i.culoare && i.culoare!=='—' && i.marime && i.marime!=='—'; }
 function inventarSorted(){
   return DB.inventar.slice().sort((a,b)=>{
@@ -1041,9 +1058,6 @@ function buildAlerts(){
   });
   staleTasks().forEach(t2=>{
     alerts.push({ level:'red', text: t('al_staleTask')(t2.descriere) });
-  });
-  frequentLate().forEach(f=>{
-    alerts.push({ level:'yellow', text: t('al_frequentLate')(participantName(f.participantId), f.count) });
   });
   return alerts;
 }
@@ -1104,6 +1118,17 @@ function renderDashboard(){
 /* ══════════════════════ PARTICIPANȚI ══════════════════════ */
 let participantSearchQuery = '';
 let participantSort = { mode:'nume', inactivFirst:false };
+let participantCategoryFilters = new Set();
+function participantCategoriesAvailable(){
+  return [...new Set(DB.participanti.map(p=>(p.categorieSportiva||'').trim()).filter(Boolean))]
+    .sort((a,b)=>a.localeCompare(b, LANG==='ru'?'ru':'ro', {sensitivity:'base'}));
+}
+function toggleParticipantCategoryFilter(category){
+  if(category==='__all__') participantCategoryFilters.clear();
+  else if(participantCategoryFilters.has(category)) participantCategoryFilters.delete(category);
+  else participantCategoryFilters.add(category);
+  render();
+}
 function renderParticipanti(){
   return `
   <div class="view-head"><div class="view-title">${t('pa_title')}</div></div>
@@ -1135,11 +1160,17 @@ function renderParticipanti(){
     <div class="field"><label>${t('pa_sortare')}</label><select onchange="participantSort.mode=this.value; render();">
       <option value="nume" ${participantSort.mode==='nume'?'selected':''}>${t('pa_sortNume')}</option>
       <option value="statut" ${participantSort.mode==='statut'?'selected':''}>${t('pa_sortStatut')}</option>
+      <option value="categorie" ${participantSort.mode==='categorie'?'selected':''}>${t('pa_sortCategorie')}</option>
     </select></div>
     ${participantSort.mode==='statut' ? `<div class="field"><label>&nbsp;</label><select onchange="participantSort.inactivFirst=(this.value==='1'); render();">
       <option value="0" ${!participantSort.inactivFirst?'selected':''}>${t('pa_inactivUltimii')}</option>
       <option value="1" ${participantSort.inactivFirst?'selected':''}>${t('pa_inactivPrimii')}</option>
     </select></div>` : ''}
+    ${participantSort.mode==='categorie' ? `<div class="category-filter-panel">
+      <button class="category-filter-chip ${participantCategoryFilters.size===0?'active':''}" onclick="toggleParticipantCategoryFilter('__all__')">${t('pa_toateCategoriile')}</button>
+      ${participantCategoriesAvailable().map(category=>`<button class="category-filter-chip ${participantCategoryFilters.has(category)?'active':''}" onclick='toggleParticipantCategoryFilter(${JSON.stringify(category)})'>${esc(category)}</button>`).join('')}
+      <button class="category-filter-chip ${participantCategoryFilters.has('__none__')?'active':''}" onclick="toggleParticipantCategoryFilter('__none__')">${t('pa_faraCategorie')}</button>
+    </div>` : ''}
   </div>
 
   <div class="table-wrap">
@@ -1152,11 +1183,17 @@ function renderParticipanti(){
 }
 function participantiFiltered(){
   const q = participantSearchQuery.toLowerCase().trim();
-  const rows = DB.participanti.filter(p => !q || `${p.nume} ${p.prenume} ${p.telefon} ${p.nrDulap}`.toLowerCase().includes(q));
+  let rows = DB.participanti.filter(p => !q || `${p.nume} ${p.prenume} ${p.telefon} ${p.nrDulap} ${p.categorieSportiva||''}`.toLowerCase().includes(q));
+  if(participantSort.mode==='categorie' && participantCategoryFilters.size){
+    rows = rows.filter(p=>participantCategoryFilters.has((p.categorieSportiva||'').trim() || '__none__'));
+  }
   const byNume = (a,b) => a.nume.localeCompare(b.nume,'ro') || a.prenume.localeCompare(b.prenume,'ro');
   if(participantSort.mode==='statut'){
     const weight = p => (p.statut==='inactiv') === participantSort.inactivFirst ? 0 : 1;
     return rows.slice().sort((a,b) => weight(a)-weight(b) || byNume(a,b));
+  }
+  if(participantSort.mode==='categorie'){
+    return rows.slice().sort((a,b) => (a.statut==='inactiv')-(b.statut==='inactiv') || byNume(a,b));
   }
   // 'nume' mode: alphabetical, inactive forced to the bottom regardless
   return rows.slice().sort((a,b) => (a.statut==='inactiv')-(b.statut==='inactiv') || byNume(a,b));
@@ -1411,7 +1448,9 @@ async function removeRow(collection, id){
   const { data, error } = await sb.from(collection).delete().eq('id', id).select();
   if(error){ alert('Ștergerea a eșuat: ' + error.message); return; }
   if(!data || !data.length){ alert('Ștergerea a eșuat: nu aveți permisiunea necesară.'); return; }
-  DB[collection] = DB[collection].filter(r=>r.id!==id);
+  const stateKey = collection==='trusted_ips' ? 'trustedIps' : collection;
+  if(Array.isArray(DB[stateKey])) DB[stateKey] = DB[stateKey].filter(r=>r.id!==id);
+  else await fetchAll();
   await logAction(`A șters o înregistrare din „${collection}”`);
   render();
 }
@@ -1690,6 +1729,7 @@ function renderMedical(){
   <div class="view-sub">${t('me_sub')}</div>
 
   <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">${t('me_faraAviz')}</div><div class="stat-value">${rows.filter(r=>r.status==='fără aviz').length}</div></div>
     <div class="stat-card crit"><div class="stat-label">${t('me_expirate')}</div><div class="stat-value c-red">${rows.filter(r=>r.status==='expirat').length}</div></div>
     <div class="stat-card warn"><div class="stat-label">${t('me_expira30')}</div><div class="stat-value c-yellow">${rows.filter(r=>r.status==='expiră curând').length}</div></div>
     <div class="stat-card"><div class="stat-label">${t('me_valabile')}</div><div class="stat-value c-green">${rows.filter(r=>r.status==='valabil').length}</div></div>
@@ -1700,14 +1740,15 @@ function renderMedical(){
     <div class="table-scroll"><table>
       <thead><tr><th>${t('th_participant')}</th><th>${t('me_th_dataAvizului')}</th><th>${t('me_th_dataExpirarii')}</th><th>${t('me_th_zileRamase')}</th><th>${t('th_statut')}</th></tr></thead>
       <tbody>${rows.map(r=>{
-        const flag = r.zile<0 ? 'flag-red' : (r.zile<=30 ? 'flag-yellow' : '');
-        const dot = r.zile<0 ? 'red' : (r.zile<=30?'yellow':'');
-        const badgeClass = r.zile<0?'red':(r.zile<=30?'yellow':'green');
+        const missing = r.status==='fără aviz';
+        const flag = missing ? '' : (r.zile<0 ? 'flag-red' : (r.zile<=30 ? 'flag-yellow' : ''));
+        const dot = missing ? '' : (r.zile<0 ? 'red' : (r.zile<=30?'yellow':''));
+        const badgeClass = missing ? 'muted' : (r.zile<0?'red':(r.zile<=30?'yellow':'green'));
         return `<tr class="${flag}">
           <td class="td-name" onclick="openProfile('${r.participantId}')">${dot?`<span class="row-flag ${dot}"></span>`:''}${esc(r.nume)}</td>
           <td class="td-muted">${fmtDate(r.dataAviz)}</td>
           <td class="td-muted">${fmtDate(r.dataExpirare)}</td>
-          <td class="td-gold">${r.zile}</td>
+          <td class="td-gold">${r.zile==null?'—':r.zile}</td>
           <td><span class="badge ${badgeClass}">${trEnum(r.status)}</span></td>
         </tr>`;
       }).join('') || `<tr><td class="td-empty" colspan="5">${t('me_none')}</td></tr>`}</tbody>
