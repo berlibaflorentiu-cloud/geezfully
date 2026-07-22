@@ -1326,7 +1326,7 @@ function renderShiftWorkflow(){
           const saved = refs.find(r=>r.slotSchimb===slot) || (isFullAdmin() ? refs[slot-1] : null);
           return `<div class="ops-row">
             <div class="field"><div class="ops-slot">#${slot} · ${t('sh_referee')} ${saved?'<span class="ops-saved">· '+t('sh_saved')+'</span>':''}</div>
-              ${saved ? `<input value="${esc(saved.arbitru)}" disabled>` : `<select id="shift-ref-${slot}">${DB.serviciuAdministratori.map(a=>`<option value="${esc(a.nume)}">${esc(a.nume)}</option>`).join('')}</select>`}
+              ${saved ? `<input value="${esc(saved.arbitru)}" disabled>` : `<select id="shift-ref-${slot}">${REFEREES.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('')}</select>`}
             </div>
             <div class="field"><label>${t('sh_venue')}</label>${saved?`<input value="${esc(saved.turneu)}" disabled>`:`<select id="shift-venue-${slot}">${TOURNAMENTS.map(v=>`<option>${esc(v)}</option>`).join('')}</select>`}</div>
             ${saved ? `<div class="field"><label>${t('sh_balls')}</label><div style="display:grid;grid-template-columns:.9fr .7fr;gap:6px"><select id="shift-ball-brand-${saved.id}"><option ${saved.marcaMingi==='DHS'?'selected':''}>DHS</option><option ${saved.marcaMingi==='JOOLA'?'selected':''}>JOOLA</option></select><input id="shift-ball-qty-${saved.id}" type="number" min="0" value="${saved.cantitateMingi||0}"></div></div>
