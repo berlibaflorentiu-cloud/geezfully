@@ -957,7 +957,7 @@ async function fetchAll(){
     daune: (dauneR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, inventarAfectat:r.inventar_afectat, natura:r.natura, bunDeterioratDistrus:r.stare, observatii:r.observatii})),
     arbitraj: (arbitrajR.data||[]).map(r=>({id:r.id, data:r.data, arbitru:r.arbitru, turneu:r.turneu, marcaMingi:r.marca_mingi, cantitateMingi:r.cantitate_mingi, observatii:r.observatii, sesiuneSchimbId:r.sesiune_schimb_id, slotSchimb:r.slot_schimb})),
     inventar: (inventarR.data||[]).map(r=>({id:r.id, denumire:r.denumire, culoare:r.culoare, marime:r.marime, um:r.um, cantitateInitiala:r.cantitate_initiala, intrari:r.intrari, iesiri:r.iesiri, cantitateMinima:r.cantitate_minima, stare:r.stare, observatii:r.observatii})),
-    sarcini: (sarciniR.data||[]).map(r=>({id:r.id, dataInreg:r.data_inreg, adminInreg: publicAdminName(adminById[r.admin_inreg_id]), status:r.status, actiuni:r.actiuni, dataSolutionare:r.data_solutionare, adminSolutionare: r.admin_solutionare_id ? publicAdminName(adminById[r.admin_solutionare_id]) : '', descriere:r.descriere})),
+    sarcini: (sarciniR.data||[]).map(r=>({id:r.id, dataInreg:r.data_inreg, administratorServiciuInregId:r.administrator_serviciu_inreg_id, adminInreg: serviciuAdminById[r.administrator_serviciu_inreg_id]?.nume || publicAdminName(adminById[r.admin_inreg_id]), status:r.status, actiuni:r.actiuni, dataSolutionare:r.data_solutionare, adminSolutionare: r.admin_solutionare_id ? publicAdminName(adminById[r.admin_solutionare_id]) : '', descriere:r.descriere})),
     observatii: (observatiiR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, categorie:r.categorie, descriere:r.descriere})),
     jurnal: (jurnalR.data||[]).map(r=>({id:r.id, cont: publicAdminName(adminById[r.administrator_id]), data:String(r.data).slice(0,10), actiune:r.actiune})),
     trustedIps: (trustedIpsR.data||[]).map(r=>({id:r.id, ip:r.ip, eticheta:r.eticheta, createdAt:r.created_at})),
@@ -2379,6 +2379,15 @@ async function adjustInventory(){
 }
 
 /* ══════════════════════ SARCINI ══════════════════════ */
+function taskAdministratorSelect(){
+  if(!isFullAdmin()){
+    const active = DB.serviciuAdministratori.find(a=>a.id===currentShift?.administratorServiciuId);
+    return `<select id="taf-admin" disabled><option value="service:${active?.id||''}">${esc(active?.nume||activeShiftName())}</option></select>`;
+  }
+  const roster = DB.serviciuAdministratori.map(a=>`<option value="service:${a.id}">${esc(a.nume)}</option>`).join('');
+  const accounts = realAdmins().map(a=>`<option value="account:${a.id}" ${a.id===currentAdminId?'selected':''}>${esc(adminName(a))}</option>`).join('');
+  return `<select id="taf-admin"><optgroup label="${esc(t('nav_serviciu'))}">${roster}</optgroup><optgroup label="${esc(t('st_admins'))}">${accounts}</optgroup></select>`;
+}
 function renderSarcini(){
   return `
   <div class="view-head"><div class="view-title">${t('ta_title')}</div></div>
@@ -2394,7 +2403,7 @@ function renderSarcini(){
     <div class="form-title">${t('ta_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:0.8fr 1fr 2fr auto">
       <div class="field"><label>${t('th_data')}</label><input id="taf-data" type="date" value="${todayISO()}"></div>
-      <div class="field"><label>${t('th_administrator')}</label><select id="taf-admin">${realAdmins().map(a=>`<option value="${a.id}" ${a.id===currentAdminId?'selected':''}>${esc(adminName(a))}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('th_administrator')}</label>${taskAdministratorSelect()}</div>
       <div class="field"><label>${t('ta_descriere')}</label><input id="taf-desc" placeholder="${t('ta_descrierePh')}"></div>
       <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addSarcina()">${t('btn_add')}</button></div>
     </div>
@@ -2426,12 +2435,17 @@ function renderSarcini(){
 async function addSarcina(){
   const desc = document.getElementById('taf-desc').value.trim();
   if(!desc){ alert(t('ta_needDesc')); return; }
-  const adminInregId = document.getElementById('taf-admin').value;
-  const row = { data_inreg: document.getElementById('taf-data').value||todayISO(), admin_inreg_id:adminInregId, descriere: desc, status:'nesoluționat' };
+  const [administratorType, administratorId] = document.getElementById('taf-admin').value.split(':');
+  if(!administratorId) return;
+  const administratorServiciuInregId = administratorType==='service' ? administratorId : null;
+  const adminInregId = administratorType==='account' ? administratorId : currentAdminId;
+  const row = { data_inreg: document.getElementById('taf-data').value||todayISO(), admin_inreg_id:adminInregId, administrator_serviciu_inreg_id:administratorServiciuInregId, descriere: desc, status:'nesoluționat' };
   const { data, error } = await sb.from('sarcini').insert(row).select().single();
   if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
-  const adminObj = DB.administratori.find(a=>a.id===adminInregId);
-  DB.sarcini.unshift({id:data.id, dataInreg:data.data_inreg, adminInreg:publicAdminName(adminObj), descriere:data.descriere, status:data.status, actiuni:data.actiuni, dataSolutionare:data.data_solutionare, adminSolutionare:''});
+  const administratorName = administratorServiciuInregId
+    ? DB.serviciuAdministratori.find(a=>a.id===administratorServiciuInregId)?.nume
+    : publicAdminName(DB.administratori.find(a=>a.id===adminInregId));
+  DB.sarcini.unshift({id:data.id, dataInreg:data.data_inreg, administratorServiciuInregId:data.administrator_serviciu_inreg_id, adminInreg:administratorName||currentAdmin, descriere:data.descriere, status:data.status, actiuni:data.actiuni, dataSolutionare:data.data_solutionare, adminSolutionare:''});
   await logAction(`A înregistrat sarcina: ${desc}`);
   render();
 }
