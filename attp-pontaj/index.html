@@ -173,6 +173,43 @@
   .alert-text { min-width: 0; padding-top: 1px; }
   .alert-empty { padding: 20px 18px; color: var(--muted); font-size: 13px; text-align: center; }
 
+  /* guided daily shift */
+  .shift-launch { background: linear-gradient(135deg, rgba(200,169,110,.13), rgba(22,27,34,.95)); border: 1px solid rgba(200,169,110,.38); border-radius: 14px; padding: 30px; margin-bottom: 26px; text-align: center; }
+  .shift-launch-icon { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; margin: 0 auto 14px; background: var(--gold-dim); border: 1px solid rgba(200,169,110,.32); color: var(--gold); font-size: 22px; }
+  .shift-launch h3 { font-size: 24px; margin-bottom: 7px; }
+  .shift-launch p { color: var(--muted); font-size: 13px; max-width: 560px; margin: 0 auto 18px; line-height: 1.55; }
+  .shift-start-confirm { max-width: 460px; margin: 0 auto; display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 10px; text-align: left; }
+  .daily-ops { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 26px; overflow: hidden; }
+  .daily-ops-head { padding: 17px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; background: linear-gradient(90deg, rgba(63,185,80,.09), transparent); }
+  .shift-identity { display: flex; align-items: center; gap: 11px; }
+  .shift-live-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 5px rgba(63,185,80,.13); }
+  .shift-identity strong { display: block; font-size: 14px; }
+  .shift-identity span { color: var(--muted); font-size: 11.5px; }
+  .btn-stop-shift { background: rgba(248,81,73,.1); border: 1px solid rgba(248,81,73,.5); color: var(--red); border-radius: 7px; padding: 9px 15px; font-weight: 700; font-size: 12px; cursor: pointer; }
+  .btn-stop-shift:hover { background: rgba(248,81,73,.18); }
+  .daily-ops-grid { display: grid; grid-template-columns: 1.3fr .7fr; gap: 16px; padding: 18px; }
+  .ops-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 17px; min-width: 0; }
+  .ops-card.training { grid-column: 1 / -1; }
+  .ops-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 5px; font-size: 13px; font-weight: 700; }
+  .ops-kicker { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--gold); }
+  .ops-help { color: var(--muted); font-size: 11.5px; line-height: 1.45; margin-bottom: 14px; }
+  .ops-row { display: grid; grid-template-columns: 1.15fr 1fr .72fr auto; gap: 8px; align-items: end; padding: 10px 0; border-top: 1px solid var(--surface2); }
+  .ops-row:first-of-type { border-top: none; padding-top: 0; }
+  .ops-row.training-row { grid-template-columns: 1fr .8fr .55fr auto; }
+  .ops-row.inventory-row { grid-template-columns: 1fr .5fr auto; }
+  .ops-slot { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .08em; margin-bottom: 5px; }
+  .ops-saved { color: var(--green); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+  .ops-today-list { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+  .ops-today-chip { font-size: 11px; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 5px 9px; }
+  @media (max-width: 900px) {
+    .daily-ops-grid { grid-template-columns: 1fr; }
+    .ops-card.training { grid-column: auto; }
+  }
+  @media (max-width: 680px) {
+    .shift-start-confirm, .ops-row, .ops-row.training-row, .ops-row.inventory-row { grid-template-columns: 1fr; }
+    .daily-ops-grid { padding: 12px; }
+  }
+
   /* forms */
   .add-form { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px 22px; margin-bottom: 22px; }
   .form-title { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--gold); margin-bottom: 15px; }
@@ -480,6 +517,18 @@ ro: {
   da_alerts_empty:'Nicio alertă activă în acest moment.', da_jurnal_title:'Jurnal activitate — ultimele acțiuni',
   da_total_inreg:'total înregistrați', da_expira30:'expiră', da_din:'din', da_categorii:'categorii',
   da_total_lucru:'total în lucru', da_total_inregistrari:'total înregistrări',
+  sh_startTitle:'Începe schimbul de locație', sh_startSub:'Pornește schimbul pentru a debloca registrul și lista clară de activități pentru ziua de azi.',
+  sh_startBtn:'Începe schimbul', sh_chooseName:'Cine este de serviciu?', sh_confirmStart:'Confirmă și începe',
+  sh_active:'Schimb activ', sh_demo:'Mod demonstrativ pentru administrator', sh_stop:'Oprește schimbul',
+  sh_refTitle:'Arbitri pentru astăzi', sh_refHelp:'Salvează numele și sala acum. Numărul mingilor poate fi completat aici mai târziu.',
+  sh_referee:'Arbitru', sh_venue:'Sală', sh_saveRef:'Salvează', sh_saved:'salvat', sh_balls:'Mingi',
+  sh_updateBalls:'Actualizează', sh_inventoryTitle:'Intrări inventar', sh_inventoryHelp:'Înregistrează imediat marfa sau echipamentul primit astăzi.',
+  sh_item:'Articol', sh_quantity:'Cantitate', sh_addStock:'Adaugă în stoc',
+  sh_trainingTitle:'Antrenamente programate azi', sh_trainingHelp:'Adaugă antrenorul, sportivul și ora; înregistrarea apare automat în Antrenamente.',
+  sh_trainer:'Antrenor', sh_trainee:'Sportiv', sh_time:'Ora', sh_addTraining:'Salvează antrenamentul',
+  sh_addRow:'+ Alt antrenament', sh_noEligible:'Nu există sportivi eligibili pentru antrenament.',
+  sh_startError:'Schimbul nu a putut fi pornit.', sh_stopError:'Schimbul nu a putut fi oprit.',
+  sh_locked:'Registrul este blocat. Începeți un schimb din Tablou de bord.',
 
   pa_title:'Participanți', pa_sub:'Date generale ale sportivilor înregistrați la locație.',
   pa_addTitle:'Adăugare participant nou', pa_dulap:'Nr. dulap', pa_dulapPh:'ex. 118', pa_nume:'Nume', pa_prenume:'Prenume',
@@ -658,6 +707,18 @@ ru: {
   da_alerts_empty:'Активных уведомлений нет.', da_jurnal_title:'Журнал активности — последние действия',
   da_total_inreg:'всего зарегистрировано', da_expira30:'истекают', da_din:'из', da_categorii:'категорий',
   da_total_lucru:'всего в работе', da_total_inregistrari:'всего записей',
+  sh_startTitle:'Начать смену на локации', sh_startSub:'Начните смену, чтобы разблокировать журнал и увидеть понятный список дел на сегодня.',
+  sh_startBtn:'Начать смену', sh_chooseName:'Кто сегодня на смене?', sh_confirmStart:'Подтвердить и начать',
+  sh_active:'Смена активна', sh_demo:'Демонстрационный режим администратора', sh_stop:'Завершить смену',
+  sh_refTitle:'Судьи на сегодня', sh_refHelp:'Сохраните имя и зал сейчас. Количество мячей можно заполнить здесь позже.',
+  sh_referee:'Судья', sh_venue:'Зал', sh_saveRef:'Сохранить', sh_saved:'сохранено', sh_balls:'Мячи',
+  sh_updateBalls:'Обновить', sh_inventoryTitle:'Поступление инвентаря', sh_inventoryHelp:'Сразу зарегистрируйте полученный сегодня товар или оборудование.',
+  sh_item:'Позиция', sh_quantity:'Количество', sh_addStock:'Добавить на склад',
+  sh_trainingTitle:'Тренировки на сегодня', sh_trainingHelp:'Добавьте тренера, спортсмена и время; запись сразу появится в разделе тренировок.',
+  sh_trainer:'Тренер', sh_trainee:'Спортсмен', sh_time:'Время', sh_addTraining:'Сохранить тренировку',
+  sh_addRow:'+ Ещё тренировка', sh_noEligible:'Нет спортсменов, допущенных к тренировкам.',
+  sh_startError:'Не удалось начать смену.', sh_stopError:'Не удалось завершить смену.',
+  sh_locked:'Журнал заблокирован. Начните смену на панели управления.',
 
   pa_title:'Участники', pa_sub:'Основные данные спортсменов, зарегистрированных на локации.',
   pa_addTitle:'Добавление нового участника', pa_dulap:'№ шкафчика', pa_dulapPh:'напр. 118', pa_nume:'Фамилия', pa_prenume:'Имя',
@@ -808,7 +869,17 @@ let currentAdmin = null;      // "Nume Prenume" afișat
 let currentAdminId = null;    // uuid din auth.users / administratori
 let currentRole = null;       // 'admin' | 'locatie'
 let currentProfileId = null;
+let currentShift = null;
+let shiftStartPrompt = false;
+let adminDemoShiftActive = false;
+let dashboardTrainingRows = 1;
+let demoShiftArbitrajIds = [];
 function isFullAdmin(){ return currentRole === 'admin'; }
+function hasActiveShift(){ return isFullAdmin() || !!currentShift; }
+function activeShiftName(){
+  if(isFullAdmin()) return currentAdmin;
+  return currentShift?.administrator || currentAdmin;
+}
 
 function todayISO(){ return new Date().toISOString().slice(0,10); }
 function uid(){ return Math.random().toString(36).slice(2,9); }
@@ -816,6 +887,11 @@ function addDays(iso,n){ const d=new Date(iso+'T00:00:00'); d.setDate(d.getDate(
 function addMonths(iso,n){ const d=new Date(iso+'T00:00:00'); d.setMonth(d.getMonth()+n); return d.toISOString().slice(0,10); }
 function daysDiff(iso){ const a=new Date(todayISO()+'T00:00:00'); const b=new Date(iso+'T00:00:00'); return Math.round((b-a)/86400000); }
 function fmtDate(iso){ if(!iso) return '—'; const [y,m,d]=iso.split('-'); return `${d}.${m}.${y}`; }
+function fmtDateTime(value){
+  if(!value) return '—';
+  const d = new Date(value);
+  return `${d.toLocaleDateString(LANG==='ru'?'ru-RU':'ro-RO')} · ${d.toLocaleTimeString(LANG==='ru'?'ru-RU':'ro-RO',{hour:'2-digit',minute:'2-digit'})}`;
+}
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 /* ══════════════════════ DATA LAYER (Supabase) ══════════════════════ */
@@ -829,7 +905,7 @@ function realAdmins(){ return DB.administratori.filter(a=>!a.ascuns && a.rol==='
 async function fetchAll(){
   const [
     administratoriR, serviciuAdministratoriR, participantiR, intarzieriR, vestimentatieR, serviciuR, spalatorieR,
-    hostelR, lenjerieR, dauneR, arbitrajR, inventarR, sarciniR, observatiiR, jurnalR, trustedIpsR, treninguriR
+    hostelR, lenjerieR, dauneR, arbitrajR, inventarR, sarciniR, observatiiR, jurnalR, trustedIpsR, treninguriR, sesiuniR
   ] = await Promise.all([
     sb.from('administratori').select('*'),
     sb.from('serviciu_administratori').select('*').eq('activ', true).order('nume'),
@@ -848,6 +924,7 @@ async function fetchAll(){
     sb.from('jurnal').select('*').order('data', {ascending:false}).limit(200),
     sb.from('trusted_ips').select('*').order('created_at', {ascending:false}),
     sb.from('treninguri').select('*').order('data', {ascending:false}),
+    sb.from('sesiuni_schimb').select('*').eq('cont_id', currentAdminId).is('ended_at', null).order('started_at', {ascending:false}).limit(1),
   ]);
 
   const administratori = administratoriR.data || [];
@@ -876,7 +953,7 @@ async function fetchAll(){
     hostel: (hostelR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, dataCazare:r.data_cazare, observatii:r.observatii})),
     lenjerie: (lenjerieR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, dataEliberare:r.data_eliberare, dataReturnare:r.data_returnare})),
     daune: (dauneR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, inventarAfectat:r.inventar_afectat, natura:r.natura, bunDeterioratDistrus:r.stare, observatii:r.observatii})),
-    arbitraj: (arbitrajR.data||[]).map(r=>({id:r.id, data:r.data, arbitru:r.arbitru, turneu:r.turneu, marcaMingi:r.marca_mingi, cantitateMingi:r.cantitate_mingi, observatii:r.observatii})),
+    arbitraj: (arbitrajR.data||[]).map(r=>({id:r.id, data:r.data, arbitru:r.arbitru, turneu:r.turneu, marcaMingi:r.marca_mingi, cantitateMingi:r.cantitate_mingi, observatii:r.observatii, sesiuneSchimbId:r.sesiune_schimb_id, slotSchimb:r.slot_schimb})),
     inventar: (inventarR.data||[]).map(r=>({id:r.id, denumire:r.denumire, culoare:r.culoare, marime:r.marime, um:r.um, cantitateInitiala:r.cantitate_initiala, intrari:r.intrari, iesiri:r.iesiri, cantitateMinima:r.cantitate_minima, stare:r.stare, observatii:r.observatii})),
     sarcini: (sarciniR.data||[]).map(r=>({id:r.id, dataInreg:r.data_inreg, adminInreg: publicAdminName(adminById[r.admin_inreg_id]), status:r.status, actiuni:r.actiuni, dataSolutionare:r.data_solutionare, adminSolutionare: r.admin_solutionare_id ? publicAdminName(adminById[r.admin_solutionare_id]) : '', descriere:r.descriere})),
     observatii: (observatiiR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, categorie:r.categorie, descriere:r.descriere})),
@@ -884,6 +961,15 @@ async function fetchAll(){
     trustedIps: (trustedIpsR.data||[]).map(r=>({id:r.id, ip:r.ip, eticheta:r.eticheta, createdAt:r.created_at})),
     treninguri: (treninguriR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, antrenor:r.antrenor, data:r.data, ora:r.ora, sumaJucator:Number(r.suma_jucator), sumaAntrenor:Number(r.suma_antrenor), observatii:r.observatii})),
   };
+  if(!isFullAdmin()){
+    const open = (sesiuniR.data||[])[0];
+    currentShift = open ? {
+      id:open.id,
+      administratorServiciuId:open.administrator_serviciu_id,
+      administrator:serviciuAdminById[open.administrator_serviciu_id]?.nume || '—',
+      startedAt:open.started_at,
+    } : null;
+  }
 }
 
 async function refetchInventar(){
@@ -977,13 +1063,14 @@ async function enterApp(userId, displayName, rol){
   document.getElementById('header-user').textContent = currentAdmin;
   document.getElementById('sb-admin').textContent = currentAdmin;
   await fetchAll();
+  document.getElementById('sb-admin').textContent = activeShiftName();
   buildSidebar();
   navigate('dashboard');
 }
 
 async function logout(){
   await sb.auth.signOut();
-  currentAdmin = null; currentAdminId = null; currentRole = null; DB = null;
+  currentAdmin = null; currentAdminId = null; currentRole = null; currentShift = null; adminDemoShiftActive = false; shiftStartPrompt = false; DB = null;
   document.body.classList.remove('role-locatie');
   document.getElementById('app-shell').classList.remove('visible');
   document.getElementById('auth-screen').style.display = 'flex';
@@ -1026,7 +1113,11 @@ const NAV = [
 
 function buildSidebar(){
   const nav = document.getElementById('sb-nav');
-  nav.innerHTML = NAV.filter(item => isFullAdmin() || item.id!=='setari').map(item => {
+  nav.innerHTML = NAV.filter(item => {
+    if(isFullAdmin()) return true;
+    if(!currentShift) return item.id==='dashboard';
+    return item.id!=='setari';
+  }).map(item => {
     const badge = navBadge(item.id);
     return `<button class="sb-item" data-view="${item.id}" onclick="navigate('${item.id}')">
       <span class="sb-icon">${item.icon}</span><span>${esc(t(item.key))}</span>
@@ -1044,6 +1135,7 @@ function navBadge(id){
 
 function navigate(view){
   if(view==='setari' && !isFullAdmin()) view = 'dashboard';
+  if(!isFullAdmin() && !currentShift && view!=='dashboard') view = 'dashboard';
   currentView = view;
   document.querySelectorAll('.sb-item').forEach(el => el.classList.toggle('active', el.dataset.view===view));
   const navItem = NAV.find(n=>n.id===view);
@@ -1141,9 +1233,134 @@ function render(){
 function participantOptions(selectedId){
   return DB.participanti.filter(p=>p.statut==='activ').map(p=>`<option value="${p.id}" ${p.id===selectedId?'selected':''}>${esc(p.nume)} ${esc(p.prenume)}</option>`).join('');
 }
-function disabledAttr(adminOnly){ return (adminOnly && !isFullAdmin()) ? 'disabled' : ''; }
+function disabledAttr(adminOnly){
+  if(adminOnly) return !isFullAdmin() ? 'disabled' : '';
+  return !hasActiveShift() ? 'disabled' : '';
+}
 
 /* ══════════════════════ DASHBOARD ══════════════════════ */
+function serviceEmployeeOptions(selectedId){
+  return DB.serviciuAdministratori.map(a=>`<option value="${a.id}" ${a.id===selectedId?'selected':''}>${esc(a.nume)}</option>`).join('');
+}
+function dashboardArbitrajRows(){
+  if(isFullAdmin()) return DB.arbitraj.filter(a=>demoShiftArbitrajIds.includes(a.id));
+  return currentShift ? DB.arbitraj.filter(a=>a.sesiuneSchimbId===currentShift.id) : [];
+}
+function openShiftPanel(){
+  if(isFullAdmin()){
+    adminDemoShiftActive = true;
+    demoShiftArbitrajIds = [];
+    dashboardTrainingRows = 1;
+    render();
+    return;
+  }
+  shiftStartPrompt = true;
+  render();
+}
+async function confirmLocationShift(){
+  const employeeId = document.getElementById('shift-employee')?.value;
+  const employee = DB.serviciuAdministratori.find(a=>a.id===employeeId);
+  if(!employee) return;
+  const { data, error } = await sb.from('sesiuni_schimb').insert({
+    cont_id:currentAdminId,
+    administrator_serviciu_id:employeeId,
+  }).select().single();
+  if(error){ alert(t('sh_startError')+' '+error.message); return; }
+  currentShift = { id:data.id, administratorServiciuId:employeeId, administrator:employee.nume, startedAt:data.started_at };
+  shiftStartPrompt = false;
+  dashboardTrainingRows = 1;
+  document.getElementById('sb-admin').textContent = employee.nume;
+  await logAction(`A început schimbul de locație: ${employee.nume}`);
+  buildSidebar();
+  render();
+}
+async function stopDashboardShift(){
+  if(isFullAdmin()) return;
+  if(!currentShift) return;
+  const endedAt = new Date().toISOString();
+  const shiftName = currentShift.administrator;
+  const { data, error } = await sb.from('sesiuni_schimb').update({ended_at:endedAt}).eq('id',currentShift.id).select();
+  if(error || !data?.length){ alert(t('sh_stopError')+(error?' '+error.message:'')); return; }
+  await logAction(`A încheiat schimbul de locație: ${shiftName}`);
+  currentShift = null;
+  dashboardTrainingRows = 1;
+  document.getElementById('sb-admin').textContent = currentAdmin;
+  currentView = 'dashboard';
+  buildSidebar();
+  render();
+}
+function addDashboardTrainingRow(){
+  dashboardTrainingRows = Math.min(8, dashboardTrainingRows + 1);
+  render();
+}
+function renderShiftWorkflow(){
+  const active = isFullAdmin() ? adminDemoShiftActive : !!currentShift;
+  if(!active){
+    return `<section class="shift-launch">
+      <div class="shift-launch-icon">✓</div>
+      <h3>${t('sh_startTitle')}</h3>
+      <p>${t('sh_startSub')}</p>
+      ${shiftStartPrompt && !isFullAdmin() ? `<div class="shift-start-confirm">
+        <div class="field"><label>${t('sh_chooseName')}</label><select id="shift-employee">${serviceEmployeeOptions('')}</select></div>
+        <button class="btn-primary" onclick="confirmLocationShift()">${t('sh_confirmStart')}</button>
+      </div>` : `<button class="btn-primary" onclick="openShiftPanel()">${t('sh_startBtn')}</button>`}
+    </section>`;
+  }
+
+  const refs = dashboardArbitrajRows();
+  const eligible = eligibleTrainingParticipants();
+  const todayTrainings = DB.treninguri.filter(r=>r.data===todayISO()).sort((a,b)=>String(a.ora||'').localeCompare(String(b.ora||'')));
+  const startedAt = isFullAdmin() ? new Date().toISOString() : currentShift.startedAt;
+  const shiftName = activeShiftName();
+  return `<section class="daily-ops">
+    <div class="daily-ops-head">
+      <div class="shift-identity"><span class="shift-live-dot"></span><div><strong>${esc(shiftName)}</strong><span>${t(isFullAdmin()?'sh_demo':'sh_active')} · ${fmtDateTime(startedAt)}</span></div></div>
+      <button class="btn-stop-shift" onclick="stopDashboardShift()">${t('sh_stop')}</button>
+    </div>
+    <div class="daily-ops-grid">
+      <div class="ops-card">
+        <div class="ops-title"><span>${t('sh_refTitle')}</span><span class="ops-kicker">01</span></div>
+        <div class="ops-help">${t('sh_refHelp')}</div>
+        ${[1,2,3].map(slot=>{
+          const saved = refs.find(r=>r.slotSchimb===slot) || (isFullAdmin() ? refs[slot-1] : null);
+          return `<div class="ops-row">
+            <div class="field"><div class="ops-slot">#${slot} · ${t('sh_referee')} ${saved?'<span class="ops-saved">· '+t('sh_saved')+'</span>':''}</div>
+              ${saved ? `<input value="${esc(saved.arbitru)}" disabled>` : `<select id="shift-ref-${slot}">${DB.serviciuAdministratori.map(a=>`<option value="${esc(a.nume)}">${esc(a.nume)}</option>`).join('')}</select>`}
+            </div>
+            <div class="field"><label>${t('sh_venue')}</label>${saved?`<input value="${esc(saved.turneu)}" disabled>`:`<select id="shift-venue-${slot}">${TOURNAMENTS.map(v=>`<option>${esc(v)}</option>`).join('')}</select>`}</div>
+            ${saved ? `<div class="field"><label>${t('sh_balls')}</label><div style="display:grid;grid-template-columns:.9fr .7fr;gap:6px"><select id="shift-ball-brand-${saved.id}"><option ${saved.marcaMingi==='DHS'?'selected':''}>DHS</option><option ${saved.marcaMingi==='JOOLA'?'selected':''}>JOOLA</option></select><input id="shift-ball-qty-${saved.id}" type="number" min="0" value="${saved.cantitateMingi||0}"></div></div>
+              <button class="btn-ghost btn-sm" onclick="updateDashboardRefereeBalls('${saved.id}')">${t('sh_updateBalls')}</button>`
+              : `<div></div><button class="btn-primary btn-sm" onclick="saveDashboardReferee(${slot})">${t('sh_saveRef')}</button>`}
+          </div>`;
+        }).join('')}
+      </div>
+
+      <div class="ops-card">
+        <div class="ops-title"><span>${t('sh_inventoryTitle')}</span><span class="ops-kicker">02</span></div>
+        <div class="ops-help">${t('sh_inventoryHelp')}</div>
+        <div class="ops-row inventory-row">
+          <div class="field"><label>${t('sh_item')}</label><select id="shift-inventory-item">${inventarSorted().map(i=>`<option value="${i.id}">${esc(trEnum(i.denumire))}${i.marime!=='—'?' — '+esc(i.marime):''}</option>`).join('')}</select></div>
+          <div class="field"><label>${t('sh_quantity')}</label><input id="shift-inventory-qty" type="number" min="1" value="1"></div>
+          <button class="btn-primary btn-sm" onclick="addDashboardInventory()">${t('sh_addStock')}</button>
+        </div>
+      </div>
+
+      <div class="ops-card training">
+        <div class="ops-title"><span>${t('sh_trainingTitle')}</span><span class="ops-kicker">03</span></div>
+        <div class="ops-help">${t('sh_trainingHelp')}</div>
+        ${eligible.length ? Array.from({length:dashboardTrainingRows},(_,idx)=>`<div class="ops-row training-row">
+          <div class="field"><label>${t('sh_trainee')}</label><select id="shift-training-player-${idx}">${eligible.map(p=>`<option value="${p.id}">${esc(p.nume)} ${esc(p.prenume)}</option>`).join('')}</select></div>
+          <div class="field"><label>${t('sh_trainer')}</label><select id="shift-training-coach-${idx}">${TRAINERS.map(x=>`<option>${esc(x)}</option>`).join('')}</select></div>
+          <div class="field"><label>${t('sh_time')}</label><input id="shift-training-time-${idx}" type="time"></div>
+          <button class="btn-primary btn-sm" onclick="addDashboardTraining(${idx})">${t('sh_addTraining')}</button>
+        </div>`).join('') : `<div class="alert-empty">${t('sh_noEligible')}</div>`}
+        ${eligible.length ? `<button class="btn-ghost btn-sm" style="margin-top:10px" onclick="addDashboardTrainingRow()">${t('sh_addRow')}</button>` : ''}
+        ${todayTrainings.length ? `<div class="ops-today-list">${todayTrainings.map(r=>`<span class="ops-today-chip">${esc(String(r.ora||'').slice(0,5)||'—')} · ${esc(participantName(r.participantId))} / ${esc(r.antrenor)}</span>`).join('')}</div>` : ''}
+      </div>
+    </div>
+  </section>`;
+}
+
 function renderDashboard(){
   const alerts = buildAlerts();
   const cazatiAcum = DB.hostel.filter(h=>!DB.lenjerie.some(()=>false)).length; // placeholder not used
@@ -1151,7 +1368,9 @@ function renderDashboard(){
   const medCurand = medicalRows().filter(r=>r.status==='expiră curând').length;
   return `
   <div class="view-head"><div class="view-title">${t('da_title')}</div></div>
-  <div class="view-sub">${fmtDate(todayISO())} · ${t('sb_shift').toLowerCase()}: ${esc(currentAdmin)}</div>
+  <div class="view-sub">${fmtDate(todayISO())} · ${t('sb_shift').toLowerCase()}: ${esc(activeShiftName())}</div>
+
+  ${renderShiftWorkflow()}
 
   <div class="stats-row">
     <div class="stat-card"><div class="stat-label">${t('da_stat_activi')}</div><div class="stat-value">${DB.participanti.filter(p=>p.statut==='activ').length}</div><div class="stat-sub">${DB.participanti.length} ${t('da_total_inreg')}</div></div>
@@ -1175,6 +1394,64 @@ function renderDashboard(){
       </tbody>
     </table></div>
   </div>`;
+}
+
+async function saveDashboardReferee(slot){
+  if(!hasActiveShift()) return;
+  const arbitru = document.getElementById(`shift-ref-${slot}`)?.value;
+  const turneu = document.getElementById(`shift-venue-${slot}`)?.value;
+  if(!arbitru || !turneu) return;
+  const payload = { data:todayISO(), arbitru, turneu, marca_mingi:'DHS', cantitate_mingi:0 };
+  if(!isFullAdmin()){
+    payload.sesiune_schimb_id = currentShift.id;
+    payload.slot_schimb = slot;
+  }
+  const { data:row, error } = await sb.from('arbitraj').insert(payload).select().single();
+  if(error){ alert('Salvarea a eșuat: '+error.message); return; }
+  const local = {id:row.id,data:row.data,arbitru:row.arbitru,turneu:row.turneu,marcaMingi:row.marca_mingi,cantitateMingi:row.cantitate_mingi,observatii:row.observatii,sesiuneSchimbId:row.sesiune_schimb_id,slotSchimb:row.slot_schimb};
+  DB.arbitraj.unshift(local);
+  if(isFullAdmin()) demoShiftArbitrajIds.push(row.id);
+  await logAction(`A programat arbitrul ${arbitru} la ${turneu}`);
+  render();
+}
+async function updateDashboardRefereeBalls(id){
+  if(!hasActiveShift()) return;
+  const row = DB.arbitraj.find(a=>a.id===id); if(!row) return;
+  const marcaMingi = document.getElementById(`shift-ball-brand-${id}`)?.value || 'DHS';
+  const raw = parseInt(document.getElementById(`shift-ball-qty-${id}`)?.value);
+  const cantitateMingi = Number.isFinite(raw) && raw>=0 ? raw : 0;
+  const { data, error } = await sb.from('arbitraj').update({marca_mingi:marcaMingi,cantitate_mingi:cantitateMingi}).eq('id',id).select();
+  if(error || !data?.length){ alert('Actualizarea a eșuat: '+(error?.message||'fără permisiune')); return; }
+  row.marcaMingi = marcaMingi;
+  row.cantitateMingi = cantitateMingi;
+  await refetchInventar();
+  await logAction(`A actualizat mingile pentru ${row.arbitru}: ${cantitateMingi} ${marcaMingi}`);
+  render();
+}
+async function addDashboardInventory(){
+  if(!hasActiveShift()) return;
+  const id = document.getElementById('shift-inventory-item')?.value;
+  const cant = parseInt(document.getElementById('shift-inventory-qty')?.value)||1;
+  const item = DB.inventar.find(i=>i.id===id); if(!item || cant<1) return;
+  const { error } = await sb.rpc('inventar_log_intrare',{p_inventar_id:id,p_cantitate:cant,p_motiv:'Intrare înregistrată din tabloul de bord'});
+  if(error){ alert('Actualizarea a eșuat: '+error.message); return; }
+  await refetchInventar();
+  await logAction(`A înregistrat o intrare de ${cant} ${item.um} — ${item.denumire}`);
+  render();
+}
+async function addDashboardTraining(index){
+  if(!hasActiveShift()) return;
+  const participantId = document.getElementById(`shift-training-player-${index}`)?.value;
+  const antrenor = document.getElementById(`shift-training-coach-${index}`)?.value;
+  const ora = document.getElementById(`shift-training-time-${index}`)?.value || null;
+  if(!participantId){ alert(t('an_needJucator')); return; }
+  if(!ora){ alert(t('sh_time')); return; }
+  const payload = {participant_id:participantId,antrenor,data:todayISO(),ora,suma_jucator:TRAINING_SUMA_JUCATOR,suma_antrenor:TRAINING_SUMA_ANTRENOR};
+  const { data:saved, error } = await sb.from('treninguri').insert(payload).select().single();
+  if(error){ alert('Salvarea a eșuat: '+error.message); return; }
+  DB.treninguri.unshift({id:saved.id,participantId:saved.participant_id,antrenor:saved.antrenor,data:saved.data,ora:saved.ora,sumaJucator:Number(saved.suma_jucator),sumaAntrenor:Number(saved.suma_antrenor),observatii:saved.observatii});
+  await logAction(`A înregistrat un antrenament pentru ${participantName(participantId)} cu ${antrenor}`);
+  render();
 }
 
 /* ══════════════════════ PARTICIPANȚI ══════════════════════ */
