@@ -497,6 +497,7 @@ ro: {
   sp_tipArt:'Tip articole', sp_tipArtPh:'ex. Maiou, șort', sp_dataPredarii:'Data predării', sp_suma:'Sumă (MDL)',
   sp_th_articole:'Articole', sp_th_suma:'Sumă', sp_countSuffix:'înregistrări', sp_none:'Nicio înregistrare.',
   sp_cantitate:'Cantitate', sp_th_cantitate:'Cant.', sp_locatia:'Locația (fără participant)',
+  sp_filtruTitle:'Filtrează după perioadă', sp_toatePerioadele:'Toate perioadele',
 
   ho_title:'Hostel', ho_sub:'Cazările pe noapte ale sportivilor la locație.', ho_cazatiAzi:'Cazați azi',
   ho_totalNopti:'Total nopți înregistrate', ho_addTitle:'Înregistrare cazare', ho_dataCazarii:'Data cazării',
@@ -654,6 +655,7 @@ ru: {
   sp_tipArt:'Тип изделий', sp_tipArtPh:'напр. майка, шорты', sp_dataPredarii:'Дата сдачи', sp_suma:'Сумма (MDL)',
   sp_th_articole:'Изделия', sp_th_suma:'Сумма', sp_countSuffix:'записей', sp_none:'Записей нет.',
   sp_cantitate:'Количество', sp_th_cantitate:'Кол-во', sp_locatia:'Локация (без участника)',
+  sp_filtruTitle:'Фильтр по периоду', sp_toatePerioadele:'Все периоды',
 
   ho_title:'Хостел', ho_sub:'Ночные заселения спортсменов на локации.', ho_cazatiAzi:'Заселены сегодня',
   ho_totalNopti:'Всего ночей зарегистрировано', ho_addTitle:'Регистрация заселения', ho_dataCazarii:'Дата заселения',
@@ -1472,13 +1474,19 @@ async function addServiciu(){
 }
 
 /* ══════════════════════ SPĂLĂTORIE ══════════════════════ */
+let spalatorieFilter = { from:'', to:'' };
+function spalatorieFiltered(){
+  const { from, to } = spalatorieFilter;
+  return DB.spalatorie.filter(r => (!from || r.data >= from) && (!to || r.data <= to));
+}
 function renderSpalatorie(){
-  const total = DB.spalatorie.reduce((s,r)=>s+Number(r.suma||0),0);
+  const rows = spalatorieFiltered();
+  const total = rows.reduce((s,r)=>s+Number(r.suma||0),0);
   return `
   <div class="view-head"><div class="view-title">${t('sp_title')}</div></div>
   <div class="view-sub">${t('sp_sub')}</div>
 
-  <div class="stats-row"><div class="stat-card"><div class="stat-label">${t('sp_totalChelt')}</div><div class="stat-value">${total} MDL</div><div class="stat-sub">${DB.spalatorie.length} ${t('sp_operatiuni')}</div></div></div>
+  <div class="stats-row"><div class="stat-card"><div class="stat-label">${t('sp_totalChelt')}</div><div class="stat-value">${total} MDL</div><div class="stat-sub">${rows.length} ${t('sp_operatiuni')}</div></div></div>
 
   <div class="add-form">
     <div class="form-title">${t('sp_addTitle')}</div>
@@ -1492,11 +1500,20 @@ function renderSpalatorie(){
     </div>
   </div>
 
+  <div class="add-form">
+    <div class="form-title">${t('sp_filtruTitle')}</div>
+    <div class="form-grid" style="grid-template-columns:1fr 1fr auto">
+      <div class="field"><label>${t('re_de_la')}</label><input id="sp-filter-from" type="date" value="${spalatorieFilter.from}" onchange="spalatorieFilter.from=this.value; render();"></div>
+      <div class="field"><label>${t('re_pana_la')}</label><input id="sp-filter-to" type="date" value="${spalatorieFilter.to}" onchange="spalatorieFilter.to=this.value; render();"></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-ghost" onclick="spalatorieFilter={from:'',to:''}; render();">${t('sp_toatePerioadele')}</button></div>
+    </div>
+  </div>
+
   <div class="table-wrap">
-    <div class="table-header"><div class="table-title">${DB.spalatorie.length} ${t('sp_countSuffix')}</div></div>
+    <div class="table-header"><div class="table-title">${rows.length} ${t('sp_countSuffix')}</div></div>
     <div class="table-scroll"><table>
       <thead><tr><th>${t('th_data')}</th><th>${t('th_participant')}</th><th>${t('sp_th_articole')}</th><th>${t('sp_th_cantitate')}</th><th>${t('sp_th_suma')}</th><th></th></tr></thead>
-      <tbody>${DB.spalatorie.length ? DB.spalatorie.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(r=>`
+      <tbody>${rows.length ? rows.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(r=>`
         <tr><td class="td-muted">${fmtDate(r.data)}</td><td class="td-name" ${r.participantId?`onclick="openProfile('${r.participantId}')"`:''}>${r.participantId?esc(participantName(r.participantId)):t('sp_locatia')}</td>
         <td>${esc(r.tipArticole)}</td><td class="td-muted">${r.cantitate||1}</td><td class="td-gold">${r.suma} MDL</td>
         <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('spalatorie','${r.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="6">${t('sp_none')}</td></tr>`}</tbody>
