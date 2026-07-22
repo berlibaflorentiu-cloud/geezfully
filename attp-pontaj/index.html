@@ -1111,13 +1111,14 @@ const NAV = [
   {id:'rapoarte', key:'nav_rapoarte', icon:'▥'},
   {id:'setari', key:'nav_setari', icon:'⚙'},
 ];
+const LOCATION_HIDDEN_VIEWS = new Set(['antrenamente','rapoarte','setari']);
 
 function buildSidebar(){
   const nav = document.getElementById('sb-nav');
   nav.innerHTML = NAV.filter(item => {
     if(isFullAdmin()) return true;
     if(!currentShift) return item.id==='dashboard';
-    return item.id!=='setari';
+    return !LOCATION_HIDDEN_VIEWS.has(item.id);
   }).map(item => {
     const badge = navBadge(item.id);
     return `<button class="sb-item" data-view="${item.id}" onclick="navigate('${item.id}')">
@@ -1135,7 +1136,7 @@ function navBadge(id){
 }
 
 function navigate(view){
-  if(view==='setari' && !isFullAdmin()) view = 'dashboard';
+  if(!isFullAdmin() && LOCATION_HIDDEN_VIEWS.has(view)) view = 'dashboard';
   if(!isFullAdmin() && !currentShift && view!=='dashboard') view = 'dashboard';
   currentView = view;
   document.querySelectorAll('.sb-item').forEach(el => el.classList.toggle('active', el.dataset.view===view));
