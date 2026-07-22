@@ -166,6 +166,11 @@
   .alert-dot { width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
   .alert-dot.red { background: var(--red); box-shadow: 0 0 0 3px rgba(248,81,73,.18); }
   .alert-dot.yellow { background: var(--yellow); box-shadow: 0 0 0 3px rgba(210,166,74,.18); }
+  .alert-type { flex: 0 0 76px; padding: 3px 7px; border: 1px solid var(--border); border-radius: 999px; font-size: 9.5px; font-weight: 700; line-height: 1.2; letter-spacing: .06em; text-align: center; text-transform: uppercase; }
+  .alert-type.medical { color: var(--red); border-color: rgba(248,81,73,.35); background: rgba(248,81,73,.08); }
+  .alert-type.inventory { color: var(--yellow); border-color: rgba(210,166,74,.35); background: rgba(210,166,74,.08); }
+  .alert-type.task { color: var(--gold); border-color: rgba(200,163,91,.35); background: rgba(200,163,91,.08); }
+  .alert-text { min-width: 0; padding-top: 1px; }
   .alert-empty { padding: 20px 18px; color: var(--muted); font-size: 13px; text-align: center; }
 
   /* forms */
@@ -590,6 +595,8 @@ ro: {
   al_medMissing:(name)=>`Sportivul activ ${name} nu are aviz medical înregistrat.`,
   al_lowStock:(name,qty,um,min)=>`Stocul „${name}” a scăzut la ${qty} ${um} (minim ${min}).`,
   al_staleTask:(desc)=>`Sarcina „${desc}” înregistrată mai mult de 48 ore în urmă nu a fost soluționată.`,
+  al_openTask:(desc)=>`Sarcina „${desc}” este în așteptare.`,
+  al_typeMedical:'Medical', al_typeInventory:'Inventar', al_typeTask:'Sarcină',
   al_frequentLate:(name,count)=>`Sportivul ${name} a întârziat de ${count} ori în ultimele 30 de zile.`,
 },
 ru: {
@@ -754,6 +761,8 @@ ru: {
   al_medMissing:(name)=>`У активного спортсмена ${name} нет зарегистрированной медицинской справки.`,
   al_lowStock:(name,qty,um,min)=>`Запас «${name}» снизился до ${qty} ${um} (минимум ${min}).`,
   al_staleTask:(desc)=>`Задача «${desc}», зарегистрированная более 48 часов назад, не решена.`,
+  al_openTask:(desc)=>`Задача «${desc}» ожидает выполнения.`,
+  al_typeMedical:'Медицина', al_typeInventory:'Инвентарь', al_typeTask:'Задача',
   al_frequentLate:(name,count)=>`Спортсмен ${name} опаздывал ${count} раз(а) за последние 30 дней.`,
 },
 };
@@ -1051,15 +1060,18 @@ function inventarSorted(){
 function buildAlerts(){
   const alerts = [];
   medicalAlerts().forEach(r=>{
-    alerts.push({ level: r.zile<0?'red':'yellow', text: r.zile<0
+    alerts.push({ type:'medical', level: r.zile<0?'red':'yellow', text: r.zile<0
       ? t('al_medExpired')(r.nume)
       : t('al_medSoon')(r.nume, r.zile) });
   });
   lowStockItems().forEach(i=>{
-    alerts.push({ level:'yellow', text: t('al_lowStock')(`${trEnum(i.denumire)}${i.marime!=='—'?' '+i.marime:''}`, inventoryCurrent(i), i.um, i.cantitateMinima) });
+    alerts.push({ type:'inventory', level:'yellow', text: t('al_lowStock')(`${trEnum(i.denumire)}${i.marime!=='—'?' '+i.marime:''}`, inventoryCurrent(i), i.um, i.cantitateMinima) });
   });
-  staleTasks().forEach(t2=>{
-    alerts.push({ level:'red', text: t('al_staleTask')(t2.descriere) });
+  DB.sarcini.filter(s=>s.status!=='soluționat').forEach(t2=>{
+    const isStale = daysDiff(t2.dataInreg) <= -2;
+    alerts.push({ type:'task', level:isStale?'red':'yellow', text: isStale
+      ? t('al_staleTask')(t2.descriere)
+      : t('al_openTask')(t2.descriere) });
   });
   return alerts;
 }
@@ -1103,7 +1115,7 @@ function renderDashboard(){
 
   <div class="alerts-panel">
     <div class="alerts-panel-head">${t('da_alerts_title')}</div>
-    ${alerts.length ? alerts.map(a=>`<div class="alert-row"><span class="alert-dot ${a.level}"></span><span>${esc(a.text)}</span></div>`).join('') : `<div class="alert-empty">${t('da_alerts_empty')}</div>`}
+    ${alerts.length ? alerts.map(a=>`<div class="alert-row"><span class="alert-dot ${a.level}"></span><span class="alert-type ${a.type}">${esc(t(`al_type${a.type[0].toUpperCase()+a.type.slice(1)}`))}</span><span class="alert-text">${esc(a.text)}</span></div>`).join('') : `<div class="alert-empty">${t('da_alerts_empty')}</div>`}
   </div>
 
   <div class="table-wrap">
@@ -2039,6 +2051,15 @@ async function addObservatie(){
 /* ══════════════════════ RAPOARTE ══════════════════════ */
 let reportState = { type:'total', from: addDays(todayISO(),-30), to: todayISO() };
 const REPORT_TYPES = ['total','intarzieri','spalatorie','medical','daune','arbitraj','inventar'];
+function updateReportDate(key, value){
+  if(!value) return;
+  reportState[key] = value;
+  if(reportState.from > reportState.to){
+    if(key==='from') reportState.to = value;
+    else reportState.from = value;
+  }
+  render();
+}
 function renderRapoarte(){
   const report = reportSections();
   return `
@@ -2049,13 +2070,14 @@ function renderRapoarte(){
     <div class="form-title">${t('re_perioada')}</div>
     <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr auto auto auto">
       <div class="field"><label>${t('re_tipRaport')}</label><select id="report-type" onchange="reportState.type=this.value; render();">${REPORT_TYPES.map(rt=>`<option value="${rt}" ${rt===reportState.type?'selected':''}>${t('re_type_'+rt)}</option>`).join('')}</select></div>
-      <div class="field"><label>${t('re_de_la')}</label><input id="report-from" type="date" value="${reportState.from}" onchange="reportState.from=this.value||reportState.from; render();"></div>
-      <div class="field"><label>${t('re_pana_la')}</label><input id="report-to" type="date" value="${reportState.to}" onchange="reportState.to=this.value||reportState.to; render();"></div>
+      <div class="field"><label>${t('re_de_la')}</label><input id="report-from" type="date" value="${reportState.from}" onchange="updateReportDate('from', this.value)"></div>
+      <div class="field"><label>${t('re_pana_la')}</label><input id="report-to" type="date" value="${reportState.to}" onchange="updateReportDate('to', this.value)"></div>
       <div class="field" style="justify-content:flex-end"><button class="btn-ghost" onclick="exportExcelReport()"><svg class="btn-icon" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 19h14"/></svg>${t('re_excel')}</button></div>
       <div class="field" style="justify-content:flex-end"><button class="btn-ghost" onclick="exportPdfReport()"><svg class="btn-icon" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M5 19h14"/></svg>${t('re_pdf')}</button></div>
       <div class="field" style="justify-content:flex-end"><button class="btn-primary" onclick="printReport()"><svg class="btn-icon" viewBox="0 0 24 24"><path d="M7 9V3h10v6"/><path d="M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><path d="M7 14h10v7H7z"/></svg>${t('re_print')}</button></div>
     </div>
   </div>
+  <div class="view-sub" style="margin:-6px 0 18px">${fmtDate(report.from)} — ${fmtDate(report.to)}</div>
 
   ${report.sections.map(section=>`
   <div class="report-card">
@@ -2065,15 +2087,18 @@ function renderRapoarte(){
 }
 
 function reportRange(){
-  const from = reportState.from, to = reportState.to;
+  const from = reportState.from <= reportState.to ? reportState.from : reportState.to;
+  const to = reportState.from <= reportState.to ? reportState.to : reportState.from;
   return { from, to, includes: iso => !!iso && iso >= from && iso <= to };
 }
 function summaryIntarzieri(range){
   const filtered = DB.intarzieri.filter(r=>range.includes(r.data));
+  const counts = {};
+  filtered.forEach(r=>{ counts[r.participantId]=(counts[r.participantId]||0)+1; });
   return [
     [t('re_m_totalIntarzieri'), filtered.length],
     [t('re_m_totalMinute'), filtered.reduce((s,r)=>s+(r.minuteIntarziere||0),0)],
-    [t('re_m_frecventi'), frequentLate().length],
+    [t('re_m_frecventi'), Object.values(counts).filter(count=>count>=3).length],
   ];
 }
 function summarySpalatorie(range){
@@ -2118,7 +2143,7 @@ function reportSections(){
         [t('re_r_obsAbs'), DB.observatii.filter(r=>range.includes(r.data)).length],
         [t('re_r_cazariHostel'), DB.hostel.filter(r=>range.includes(r.dataCazare)).length],
         [t('re_r_vestElib'), DB.vestimentatie.filter(r=>range.includes(r.data)).reduce((s,v)=>s+v.cantitate,0)+' buc'],
-        [t('re_r_avizeExp'), medicalRows().filter(r=>r.status==='expirat').length],
+        [t('re_r_avizeExp'), medicalRows().filter(r=>r.status==='expirat' && range.includes(r.dataExpirare)).length],
         [t('re_r_dauneProv'), DB.daune.filter(r=>range.includes(r.data)).length],
       ]},
       { title:t('re_sect_admin'), rows:[
