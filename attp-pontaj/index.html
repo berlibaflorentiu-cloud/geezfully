@@ -423,7 +423,7 @@ const ENUM_RU = {
   'intrare':'приход', 'iesire':'расход', 'corectare':'корректировка',
   'Maiouri roșii':'Красные майки', 'Maiouri albastre':'Синие майки', 'Mingi noi':'Новые мячи',
   'Mingi noi DHS':'Новые мячи DHS', 'Mingi noi JOOLA':'Новые мячи JOOLA', 'Șorturi':'Шорты',
-  'Seturi lenjerie':'Комплекты белья', 'Inventar sportiv (mese, plase)':'Спортивный инвентарь (столы, сетки)',
+  'Seturi lenjerie':'Комплекты белья',
 };
 function trEnum(v){ return (LANG==='ru' && ENUM_RU[v]) ? ENUM_RU[v] : v; }
 
@@ -1034,7 +1034,7 @@ function inventoryStare(curent, minima){
   if(curent === minima) return 'minim';
   return 'bună';
 }
-const INVENTAR_TOP_ORDER = { 'Mingi noi DHS':0, 'Mingi noi JOOLA':1, 'Inventar sportiv (mese, plase)':2, 'Seturi lenjerie':3, 'Șorturi':4 };
+const INVENTAR_TOP_ORDER = { 'Mingi noi DHS':0, 'Mingi noi JOOLA':1, 'Seturi lenjerie':2, 'Șorturi':3 };
 const INVENTAR_SIZE_ORDER = ['M','L','XL','XXL','XXXL'];
 function inventarHasVariant(i){ return i.culoare && i.culoare!=='—' && i.marime && i.marime!=='—'; }
 function inventarSorted(){
