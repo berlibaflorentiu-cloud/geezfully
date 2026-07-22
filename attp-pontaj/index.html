@@ -886,8 +886,18 @@ function frequentLate(){
   return Object.entries(counts).filter(([,c])=>c>=3).map(([pid,c])=>({participantId:pid, count:c}));
 }
 function inventoryCurrent(item){ return item.cantitateInitiala + item.intrari - item.iesiri; }
-const INVENTAR_ORDER = { 'Mingi noi DHS':0, 'Mingi noi JOOLA':1, 'Inventar sportiv (mese, plase)':2, 'Seturi lenjerie':3 };
-function inventarSorted(){ return DB.inventar.slice().sort((a,b)=> (INVENTAR_ORDER[a.denumire]??3) - (INVENTAR_ORDER[b.denumire]??3)); }
+const INVENTAR_TOP_ORDER = { 'Mingi noi DHS':0, 'Mingi noi JOOLA':1, 'Inventar sportiv (mese, plase)':2, 'Seturi lenjerie':3 };
+const INVENTAR_SIZE_ORDER = ['S','M','L','XL','XXL','XXXL'];
+function inventarHasVariant(i){ return i.culoare && i.culoare!=='—' && i.marime && i.marime!=='—'; }
+function inventarSorted(){
+  return DB.inventar.slice().sort((a,b)=>{
+    const va = inventarHasVariant(a) ? 1 : 0, vb = inventarHasVariant(b) ? 1 : 0;
+    if(va !== vb) return va - vb;
+    if(va === 0) return (INVENTAR_TOP_ORDER[a.denumire] ?? 99) - (INVENTAR_TOP_ORDER[b.denumire] ?? 99);
+    if(a.denumire !== b.denumire) return a.denumire.localeCompare(b.denumire);
+    return INVENTAR_SIZE_ORDER.indexOf(a.marime) - INVENTAR_SIZE_ORDER.indexOf(b.marime);
+  });
+}
 
 function buildAlerts(){
   const alerts = [];
