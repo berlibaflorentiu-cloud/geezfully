@@ -1645,8 +1645,8 @@ function renderSpalatorie(){
   <div class="add-form">
     <div class="form-title">${t('sp_filtruTitle')}</div>
     <div class="form-grid" style="grid-template-columns:1fr 1fr auto">
-      <div class="field"><label>${t('re_de_la')}</label><input id="sp-filter-from" type="date" value="${spalatorieFilter.from}" onchange="spalatorieFilter.from=this.value; render();"></div>
-      <div class="field"><label>${t('re_pana_la')}</label><input id="sp-filter-to" type="date" value="${spalatorieFilter.to}" onchange="spalatorieFilter.to=this.value; render();"></div>
+      <div class="field"><label>${t('re_de_la')}</label><input id="sp-filter-from" type="date" value="${spalatorieFilter.from}" onchange="if(this.value){ spalatorieFilter.from=this.value; render(); }"></div>
+      <div class="field"><label>${t('re_pana_la')}</label><input id="sp-filter-to" type="date" value="${spalatorieFilter.to}" onchange="if(this.value){ spalatorieFilter.to=this.value; render(); }"></div>
       <div class="field" style="justify-content:flex-end"><button class="btn-ghost" onclick="spalatorieFilter={from:'',to:''}; render();">${t('sp_toatePerioadele')}</button></div>
     </div>
   </div>
