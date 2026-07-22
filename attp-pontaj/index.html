@@ -387,6 +387,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const TOURNAMENTS = ['RIO','MEXICO Day','MEXICO Night'];
+const REFEREES = ['Bambuleac Cristian','Barancean Iulia','Bulat Mihai','Calev Leonid','Ciubinidze Miroslav','Gribcov Dmitri','Iamandi Nadejda','Leu Igor','Malcoci Mihai','Melintii Vladimir','Meriacri Aurel','Mocreac Ilarion','Rusu Svetlana'];
 const CLOTHING_TYPES = ['Maiou roșu','Maiou albastru'];
 const CLOTHING_SIZES = ['M','L','XL','XXL','XXXL'];
 const SPORT_CATEGORIES = ['MS','CMS','Categoria I','Categoria II','Categoria III','Amator'];
@@ -1812,10 +1813,10 @@ function renderArbitraj(){
     <div class="form-title">${t('ar_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:0.8fr 1.2fr 1fr 0.6fr 0.7fr auto">
       <div class="field"><label>${t('th_data')}</label><input id="af-data" type="date" value="${todayISO()}"></div>
-      <div class="field"><label>${t('ar_numeArbitru')}</label><input id="af-arbitru" placeholder="${t('ar_numeArbitruPh')}"></div>
+      <div class="field"><label>${t('ar_numeArbitru')}</label><select id="af-arbitru">${REFEREES.map(r=>`<option>${r}</option>`).join('')}</select></div>
       <div class="field"><label>${t('ar_turneu')}</label><select id="af-turneu">${TOURNAMENTS.map(tour=>`<option>${tour}</option>`).join('')}</select></div>
       <div class="field"><label>${t('ar_marcaMingi')}</label><select id="af-marca"><option value="DHS">DHS</option><option value="JOOLA">JOOLA</option></select></div>
-      <div class="field"><label>${t('ar_mingiNoi')}</label><input id="af-mingi" type="number" min="1" value="1"></div>
+      <div class="field"><label>${t('ar_mingiNoi')}</label><input id="af-mingi" type="number" min="0" value="0"></div>
       <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addArbitraj()">${t('btn_add')}</button></div>
     </div>
   </div>
@@ -1835,7 +1836,8 @@ async function addArbitraj(){
   if(!arbitru){ alert(t('ar_needNume')); return; }
   const turneu = document.getElementById('af-turneu').value;
   const marcaMingi = document.getElementById('af-marca').value;
-  const cantitateMingi = parseInt(document.getElementById('af-mingi').value)||1;
+  const cantitateMingiRaw = parseInt(document.getElementById('af-mingi').value);
+  const cantitateMingi = Number.isFinite(cantitateMingiRaw) && cantitateMingiRaw>=0 ? cantitateMingiRaw : 0;
   const data = document.getElementById('af-data').value || todayISO();
   const { data:row, error } = await sb.from('arbitraj').insert({ data, arbitru, turneu, marca_mingi:marcaMingi, cantitate_mingi:cantitateMingi }).select().single();
   if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
