@@ -570,6 +570,7 @@ ro: {
   se_title:'Serviciu administratori', se_sub:'Graficul de serviciu / schimburile administratorilor la locație.',
   se_overlap:'⚠ Suprapunere de schimburi detectată pe:', se_addTitle:'Adăugare schimb',
   se_raportTitle:'Raport schimburi lucrate', se_nrSchimburi:'Nr. schimburi', se_calendarTitle:'Calendar schimburi',
+  se_startTime:'Început', se_endTime:'Sfârșit',
   se_none:'Niciun schimb înregistrat.',
 
   sp_title:'Spălătorie', sp_sub:'Evidența spălătoriilor chimice și a sumelor de plată.',
@@ -761,6 +762,7 @@ ru: {
   se_title:'Смены администраторов', se_sub:'График смен администраторов на локации.',
   se_overlap:'⚠ Обнаружено пересечение смен на:', se_addTitle:'Добавление смены',
   se_raportTitle:'Отчёт по отработанным сменам', se_nrSchimburi:'Кол-во смен', se_calendarTitle:'Календарь смен',
+  se_startTime:'Начало', se_endTime:'Окончание',
   se_none:'Смены не зарегистрированы.',
 
   sp_title:'Прачечная', sp_sub:'Учёт химчистки и сумм к оплате.',
@@ -899,6 +901,12 @@ function fmtDateTime(value){
   const d = new Date(value);
   return `${d.toLocaleDateString(LANG==='ru'?'ru-RU':'ro-RO')} · ${d.toLocaleTimeString(LANG==='ru'?'ru-RU':'ro-RO',{hour:'2-digit',minute:'2-digit'})}`;
 }
+function fmtTime(value){
+  if(!value) return '—';
+  return new Date(value).toLocaleTimeString(LANG==='ru'?'ru-RU':'ro-RO', {
+    timeZone:'Europe/Chisinau', hour:'2-digit', minute:'2-digit', hour12:false,
+  });
+}
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 /* ══════════════════════ DATA LAYER (Supabase) ══════════════════════ */
@@ -954,6 +962,8 @@ async function fetchAll(){
       id:r.id, data:r.data,
       administratorServiciuId:r.administrator_serviciu_id,
       administratorId:r.administrator_id,
+      inceputLa:r.inceput_la,
+      sfarsitLa:r.sfarsit_la,
       administrator: serviciuAdminById[r.administrator_serviciu_id]?.nume || publicAdminName(adminById[r.administrator_id]),
     })),
     spalatorie: (spalatorieR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, tipArticole:r.tip_articole, cantitate:r.cantitate, suma:Number(r.suma)})),
@@ -1892,10 +1902,11 @@ function renderServiciu(){
   <div class="table-wrap">
     <div class="table-header"><div class="table-title">${t('se_calendarTitle')}</div></div>
     <div class="table-scroll service-calendar-scroll"><table>
-      <thead><tr><th>${t('th_data')}</th><th>${t('th_administrator')}</th><th></th></tr></thead>
+      <thead><tr><th>${t('th_data')}</th><th>${t('th_administrator')}</th><th>${t('se_startTime')}</th><th>${t('se_endTime')}</th><th></th></tr></thead>
       <tbody>${DB.serviciu.length ? DB.serviciu.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(s=>`
         <tr><td class="td-muted">${fmtDate(s.data)}</td><td>${esc(s.administrator)}</td>
-        <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('serviciu','${s.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="3">${t('se_none')}</td></tr>`}</tbody>
+        <td class="td-muted">${fmtTime(s.inceputLa)}</td><td class="td-muted">${fmtTime(s.sfarsitLa)}</td>
+        <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('serviciu','${s.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="5">${t('se_none')}</td></tr>`}</tbody>
     </table></div>
   </div>`;
 }
@@ -1906,7 +1917,7 @@ async function addServiciu(){
   if(!serviciuAdmin) return;
   const { data:row, error } = await sb.from('serviciu').insert({ data, administrator_serviciu_id:administratorServiciuId }).select().single();
   if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
-  DB.serviciu.push({id:row.id, data:row.data, administratorServiciuId:row.administrator_serviciu_id, administrator:serviciuAdmin.nume});
+  DB.serviciu.push({id:row.id, data:row.data, administratorServiciuId:row.administrator_serviciu_id, inceputLa:row.inceput_la, sfarsitLa:row.sfarsit_la, administrator:serviciuAdmin.nume});
   await logAction(`A programat schimb pentru ${serviciuAdmin.nume} pe ${fmtDate(data)}`);
   render();
 }
