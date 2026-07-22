@@ -539,7 +539,7 @@ ro: {
 
   iv_title:'Inventar', iv_sub:'Stocul bunurilor aflate la locație. Cantitatea curentă scade automat la eliberări.',
   iv_lowStock:'articole sub stocul minim admis.', iv_addTitle:'Intrare / corectare stoc', iv_articol:'Articol',
-  iv_tipMiscare:'Tip mișcare', iv_intrare:'intrare', iv_iesire:'ieșire', iv_btnAdd:'+ Înregistrează',
+  iv_tipMiscare:'Tip mișcare', iv_intrare:'intrare', iv_iesire:'ieșire', iv_corectare:'corecție', iv_coloana:'Coloană corectată', iv_btnAdd:'+ Înregistrează',
   iv_structTitle:'Structura inventarului', iv_th_articol:'Articol', iv_th_culoare:'Culoare', iv_th_marime:'Mărime',
   iv_th_um:'UM', iv_th_initial:'Inițial', iv_th_intrari:'Intrări', iv_th_iesiri:'Ieșiri', iv_th_curent:'Curent',
   iv_th_minim:'Minim', iv_th_stare:'Stare',
@@ -703,7 +703,7 @@ ru: {
 
   iv_title:'Инвентарь', iv_sub:'Запас товаров на локации. Текущее количество автоматически снижается при выдаче.',
   iv_lowStock:'товаров ниже допустимого минимума.', iv_addTitle:'Приход / корректировка склада', iv_articol:'Товар',
-  iv_tipMiscare:'Тип операции', iv_intrare:'приход', iv_iesire:'расход', iv_btnAdd:'+ Зарегистрировать',
+  iv_tipMiscare:'Тип операции', iv_intrare:'приход', iv_iesire:'расход', iv_corectare:'корректировка', iv_coloana:'Исправляемая колонка', iv_btnAdd:'+ Зарегистрировать',
   iv_structTitle:'Структура склада', iv_th_articol:'Товар', iv_th_culoare:'Цвет', iv_th_marime:'Размер',
   iv_th_um:'Ед.изм.', iv_th_initial:'Начальный', iv_th_intrari:'Приход', iv_th_iesiri:'Расход', iv_th_curent:'Текущий',
   iv_th_minim:'Минимум', iv_th_stare:'Состояние',
@@ -1848,7 +1848,10 @@ async function addArbitraj(){
 }
 
 /* ══════════════════════ INVENTAR ══════════════════════ */
+let inventarAddState = { tip:'intrare', coloana:'intrare' };
 function renderInventar(){
+  if(!isFullAdmin()) inventarAddState.tip = 'intrare';
+  const showColoana = isFullAdmin() && inventarAddState.tip==='corectare';
   return `
   <div class="view-head"><div class="view-title">${t('iv_title')}</div></div>
   <div class="view-sub">${t('iv_sub')}</div>
@@ -1857,11 +1860,19 @@ function renderInventar(){
 
   <div class="add-form">
     <div class="form-title">${t('iv_addTitle')}</div>
-    <div class="form-grid" style="grid-template-columns:1.4fr 0.8fr 0.8fr auto">
+    <div class="form-grid" style="grid-template-columns:1.4fr 0.8fr ${showColoana?'0.8fr ':''}0.8fr auto">
       <div class="field"><label>${t('iv_articol')}</label><select id="if2-item">${inventarSorted().map(i=>`<option value="${i.id}">${esc(trEnum(i.denumire))}${i.marime!=='—'?' — '+i.marime:''}</option>`).join('')}</select></div>
-      <div class="field"><label>${t('iv_tipMiscare')}</label><select id="if2-tip"><option value="intrare">${t('iv_intrare')}</option><option value="iesire">${t('iv_iesire')}</option></select></div>
+      <div class="field"><label>${t('iv_tipMiscare')}</label><select id="if2-tip" onchange="inventarAddState.tip=this.value; render();">
+        <option value="intrare" ${inventarAddState.tip==='intrare'?'selected':''}>${t('iv_intrare')}</option>
+        ${isFullAdmin() ? `<option value="iesire" ${inventarAddState.tip==='iesire'?'selected':''}>${t('iv_iesire')}</option>
+        <option value="corectare" ${inventarAddState.tip==='corectare'?'selected':''}>${t('iv_corectare')}</option>` : ''}
+      </select></div>
+      ${showColoana ? `<div class="field"><label>${t('iv_coloana')}</label><select id="if2-coloana" onchange="inventarAddState.coloana=this.value;">
+        <option value="intrare" ${inventarAddState.coloana==='intrare'?'selected':''}>${t('iv_intrare')}</option>
+        <option value="iesire" ${inventarAddState.coloana==='iesire'?'selected':''}>${t('iv_iesire')}</option>
+      </select></div>` : ''}
       <div class="field"><label>${t('ve_cantitate')}</label><input id="if2-cant" type="number" min="1" value="1"></div>
-      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr(true)} onclick="adjustInventory()">${t('iv_btnAdd')}</button></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="adjustInventory()">${t('iv_btnAdd')}</button></div>
     </div>
   </div>
 
@@ -1889,16 +1900,25 @@ function renderInventar(){
 }
 async function adjustInventory(){
   const id = document.getElementById('if2-item').value;
-  const tip = document.getElementById('if2-tip').value;
+  const tip = inventarAddState.tip;
   const cant = parseInt(document.getElementById('if2-cant').value)||1;
   const item = DB.inventar.find(i=>i.id===id); if(!item) return;
-  const field = tip==='intrare' ? 'intrari' : 'iesiri';
-  const { data, error } = await sb.from('inventar').update({ [field]: item[field] + cant }).eq('id', id).select();
-  if(error){ alert('Actualizarea a eșuat: ' + error.message); return; }
-  if(!data || !data.length){ alert('Actualizarea a eșuat: nu aveți permisiunea necesară.'); return; }
-  await sb.from('inventar_miscari').insert({ inventar_id:id, tip, cantitate:cant, motiv:'Ajustare manuală din pagina Inventar', administrator_id: currentAdminId });
-  item[field] += cant;
-  await logAction(`A înregistrat ${tip === 'intrare' ? 'o intrare' : 'o ieșire'} de ${cant} ${item.um} — ${item.denumire}`);
+
+  let rpcError, logMsg;
+  if(tip==='intrare'){
+    ({ error: rpcError } = await sb.rpc('inventar_log_intrare', { p_inventar_id:id, p_cantitate:cant, p_motiv:'Ajustare manuală din pagina Inventar' }));
+    logMsg = `A înregistrat o intrare de ${cant} ${item.um} — ${item.denumire}`;
+  } else if(tip==='iesire'){
+    ({ error: rpcError } = await sb.rpc('inventar_log_iesire', { p_inventar_id:id, p_cantitate:cant, p_motiv:'Ajustare manuală din pagina Inventar' }));
+    logMsg = `A înregistrat o ieșire de ${cant} ${item.um} — ${item.denumire}`;
+  } else {
+    const coloana = inventarAddState.coloana;
+    ({ error: rpcError } = await sb.rpc('inventar_log_corectie', { p_inventar_id:id, p_coloana:coloana, p_cantitate:cant, p_motiv:'Corecție manuală din pagina Inventar' }));
+    logMsg = `A corectat ${coloana==='intrare'?'intrările':'ieșirile'} cu -${cant} ${item.um} — ${item.denumire}`;
+  }
+  if(rpcError){ alert('Actualizarea a eșuat: ' + rpcError.message); return; }
+  await refetchInventar();
+  await logAction(logMsg);
   render();
 }
 
