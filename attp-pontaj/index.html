@@ -389,6 +389,8 @@ const ENUM_RU = {
   'Absent':'Отсутствует', 'Lipsă vestimentație':'Нет формы', 'Comportament necorespunzător':'Ненадлежащее поведение',
   'Conflict':'Конфликт', 'Altă situație':'Другая ситуация',
   'intrare':'приход', 'iesire':'расход', 'corectare':'корректировка',
+  'Maiouri roșii':'Красные майки', 'Maiouri albastre':'Синие майки', 'Mingi noi':'Новые мячи',
+  'Seturi lenjerie':'Комплекты белья', 'Inventar sportiv (mese, plase)':'Спортивный инвентарь (столы, сетки)',
 };
 function trEnum(v){ return (LANG==='ru' && ENUM_RU[v]) ? ENUM_RU[v] : v; }
 
@@ -866,7 +868,7 @@ function buildAlerts(){
       : t('al_medSoon')(r.nume, r.zile) });
   });
   lowStockItems().forEach(i=>{
-    alerts.push({ level:'yellow', text: t('al_lowStock')(`${i.denumire}${i.marime!=='—'?' '+i.marime:''}`, inventoryCurrent(i), i.um, i.cantitateMinima) });
+    alerts.push({ level:'yellow', text: t('al_lowStock')(`${trEnum(i.denumire)}${i.marime!=='—'?' '+i.marime:''}`, inventoryCurrent(i), i.um, i.cantitateMinima) });
   });
   staleTasks().forEach(t2=>{
     alerts.push({ level:'red', text: t('al_staleTask')(t2.descriere) });
@@ -1565,7 +1567,7 @@ function renderInventar(){
   <div class="add-form">
     <div class="form-title">${t('iv_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:1.4fr 0.8fr 0.8fr auto">
-      <div class="field"><label>${t('iv_articol')}</label><select id="if2-item">${DB.inventar.map(i=>`<option value="${i.id}">${esc(i.denumire)}${i.marime!=='—'?' — '+i.marime:''}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('iv_articol')}</label><select id="if2-item">${DB.inventar.map(i=>`<option value="${i.id}">${esc(trEnum(i.denumire))}${i.marime!=='—'?' — '+i.marime:''}</option>`).join('')}</select></div>
       <div class="field"><label>${t('iv_tipMiscare')}</label><select id="if2-tip"><option value="intrare">${t('iv_intrare')}</option><option value="iesire">${t('iv_iesire')}</option></select></div>
       <div class="field"><label>${t('ve_cantitate')}</label><input id="if2-cant" type="number" min="1" value="1"></div>
       <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="adjustInventory()">${t('iv_btnAdd')}</button></div>
@@ -1580,7 +1582,7 @@ function renderInventar(){
         const curent = inventoryCurrent(i);
         const low = curent < i.cantitateMinima;
         return `<tr class="${low?'flag-yellow':''}">
-          <td class="td-name">${low?'<span class="row-flag yellow"></span>':''}${esc(i.denumire)}</td>
+          <td class="td-name">${low?'<span class="row-flag yellow"></span>':''}${esc(trEnum(i.denumire))}</td>
           <td class="td-muted">${esc(trEnum(i.culoare))}</td>
           <td>${i.marime && i.marime!=='—' ? `<span class="inventory-size">${esc(i.marime)}</span>` : '<span class="td-muted">—</span>'}</td>
           <td class="td-muted">${esc(i.um)}</td>
@@ -1759,7 +1761,7 @@ function renderRapoarte(){
 
   <div class="report-card">
     <div class="form-title" style="margin-bottom:10px">${t('re_sect_inv')}</div>
-    ${DB.inventar.map(i=>`<div class="report-row"><span>${esc(i.denumire)}${i.marime!=='—'?' — '+i.marime:''}</span><span class="td-gold">${inventoryCurrent(i)} ${i.um}</span></div>`).join('')}
+    ${DB.inventar.map(i=>`<div class="report-row"><span>${esc(trEnum(i.denumire))}${i.marime!=='—'?' — '+i.marime:''}</span><span class="td-gold">${inventoryCurrent(i)} ${i.um}</span></div>`).join('')}
   </div>`;
 }
 
