@@ -923,7 +923,7 @@ async function fetchAll(){
     sb.from('inventar').select('*').order('denumire'),
     sb.from('sarcini').select('*').order('data_inreg', {ascending:false}),
     sb.from('observatii').select('*').order('data', {ascending:false}),
-    sb.from('jurnal').select('*').order('data', {ascending:false}).limit(200),
+    isFullAdmin() ? sb.from('jurnal').select('*').order('data', {ascending:false}).limit(200) : Promise.resolve({data:[]}),
     sb.from('trusted_ips').select('*').order('created_at', {ascending:false}),
     sb.from('treninguri').select('*').order('data', {ascending:false}),
     sb.from('sesiuni_schimb').select('*').eq('cont_id', currentAdminId).is('ended_at', null).order('started_at', {ascending:false}).limit(1),
@@ -981,7 +981,6 @@ async function refetchInventar(){
 
 async function logAction(actiune){
   DB.jurnal.unshift({ id: uid(), cont: currentAdmin, data: todayISO(), actiune });
-  if (DB.jurnal.length > 200) DB.jurnal.length = 200;
   const { error } = await sb.from('jurnal').insert({ administrator_id: currentAdminId, actiune });
   if (error) console.error('jurnal insert failed', error);
 }
@@ -1387,7 +1386,7 @@ function renderDashboard(){
     ${alerts.length ? alerts.map(a=>`<div class="alert-row"><span class="alert-dot ${a.level}"></span><span class="alert-type ${a.type}">${esc(t(`al_type${a.type[0].toUpperCase()+a.type.slice(1)}`))}</span><span class="alert-text">${esc(a.text)}</span></div>`).join('') : `<div class="alert-empty">${t('da_alerts_empty')}</div>`}
   </div>
 
-  <div class="table-wrap">
+  ${isFullAdmin() ? `<div class="table-wrap">
     <div class="table-header"><div class="table-title">${t('da_jurnal_title')}</div></div>
     <div class="table-scroll recent-actions-scroll"><table>
       <thead><tr><th>${t('th_cont')}</th><th>${t('th_data')}</th><th>${t('th_actiune')}</th></tr></thead>
@@ -1395,7 +1394,7 @@ function renderDashboard(){
         ${DB.jurnal.slice(0,100).map(j=>`<tr><td class="td-muted">${esc(j.cont)}</td><td class="td-muted">${fmtDate(j.data)}</td><td>${esc(j.actiune)}</td></tr>`).join('')}
       </tbody>
     </table></div>
-  </div>`;
+  </div>` : ''}`;
 }
 
 async function saveDashboardReferee(slot){
