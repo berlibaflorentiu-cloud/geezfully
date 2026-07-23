@@ -249,6 +249,7 @@
   .table-hint { color: var(--gold); font-size: 11.5px; }
   .table-scroll { overflow-x: auto; }
   .recent-actions-scroll { height: 540px; overflow: auto; }
+  .vestimentatie-scroll { height: 900px; overflow: auto; }
   .service-calendar-scroll { max-height: 1392px; overflow: auto; }
   .service-calendar-scroll thead th { position: sticky; top: 0; z-index: 2; background: var(--surface); }
   table { width: 100%; border-collapse: collapse; }
@@ -1992,7 +1993,7 @@ function renderVestimentatie(){
       <div class="table-title">${DB.vestimentatie.length} ${t('ve_countSuffix')}</div>
       <div class="table-hint">${t('ve_hint')}</div>
     </div>
-    <div class="table-scroll"><table>
+    <div class="table-scroll vestimentatie-scroll"><table>
       <thead><tr><th>${t('th_data')}</th><th>${t('th_participant')}</th><th>${t('ve_th_tip')}</th><th>${t('ve_marime')}</th><th>${t('ve_th_cantitate')}</th><th>${t('ve_th_returnare')}</th><th></th></tr></thead>
       <tbody>${DB.vestimentatie.length ? DB.vestimentatie.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(v=>`
         <tr>
