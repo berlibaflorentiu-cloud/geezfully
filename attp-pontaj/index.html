@@ -975,8 +975,8 @@ async function fetchAll(){
       marime:p.marime, categorieSportiva:p.categorie_sportiva, statut:p.statut, dataInregistrarii:p.data_inregistrarii,
       eligibilAntrenament:p.eligibil_antrenament,
     })),
-    intarzieri: (intarzieriR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, data:r.data, minuteIntarziere:r.minute_intarziere, motiv:r.motiv})),
-    vestimentatie: (vestimentatieR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, tip:r.tip, culoare:r.culoare, marime:r.marime, cantitate:r.cantitate, dataReturnare:r.data_returnare, stareReturnare:r.stare_returnare})),
+    intarzieri: (intarzieriR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, arbitru:r.arbitru, data:r.data, minuteIntarziere:r.minute_intarziere, motiv:r.motiv})),
+    vestimentatie: (vestimentatieR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, arbitru:r.arbitru, tip:r.tip, culoare:r.culoare, marime:r.marime, cantitate:r.cantitate, dataReturnare:r.data_returnare, stareReturnare:r.stare_returnare})),
     serviciu: (serviciuR.data||[]).map(r=>({
       id:r.id, data:r.data,
       administratorServiciuId:r.administrator_serviciu_id,
@@ -1216,8 +1216,10 @@ function lowStockItems(){ return DB.inventar.filter(i=> (i.cantitateInitiala+i.i
 function staleTasks(){ return DB.sarcini.filter(s=>s.status!=='soluționat' && daysDiff(s.dataInreg) <= -2); }
 function frequentLate(){
   const counts = {};
-  DB.intarzieri.forEach(i=>{ if(daysDiff(i.data) >= -30){ counts[i.participantId]=(counts[i.participantId]||0)+1; } });
-  return Object.entries(counts).filter(([,c])=>c>=3).map(([pid,c])=>({participantId:pid, count:c}));
+  DB.intarzieri.forEach(i=>{ if(daysDiff(i.data) >= -30){ const key=i.arbitru?`referee:${i.arbitru}`:`participant:${i.participantId}`; counts[key]=(counts[key]||0)+1; } });
+  return Object.entries(counts).filter(([,c])=>c>=3).map(([key,c])=>key.startsWith('referee:')
+    ? {participantId:null, arbitru:key.slice(8), count:c}
+    : {participantId:key.slice(12), arbitru:null, count:c});
 }
 function inventoryCurrent(item){ return item.cantitateInitiala + item.intrari - item.iesiri; }
 function inventoryStare(curent, minima){
@@ -1276,6 +1278,16 @@ function render(){
 function participantOptions(selectedId){
   return DB.participanti.filter(p=>p.statut==='activ').map(p=>`<option value="${p.id}" ${p.id===selectedId?'selected':''}>${esc(p.nume)} ${esc(p.prenume)}</option>`).join('');
 }
+function participantAndRefereeOptions(){
+  const participants = DB.participanti.filter(p=>p.statut==='activ').map(p=>`<option value="participant:${p.id}">${esc(p.nume)} ${esc(p.prenume)}</option>`).join('');
+  const referees = REFEREES.map(name=>`<option value="referee:${esc(name)}">${esc(name)} · Arbitru</option>`).join('');
+  return participants + referees;
+}
+function selectedPerson(value){
+  if(value.startsWith('referee:')) return { participantId:null, arbitru:value.slice(8) };
+  return { participantId:value.replace(/^participant:/, ''), arbitru:null };
+}
+function entryPersonName(row){ return row.arbitru || participantName(row.participantId); }
 function disabledAttr(adminOnly){
   if(adminOnly) return !isFullAdmin() ? 'disabled' : '';
   return !hasActiveShift() ? 'disabled' : '';
@@ -1807,7 +1819,7 @@ function renderIntarzieri(){
   <div class="add-form">
     <div class="form-title">${t('it_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:1fr 1fr 0.6fr 1fr auto">
-      <div class="field"><label>${t('th_participant')}</label><select id="if-participant">${participantOptions()}</select></div>
+      <div class="field"><label>${t('th_participant')}</label><select id="if-participant">${participantAndRefereeOptions()}</select></div>
       <div class="field"><label>${t('th_data')}</label><input id="if-data" type="date" value="${todayISO()}"></div>
       <div class="field"><label>${t('it_minute')}</label><input id="if-minute" type="number" min="0"></div>
       <div class="field"><label>${t('it_motiv')}</label><input id="if-motiv" type="text"></div>
@@ -1817,7 +1829,7 @@ function renderIntarzieri(){
 
   ${top.length ? `<div class="table-wrap"><div class="table-header"><div class="table-title">${t('it_topTitle')}</div></div>
     <div class="table-scroll"><table><thead><tr><th>${t('th_participant')}</th><th>${t('it_nrIntarzieri')}</th></tr></thead><tbody>
-      ${top.map(row=>`<tr><td class="td-name" onclick="openProfile('${row.participantId}')">${esc(participantName(row.participantId))}</td><td class="td-gold">${row.count}</td></tr>`).join('')}
+      ${top.map(row=>`<tr><td class="td-name" ${row.participantId?`onclick="openProfile('${row.participantId}')"`:''}>${esc(entryPersonName(row))}</td><td class="td-gold">${row.count}</td></tr>`).join('')}
     </tbody></table></div></div>` : ''}
 
   <div class="table-wrap">
@@ -1825,23 +1837,24 @@ function renderIntarzieri(){
     <div class="table-scroll"><table>
       <thead><tr><th>${t('th_data')}</th><th>${t('th_participant')}</th><th>${t('it_minute')}</th><th>${t('it_motiv')}</th><th></th></tr></thead>
       <tbody>${DB.intarzieri.length ? DB.intarzieri.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(i=>`
-        <tr><td class="td-muted">${fmtDate(i.data)}</td><td class="td-name" onclick="openProfile('${i.participantId}')">${esc(participantName(i.participantId))}</td>
+        <tr><td class="td-muted">${fmtDate(i.data)}</td><td class="td-name" ${i.participantId?`onclick="openProfile('${i.participantId}')"`:''}>${esc(entryPersonName(i))}</td>
         <td class="td-muted">${i.minuteIntarziere!=null?i.minuteIntarziere:'—'}</td><td class="td-muted">${esc(i.motiv||'—')}</td>
         <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('intarzieri','${i.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="5">${t('it_none')}</td></tr>`}</tbody>
     </table></div>
   </div>`;
 }
 async function addIntarziere(){
-  const participantId = document.getElementById('if-participant').value;
+  const person = selectedPerson(document.getElementById('if-participant').value);
+  const participantId = person.participantId;
   const data = document.getElementById('if-data').value || todayISO();
   const minuteRaw = document.getElementById('if-minute').value;
   const minute_intarziere = minuteRaw === '' ? null : Number(minuteRaw);
   const motiv = document.getElementById('if-motiv').value.trim() || null;
-  if(!participantId) return;
-  const { data:row, error } = await sb.from('intarzieri').insert({ participant_id:participantId, data, minute_intarziere, motiv }).select().single();
+  if(!participantId && !person.arbitru) return;
+  const { data:row, error } = await sb.from('intarzieri').insert({ participant_id:participantId, arbitru:person.arbitru, data, minute_intarziere, motiv }).select().single();
   if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
-  DB.intarzieri.unshift({id:row.id, participantId:row.participant_id, data:row.data, minuteIntarziere:row.minute_intarziere, motiv:row.motiv});
-  await logAction(`A înregistrat o întârziere pentru ${participantName(participantId)}`);
+  DB.intarzieri.unshift({id:row.id, participantId:row.participant_id, arbitru:row.arbitru, data:row.data, minuteIntarziere:row.minute_intarziere, motiv:row.motiv});
+  await logAction(`A înregistrat o întârziere pentru ${entryPersonName({participantId, arbitru:person.arbitru})}`);
   render();
 }
 async function removeRow(collection, id){
@@ -1864,7 +1877,7 @@ function renderVestimentatie(){
   <div class="add-form">
     <div class="form-title">${t('ve_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:1fr 1fr 0.7fr 0.7fr 0.6fr auto">
-      <div class="field"><label>${t('th_participant')}</label><select id="vf-participant">${participantOptions()}</select></div>
+      <div class="field"><label>${t('th_participant')}</label><select id="vf-participant">${participantAndRefereeOptions()}</select></div>
       <div class="field"><label>${t('ve_tip')}</label><select id="vf-tip">${CLOTHING_TYPES.map(ct=>`<option value="${ct}">${trEnum(ct)}</option>`).join('')}</select></div>
       <div class="field"><label>${t('ve_marime')}</label><select id="vf-marime">${CLOTHING_SIZES.map(s=>`<option>${s}</option>`).join('')}</select></div>
       <div class="field"><label>${t('ve_cantitate')}</label><input id="vf-cantitate" type="number" min="1" value="1"></div>
@@ -1880,7 +1893,7 @@ function renderVestimentatie(){
       <tbody>${DB.vestimentatie.length ? DB.vestimentatie.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(v=>`
         <tr>
           <td class="td-muted">${fmtDate(v.data)}</td>
-          <td class="td-name" onclick="openProfile('${v.participantId}')">${esc(participantName(v.participantId))}</td>
+          <td class="td-name" ${v.participantId?`onclick="openProfile('${v.participantId}')"`:''}>${esc(entryPersonName(v))}</td>
           <td>${esc(trEnum(v.tip))}</td><td><span class="badge muted">${v.marime}</span></td>
           <td class="td-gold">${v.cantitate}</td>
           <td class="td-muted">${v.dataReturnare?fmtDate(v.dataReturnare)+(v.stareReturnare?` (${esc(v.stareReturnare)})`:''):'—'}</td>
@@ -1890,20 +1903,21 @@ function renderVestimentatie(){
   </div>`;
 }
 async function addVestimentatie(){
-  const participantId = document.getElementById('vf-participant').value;
-  if(!participantId) return;
+  const person = selectedPerson(document.getElementById('vf-participant').value);
+  const participantId = person.participantId;
+  if(!participantId && !person.arbitru) return;
   const tip = document.getElementById('vf-tip').value;
   const marime = document.getElementById('vf-marime').value;
   const cantitate = parseInt(document.getElementById('vf-cantitate').value)||1;
   const data = document.getElementById('vf-data').value || todayISO();
   const culoare = tip.includes('roșu') ? 'Roșu' : 'Albastru';
   const { data:row, error } = await sb.from('vestimentatie')
-    .insert({ data, participant_id:participantId, tip, culoare, marime, cantitate })
+    .insert({ data, participant_id:participantId, arbitru:person.arbitru, tip, culoare, marime, cantitate })
     .select().single();
   if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
-  DB.vestimentatie.unshift({id:row.id, data:row.data, participantId:row.participant_id, tip:row.tip, culoare:row.culoare, marime:row.marime, cantitate:row.cantitate, dataReturnare:row.data_returnare});
+  DB.vestimentatie.unshift({id:row.id, data:row.data, participantId:row.participant_id, arbitru:row.arbitru, tip:row.tip, culoare:row.culoare, marime:row.marime, cantitate:row.cantitate, dataReturnare:row.data_returnare});
   await refetchInventar(); // un trigger în bază a scăzut deja stocul
-  await logAction(`A eliberat ${cantitate}× ${tip} (${marime}) către ${participantName(participantId)}`);
+  await logAction(`A eliberat ${cantitate}× ${tip} (${marime}) către ${entryPersonName({participantId, arbitru:person.arbitru})}`);
   render();
 }
 
@@ -2854,13 +2868,13 @@ function excelReportRows(report){
   }
   if(wants('intarzieri')){
     DB.intarzieri.filter(r=>report.includes(r.data)).forEach(r=>add(
-      r.data, 'Întârzieri', 'Întârziere', participantName(r.participantId),
+      r.data, 'Întârzieri', 'Întârziere', entryPersonName(r),
       [r.minuteIntarziere!=null ? `${r.minuteIntarziere} min` : '', r.motiv || ''].filter(Boolean).join(' · ')
     ));
   }
   if(wants('total')){
     DB.vestimentatie.filter(r=>report.includes(r.data) || report.includes(r.dataReturnare)).forEach(r=>add(
-      r.data, 'Vestimentație', 'Eliberare vestimentație', participantName(r.participantId),
+      r.data, 'Vestimentație', 'Eliberare vestimentație', entryPersonName(r),
       [r.tip, r.culoare, r.marime].filter(Boolean).join(' · '), Number(r.cantitate||0), 'buc',
       r.dataReturnare ? 'returnat' : 'eliberat', r.dataReturnare
     ));
