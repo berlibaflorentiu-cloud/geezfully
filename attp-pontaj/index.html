@@ -593,6 +593,9 @@ ro: {
   ve_addTitle:'Eliberare vestimentație', ve_tip:'Tip articol', ve_marime:'Mărime', ve_cantitate:'Cantitate',
   ve_data:'Data', ve_btnAdd:'+ Eliberează', ve_th_tip:'Tip', ve_th_cantitate:'Cantitate', ve_th_returnare:'Returnare',
   ve_countSuffix:'eliberări', ve_none:'Nicio eliberare înregistrată.',
+  ve_hint:'Apasă pe statut pentru a marca returnarea',
+  ve_confirmReturn:'Confirmați marcarea vestimentației ca returnată? Odată confirmată, doar administratorii mai pot anula acest lucru.',
+  ve_lockedHint:'Returnare confirmată — doar administratorii pot anula.',
 
   se_title:'Serviciu administratori', se_sub:'Graficul de serviciu / schimburile administratorilor la locație.',
   se_overlap:'⚠ Suprapunere de schimburi detectată pe:', se_addTitle:'Adăugare schimb',
@@ -803,6 +806,9 @@ ru: {
   ve_addTitle:'Выдача формы', ve_tip:'Тип изделия', ve_marime:'Размер', ve_cantitate:'Количество',
   ve_data:'Дата', ve_btnAdd:'+ Выдать', ve_th_tip:'Тип', ve_th_cantitate:'Количество', ve_th_returnare:'Возврат',
   ve_countSuffix:'выдач', ve_none:'Выдач не зарегистрировано.',
+  ve_hint:'Нажмите на статус, чтобы отметить возврат',
+  ve_confirmReturn:'Подтвердить, что форма возвращена? После подтверждения отменить это смогут только администраторы.',
+  ve_lockedHint:'Возврат подтверждён — отменить может только администратор.',
 
   se_title:'Смены администраторов', se_sub:'График смен администраторов на локации.',
   se_overlap:'⚠ Обнаружено пересечение смен на:', se_addTitle:'Добавление смены',
@@ -1982,7 +1988,10 @@ function renderVestimentatie(){
   </div>
 
   <div class="table-wrap">
-    <div class="table-header"><div class="table-title">${DB.vestimentatie.length} ${t('ve_countSuffix')}</div></div>
+    <div class="table-header">
+      <div class="table-title">${DB.vestimentatie.length} ${t('ve_countSuffix')}</div>
+      <div class="table-hint">${t('ve_hint')}</div>
+    </div>
     <div class="table-scroll"><table>
       <thead><tr><th>${t('th_data')}</th><th>${t('th_participant')}</th><th>${t('ve_th_tip')}</th><th>${t('ve_marime')}</th><th>${t('ve_th_cantitate')}</th><th>${t('ve_th_returnare')}</th><th></th></tr></thead>
       <tbody>${DB.vestimentatie.length ? DB.vestimentatie.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(v=>`
@@ -1991,7 +2000,9 @@ function renderVestimentatie(){
           <td class="td-name" ${v.participantId?`onclick="openProfile('${v.participantId}')"`:''}>${esc(entryPersonName(v))}</td>
           <td>${esc(trEnum(v.tip))}</td><td><span class="badge muted">${v.marime}</span></td>
           <td class="td-gold">${v.cantitate}</td>
-          <td class="td-muted">${v.dataReturnare?fmtDate(v.dataReturnare)+(v.stareReturnare?` (${esc(v.stareReturnare)})`:''):'—'}</td>
+          <td>${v.dataReturnare && !isFullAdmin()
+            ? `<span class="badge green" title="${t('ve_lockedHint')}">${fmtDate(v.dataReturnare)}</span>`
+            : `<button type="button" class="badge ${v.dataReturnare?'green':'yellow'}" ${disabledAttr()} onclick="toggleVestimentatieReturn('${v.id}')" title="${t('ve_hint')}">${v.dataReturnare?fmtDate(v.dataReturnare):trEnum('nereturnat')}</button>`}</td>
           <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('vestimentatie','${v.id}')">${t('btn_delete')}</button></td>
         </tr>`).join('') : `<tr><td class="td-empty" colspan="7">${t('ve_none')}</td></tr>`}</tbody>
     </table></div>
@@ -2013,6 +2024,20 @@ async function addVestimentatie(){
   DB.vestimentatie.unshift({id:row.id, data:row.data, participantId:row.participant_id, arbitru:row.arbitru, tip:row.tip, culoare:row.culoare, marime:row.marime, cantitate:row.cantitate, dataReturnare:row.data_returnare});
   await refetchInventar(); // un trigger în bază a scăzut deja stocul
   await logAction(`A eliberat ${cantitate}× ${tip} (${marime}) către ${entryPersonName({participantId, arbitru:person.arbitru})}`);
+  render();
+}
+async function toggleVestimentatieReturn(id){
+  const item = DB.vestimentatie.find(v=>v.id===id);
+  if(!item) return;
+  if(item.dataReturnare && !isFullAdmin()) return; // locked for locație — only admin can revert
+  if(!item.dataReturnare && !isFullAdmin() && !confirm(t('ve_confirmReturn'))) return;
+  const dataReturnare = item.dataReturnare ? null : todayISO();
+  const { data, error } = await sb.from('vestimentatie').update({ data_returnare:dataReturnare }).eq('id', id).select();
+  if(error){ alert('Actualizarea statutului a eșuat: ' + error.message); return; }
+  if(!data || !data.length){ alert('Actualizarea a eșuat: nu aveți permisiunea necesară.'); return; }
+  item.dataReturnare = dataReturnare;
+  await refetchInventar(); // un trigger în bază a mutat stocul între nou/uzat
+  await logAction(`${dataReturnare?'A marcat ca returnată':'A marcat ca nereturnată'} vestimentația lui ${entryPersonName(item)}`);
   render();
 }
 
@@ -2261,6 +2286,7 @@ async function toggleLenjerieReturn(id){
   if(error){ alert('Actualizarea statutului a eșuat: ' + error.message); return; }
   if(!data || !data.length){ alert('Actualizarea a eșuat: nu aveți permisiunea necesară.'); return; }
   item.dataReturnare = dataReturnare;
+  await refetchInventar(); // un trigger în bază a mutat stocul între nou/uzat
   await logAction(`${dataReturnare?'A marcat ca returnată':'A marcat ca nereturnată'} lenjeria lui ${participantName(item.participantId)}`);
   render();
 }
