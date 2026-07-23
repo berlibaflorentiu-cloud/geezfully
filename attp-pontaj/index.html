@@ -603,7 +603,10 @@ ro: {
   da2_none:'Nicio daună înregistrată.', da2_valoare:'Prejudiciu estimat (MDL)', da2_avertizor:'Nume avertizor',
   da2_observatii:'Observații', da2_afectat:'afectat', da2_deteriorat:'deteriorat',
   da2_totalValoare:'Prejudiciu estimat total', da2_totalAfectate:'Bunuri afectate', da2_totalDeteriorate:'Bunuri deteriorate',
-  da2_filterMonth:'Schimbă luna', da2_month:'Lună', da2_allMonths:'Toate lunile',
+  da2_filterMonth:'Perioada raportului', da2_month:'Lună', da2_sixMonths:'6 luni', da2_year:'An',
+  da2_endMonth:'Luna de sfârșit', da2_reportTitle:'Raport daune provocate — după număr',
+  da2_reportSub:'Clasament după numărul daunelor provocate, indiferent de valoarea lor.',
+  da2_reportCount:'Nr. daune', da2_reportNone:'Nicio daună în perioada selectată.',
 
   ar_title:'Arbitraj', ar_sub:'Arbitrii de turneu și cantitatea de mingi noi eliberate — scade automat din inventar.',
   ar_addTitle:'Eliberare mingi arbitru', ar_numeArbitru:'Nume arbitru', ar_numeArbitruPh:'Nume arbitru',
@@ -799,7 +802,10 @@ ru: {
   da2_none:'Случаев ущерба не зарегистрировано.', da2_valoare:'Оценочный ущерб (MDL)', da2_avertizor:'Кто сообщил',
   da2_observatii:'Примечания', da2_afectat:'затронуто', da2_deteriorat:'повреждено',
   da2_totalValoare:'Общий оценочный ущерб', da2_totalAfectate:'Затронутые предметы', da2_totalDeteriorate:'Повреждённые предметы',
-  da2_filterMonth:'Сменить месяц', da2_month:'Месяц', da2_allMonths:'Все месяцы',
+  da2_filterMonth:'Период отчёта', da2_month:'Месяц', da2_sixMonths:'6 месяцев', da2_year:'Год',
+  da2_endMonth:'Конечный месяц', da2_reportTitle:'Отчёт по причинённому ущербу — по количеству',
+  da2_reportSub:'Рейтинг по количеству случаев ущерба независимо от их стоимости.',
+  da2_reportCount:'Кол-во случаев', da2_reportNone:'За выбранный период ущерб не зарегистрирован.',
 
   ar_title:'Судейство', ar_sub:'Судьи турниров и количество выданных новых мячей — автоматически списывается со склада.',
   ar_addTitle:'Выдача мячей судье', ar_numeArbitru:'Имя судьи', ar_numeArbitruPh:'Имя судьи',
@@ -2163,15 +2169,43 @@ function renderMedical(){
 }
 
 /* ══════════════════════ DAUNE ══════════════════════ */
-let dauneFilter={month:todayISO().slice(0,7)};
+let dauneFilter={mode:'month',month:todayISO().slice(0,7),year:todayISO().slice(0,4)};
 function dauneMonthsAvailable(){
   const months=new Set(DB.daune.map(d=>d.data.slice(0,7)));
   months.add(todayISO().slice(0,7));
   return [...months].sort().reverse();
 }
+function dauneYearsAvailable(){
+  const years=new Set(DB.daune.map(d=>d.data.slice(0,4)));
+  years.add(todayISO().slice(0,4));
+  return [...years].sort().reverse();
+}
+function dauneShiftMonth(yyyyMM,delta){
+  const [year,month]=yyyyMM.split('-').map(Number);
+  const shifted=year*12+(month-1)+delta;
+  const shiftedYear=Math.floor(shifted/12);
+  const shiftedMonth=shifted-shiftedYear*12+1;
+  return `${shiftedYear}-${String(shiftedMonth).padStart(2,'0')}`;
+}
 function dauneRowsFiltered(){
-  const month=dauneFilter.month;
-  return DB.daune.filter(d=>!month||d.data.slice(0,7)===month);
+  if(dauneFilter.mode==='year') return DB.daune.filter(d=>d.data.slice(0,4)===dauneFilter.year);
+  const endMonth=dauneFilter.month;
+  if(dauneFilter.mode==='sixMonths'){
+    const startMonth=dauneShiftMonth(endMonth,-5);
+    return DB.daune.filter(d=>d.data.slice(0,7)>=startMonth&&d.data.slice(0,7)<=endMonth);
+  }
+  return DB.daune.filter(d=>d.data.slice(0,7)===endMonth);
+}
+function daunePeriodLabel(){
+  if(dauneFilter.mode==='year') return dauneFilter.year;
+  if(dauneFilter.mode==='sixMonths') return `${monthLabel(dauneShiftMonth(dauneFilter.month,-5))} — ${monthLabel(dauneFilter.month)}`;
+  return monthLabel(dauneFilter.month);
+}
+function dauneParticipantRanking(rows){
+  const counts={};
+  rows.forEach(d=>{ if(d.participantId) counts[d.participantId]=(counts[d.participantId]||0)+1; });
+  return Object.entries(counts).map(([participantId,count])=>({participantId,count,name:participantName(participantId)}))
+    .sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name,LANG==='ru'?'ru':'ro'));
 }
 function damageNotifierSelect(){
   if(!isFullAdmin()){
@@ -2184,6 +2218,7 @@ function damageNotifierSelect(){
 }
 function renderDaune(){
   const rows=dauneRowsFiltered();
+  const ranking=dauneParticipantRanking(rows);
   const totalValoare=rows.reduce((sum,d)=>sum+Number(d.valoareEstimata||0),0);
   return `
   <div class="view-head"><div class="view-title">${t('da2_title')}</div></div>
@@ -2197,13 +2232,26 @@ function renderDaune(){
 
   <div class="add-form">
     <div class="form-title">${t('da2_filterMonth')}</div>
-    <div class="form-grid" style="grid-template-columns:1fr auto">
-      <div class="field"><label>${t('da2_month')}</label><select onchange="dauneFilter.month=this.value;render();">
-        <option value="" ${!dauneFilter.month?'selected':''}>${t('da2_allMonths')}</option>
-        ${dauneMonthsAvailable().map(m=>`<option value="${m}" ${dauneFilter.month===m?'selected':''}>${monthLabel(m)}</option>`).join('')}
-      </select></div>
-      <div class="field" style="justify-content:flex-end"><button class="btn-ghost" onclick="dauneFilter={month:''};render();">${t('da2_allMonths')}</button></div>
+    <div class="toggle-group" role="group" aria-label="${esc(t('da2_filterMonth'))}" style="margin-bottom:14px">
+      <button type="button" class="toggle-btn ${dauneFilter.mode==='month'?'active':''}" aria-pressed="${dauneFilter.mode==='month'}" onclick="dauneFilter.mode='month';render();">${t('da2_month')}</button>
+      <button type="button" class="toggle-btn ${dauneFilter.mode==='sixMonths'?'active':''}" aria-pressed="${dauneFilter.mode==='sixMonths'}" onclick="dauneFilter.mode='sixMonths';render();">${t('da2_sixMonths')}</button>
+      <button type="button" class="toggle-btn ${dauneFilter.mode==='year'?'active':''}" aria-pressed="${dauneFilter.mode==='year'}" onclick="dauneFilter.mode='year';render();">${t('da2_year')}</button>
     </div>
+    <div class="form-grid" style="grid-template-columns:1fr">
+      ${dauneFilter.mode==='year' ? `<div class="field"><label>${t('da2_year')}</label><select onchange="dauneFilter.year=this.value;render();">
+        ${dauneYearsAvailable().map(y=>`<option value="${y}" ${dauneFilter.year===y?'selected':''}>${y}</option>`).join('')}
+      </select></div>` : `<div class="field"><label>${t(dauneFilter.mode==='sixMonths'?'da2_endMonth':'da2_month')}</label><select onchange="dauneFilter.month=this.value;render();">
+        ${dauneMonthsAvailable().map(m=>`<option value="${m}" ${dauneFilter.month===m?'selected':''}>${monthLabel(m)}</option>`).join('')}
+      </select></div>`}
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div><div class="table-title">${t('da2_reportTitle')}</div><div class="view-sub" style="margin:4px 0 0">${t('da2_reportSub')}</div></div><div class="table-hint">${esc(daunePeriodLabel())}</div></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>#</th><th>${t('th_participant')}</th><th>${t('da2_reportCount')}</th></tr></thead>
+      <tbody>${ranking.length ? ranking.map((row,index)=>`<tr><td class="td-muted">${index+1}</td><td class="td-name" onclick="openProfile('${row.participantId}')">${esc(row.name)}</td><td class="td-gold">${row.count}</td></tr>`).join('') : `<tr><td class="td-empty" colspan="3">${t('da2_reportNone')}</td></tr>`}</tbody>
+    </table></div>
   </div>
 
   <div class="add-form">
