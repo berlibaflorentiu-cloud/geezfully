@@ -2705,8 +2705,8 @@ function renderAntrenamente(){
   <div class="add-form">
     <div class="form-title">${t('an_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:1.2fr 0.8fr 0.8fr 0.7fr auto">
-      <div class="field"><label>${t('an_jucator')}</label><select id="tf-jucator">${eligibili.map(p=>`<option value="${p.id}">${esc(p.nume)} ${esc(p.prenume)}</option>`).join('')}</select></div>
-      <div class="field"><label>${t('an_antrenor')}</label><select id="tf-antrenor">${TRAINERS.map(tr=>`<option>${tr}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('an_jucator')}</label>${autocompleteField('tf-jucator', eligibili.map(p=>({value:p.id, label:`${p.nume} ${p.prenume}`})))}</div>
+      <div class="field"><label>${t('an_antrenor')}</label>${autocompleteField('tf-antrenor', TRAINERS.map(tr=>({value:tr, label:tr})))}</div>
       <div class="field"><label>${t('th_data')}</label><input id="tf-data" type="date" value="${todayISO()}"></div>
       <div class="field"><label>${t('an_ora')}</label><input id="tf-ora" type="time"></div>
       <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addTraining()">${t('an_btnAdd')}</button></div>
