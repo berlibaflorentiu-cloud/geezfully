@@ -1761,7 +1761,7 @@ function renderProfile(editing = false){
   const p = participant(id); if(!p) return;
   document.getElementById('profile-modal-title').textContent = `${p.nume} ${p.prenume}`;
   const editBtn = document.getElementById('profile-edit-btn');
-  editBtn.style.display = (editing || !isFullAdmin()) ? 'none' : '';
+  editBtn.style.display = (editing || !hasActiveShift()) ? 'none' : '';
   editBtn.title = t('pa_editTitle');
   const deleteBtn = document.getElementById('profile-delete-btn');
   deleteBtn.style.display = (editing || !isFullAdmin()) ? 'none' : '';
@@ -2440,31 +2440,6 @@ async function addDauna(){
 /* ══════════════════════ ARBITRAJ ══════════════════════ */
 function renderArbitraj(){
   return `
-  <div class="view-head"><div class="view-title">${t('ar_title')}</div></div>
-  <div class="view-sub">${t('ar_sub')}</div>
-
-  <div class="add-form">
-    <div class="form-title">${t('ar_addTitle')}</div>
-    <div class="form-grid" style="grid-template-columns:0.8fr 1.2fr 1fr 0.6fr 0.7fr auto">
-      <div class="field"><label>${t('th_data')}</label><input id="af-data" type="date" value="${todayISO()}"></div>
-      <div class="field"><label>${t('ar_numeArbitru')}</label><select id="af-arbitru">${arbitriActivi().map(a=>`<option>${esc(a.nume)} ${esc(a.prenume)}</option>`).join('')}</select></div>
-      <div class="field"><label>${t('ar_turneu')}</label><select id="af-turneu">${TOURNAMENTS.map(tour=>`<option>${tour}</option>`).join('')}</select></div>
-      <div class="field"><label>${t('ar_marcaMingi')}</label><select id="af-marca"><option value="DHS">DHS</option><option value="JOOLA">JOOLA</option></select></div>
-      <div class="field"><label>${t('ar_mingiNoi')}</label><input id="af-mingi" type="number" min="0" value="0"></div>
-      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addArbitraj()">${t('btn_add')}</button></div>
-    </div>
-  </div>
-
-  <div class="table-wrap">
-    <div class="table-header"><div class="table-title">${DB.arbitraj.length} ${t('ar_countSuffix')}</div></div>
-    <div class="table-scroll"><table>
-      <thead><tr><th>${t('th_data')}</th><th>${t('ar_th_arbitru')}</th><th>${t('ar_th_turneu')}</th><th>${t('ar_th_marcaMingi')}</th><th>${t('ar_th_mingiNoi')}</th><th></th></tr></thead>
-      <tbody>${DB.arbitraj.length ? DB.arbitraj.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(a=>`
-        <tr><td class="td-muted">${fmtDate(a.data)}</td><td>${esc(a.arbitru)}</td><td><span class="badge gold">${esc(a.turneu)}</span></td>
-        <td>${esc(a.marcaMingi||'DHS')}</td><td class="td-gold">${a.cantitateMingi}</td><td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('arbitraj','${a.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="6">${t('ar_none')}</td></tr>`}</tbody>
-    </table></div>
-  </div>
-
   <div class="view-head"><div class="view-title">${t('arb_title')}</div></div>
   <div class="view-sub">${t('arb_sub')}</div>
 
@@ -2493,6 +2468,31 @@ function renderArbitraj(){
           <td class="td-muted">${fmtDate(a.dataNasterii)}</td><td class="td-muted">${esc(a.telefon)}</td>
           <td><span class="badge ${a.statut==='activ'?'green':'muted'}">${trEnum(a.statut)}</span></td>
         </tr>`).join('') : `<tr><td class="td-empty" colspan="6">${t('arb_none')}</td></tr>`}</tbody>
+    </table></div>
+  </div>
+
+  <div class="view-head"><div class="view-title">${t('ar_title')}</div></div>
+  <div class="view-sub">${t('ar_sub')}</div>
+
+  <div class="add-form">
+    <div class="form-title">${t('ar_addTitle')}</div>
+    <div class="form-grid" style="grid-template-columns:0.8fr 1.2fr 1fr 0.6fr 0.7fr auto">
+      <div class="field"><label>${t('th_data')}</label><input id="af-data" type="date" value="${todayISO()}"></div>
+      <div class="field"><label>${t('ar_numeArbitru')}</label><select id="af-arbitru">${arbitriActivi().map(a=>`<option>${esc(a.nume)} ${esc(a.prenume)}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('ar_turneu')}</label><select id="af-turneu">${TOURNAMENTS.map(tour=>`<option>${tour}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('ar_marcaMingi')}</label><select id="af-marca"><option value="DHS">DHS</option><option value="JOOLA">JOOLA</option></select></div>
+      <div class="field"><label>${t('ar_mingiNoi')}</label><input id="af-mingi" type="number" min="0" value="0"></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addArbitraj()">${t('btn_add')}</button></div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${DB.arbitraj.length} ${t('ar_countSuffix')}</div></div>
+    <div class="table-scroll recent-actions-scroll"><table>
+      <thead><tr><th>${t('th_data')}</th><th>${t('ar_th_arbitru')}</th><th>${t('ar_th_turneu')}</th><th>${t('ar_th_marcaMingi')}</th><th>${t('ar_th_mingiNoi')}</th><th></th></tr></thead>
+      <tbody>${DB.arbitraj.length ? DB.arbitraj.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(a=>`
+        <tr><td class="td-muted">${fmtDate(a.data)}</td><td>${esc(a.arbitru)}</td><td><span class="badge gold">${esc(a.turneu)}</span></td>
+        <td>${esc(a.marcaMingi||'DHS')}</td><td class="td-gold">${a.cantitateMingi}</td><td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('arbitraj','${a.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="6">${t('ar_none')}</td></tr>`}</tbody>
     </table></div>
   </div>`;
 }
@@ -2529,7 +2529,7 @@ function renderArbitruProfile(editing = false){
   const a = arbitru(currentArbitruId); if(!a) return;
   document.getElementById('arbitru-modal-title').textContent = `${a.nume} ${a.prenume}`;
   const editBtn = document.getElementById('arbitru-edit-btn');
-  editBtn.style.display = (editing || !isFullAdmin()) ? 'none' : '';
+  editBtn.style.display = (editing || !hasActiveShift()) ? 'none' : '';
   editBtn.title = t('arb_editTitle');
   const deleteBtn = document.getElementById('arbitru-delete-btn');
   deleteBtn.style.display = (editing || !isFullAdmin()) ? 'none' : '';
