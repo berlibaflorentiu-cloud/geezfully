@@ -3340,12 +3340,12 @@
     const winRate = matches ? Math.round((wins / matches) * 100) : 0;
     const initials = `${ref.first_name?.[0] || ''}${ref.last_name?.[0] || ''}`.toUpperCase();
     const imagePath = participantImagePath(ref);
-    // Rating and city come from MTTF when available (a more complete, better-
-    // maintained federation database) — match/tournament counts stay Setka-sourced.
-    const rating = mttf?.ranking ?? stats?.rating_sc ?? '—';
-    const city = mttf?.city || player?.city || 'Localitate nespecificată';
-    const sourceLabel = mttf && player ? 'Rating MTTF · meciuri Setka Cup prin ATTP'
-      : mttf ? 'Date MTTF' : 'Date Setka Cup prin ATTP';
+    // Setka Cup's rating stays the primary source (MTTF's own rating scale
+    // isn't useful to us) — MTTF only fills in when Setka has genuinely
+    // nothing for this person (no ATTP row / no confirmed Setka match at all).
+    const rating = stats?.rating_sc ?? mttf?.ranking ?? '—';
+    const city = player?.city || mttf?.city || 'Localitate nespecificată';
+    const sourceLabel = player ? 'Date Setka Cup prin ATTP' : mttf ? 'Date MTTF' : 'Date Setka Cup prin ATTP';
     card.innerHTML = `<div class="ref-player-avatar"><img src="${imagePath}" alt="${escapeHtml(ref.first_name)} ${escapeHtml(ref.last_name)}" onerror="this.parentElement.textContent='${escapeHtml(initials)}'"></div>
       <div class="ref-player-location">${escapeHtml(city)}</div>
       <div class="ref-player-rating"><small>Rating</small> ${rating}</div>
