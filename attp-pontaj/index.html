@@ -2812,15 +2812,16 @@ function renderInventar(){
   <div class="table-wrap">
     <div class="table-header"><div class="table-title">${t('iv_uzateTitle')}</div></div>
     <div class="table-scroll"><table>
-      <thead><tr><th>${t('iv_th_articol')}</th><th>${t('iv_th_culoare')}</th><th>${t('iv_th_marime')}</th><th>${t('iv_th_um')}</th><th>${t('iv_th_initial')}</th><th>${t('iv_th_intrari')}</th><th>${t('iv_th_iesiri')}</th><th>${t('iv_th_curent')}</th><th>${t('iv_th_minim')}</th><th>${t('iv_th_stare')}</th></tr></thead>
-      <tbody>${inventarRows(inventarSorted(DB.inventar.filter(i=>i.conditie==='uzat')))}</tbody>
+      <thead><tr><th>${t('iv_th_articol')}</th><th>${t('iv_th_culoare')}</th><th>${t('iv_th_marime')}</th><th>${t('iv_th_um')}</th><th>${t('iv_th_initial')}</th><th>${t('iv_th_intrari')}</th><th>${t('iv_th_iesiri')}</th><th>${t('iv_th_curent')}</th></tr></thead>
+      <tbody>${inventarRows(inventarSorted(DB.inventar.filter(i=>i.conditie==='uzat')), {minim:false})}</tbody>
     </table></div>
   </div>`;
 }
-function inventarRows(items){
+function inventarRows(items, opts){
+  const showMinim = !opts || opts.minim !== false;
   return items.map(i=>{
     const curent = inventoryCurrent(i);
-    const low = curent < i.cantitateMinima;
+    const low = showMinim && curent < i.cantitateMinima;
     const stare = inventoryStare(curent, i.cantitateMinima);
     const stareBadge = stare==='bună' ? 'green' : stare==='minim' ? 'yellow' : stare==='sub minim' ? 'amber' : 'red';
     return `<tr class="${low?'flag-yellow':''}">
@@ -2829,8 +2830,8 @@ function inventarRows(items){
       <td>${i.marime && i.marime!=='—' ? `<span class="inventory-size">${esc(i.marime)}</span>` : '<span class="td-muted">—</span>'}</td>
       <td class="td-muted">${esc(i.um)}</td>
       <td class="td-muted">${i.cantitateInitiala}</td><td class="td-muted">${i.intrari}</td><td class="td-muted">${i.iesiri}</td>
-      <td class="td-gold">${curent}</td><td class="td-muted">${i.cantitateMinima}</td>
-      <td><span class="badge ${stareBadge}">${esc(trEnum(stare))}</span></td>
+      <td class="td-gold">${curent}</td>${showMinim ? `<td class="td-muted">${i.cantitateMinima}</td>
+      <td><span class="badge ${stareBadge}">${esc(trEnum(stare))}</span></td>` : ''}
     </tr>`;
   }).join('');
 }
