@@ -1149,7 +1149,7 @@ const NAV = [
   {id:'rapoarte', key:'nav_rapoarte', icon:'▥'},
   {id:'setari', key:'nav_setari', icon:'⚙'},
 ];
-const LOCATION_HIDDEN_VIEWS = new Set(['antrenamente','rapoarte','setari']);
+const LOCATION_HIDDEN_VIEWS = new Set(['rapoarte','setari']);
 
 function buildSidebar(){
   const nav = document.getElementById('sb-nav');
@@ -1528,7 +1528,7 @@ function renderParticipanti(){
   <div class="view-head"><div class="view-title">${t('pa_title')}</div></div>
   <div class="view-sub">${t('pa_sub')}</div>
 
-  ${!isFullAdmin() ? '' : `<div class="add-form">
+  ${!hasActiveShift() ? '' : `<div class="add-form">
     <div class="form-title">${t('pa_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:repeat(6,1fr)">
       <div class="field"><label>${t('pa_dulap')}</label><input id="pf-dulap" placeholder="${t('pa_dulapPh')}"></div>
@@ -1541,7 +1541,7 @@ function renderParticipanti(){
       <div class="field"><label>${t('pa_aviz')}</label><input id="pf-aviz" type="date" value="${todayISO()}"></div>
       <div class="field"><label>${t('pa_marime')}</label><select id="pf-marime">${CLOTHING_SIZES.map(s=>`<option>${s}</option>`).join('')}</select></div>
       <div class="field"><label>${t('pa_categorieSp')}</label><select id="pf-categorie"><option value="">${t('pa_nespecificata')}</option>${SPORT_CATEGORIES.map(c=>`<option>${c}</option>`).join('')}</select></div>
-      <div class="field" style="justify-content:flex-end"><button class="btn-primary" onclick="addParticipant()">${t('pa_btnAdd')}</button></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addParticipant()">${t('pa_btnAdd')}</button></div>
     </div>
   </div>`}
 
