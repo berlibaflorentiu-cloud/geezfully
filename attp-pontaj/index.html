@@ -663,6 +663,7 @@ ro: {
   iv_lowStock:'articole sub stocul minim admis.', iv_addTitle:'Intrare / corectare stoc', iv_articol:'Articol',
   iv_tipMiscare:'Tip mișcare', iv_intrare:'intrare', iv_iesire:'ieșire', iv_corectare:'corecție', iv_coloana:'Coloană corectată', iv_btnAdd:'+ Înregistrează',
   iv_structTitle:'Structura inventarului', iv_th_articol:'Articol', iv_th_culoare:'Culoare', iv_th_marime:'Mărime',
+  iv_uzateTitle:'Uzate', iv_uzateSub:'Bunuri scoase din stocul nou și folosite ca uzate (maiouri, șorturi, lenjerie).',
   iv_th_um:'UM', iv_th_initial:'Inițial', iv_th_intrari:'Intrări', iv_th_iesiri:'Ieșiri', iv_th_curent:'Curent',
   iv_th_minim:'Minim', iv_th_stare:'Stare',
 
@@ -872,6 +873,7 @@ ru: {
   iv_lowStock:'товаров ниже допустимого минимума.', iv_addTitle:'Приход / корректировка склада', iv_articol:'Товар',
   iv_tipMiscare:'Тип операции', iv_intrare:'приход', iv_iesire:'расход', iv_corectare:'корректировка', iv_coloana:'Исправляемая колонка', iv_btnAdd:'+ Зарегистрировать',
   iv_structTitle:'Структура склада', iv_th_articol:'Товар', iv_th_culoare:'Цвет', iv_th_marime:'Размер',
+  iv_uzateTitle:'Б/у', iv_uzateSub:'Товары, выведенные из нового запаса и используемые как бывшие в употреблении (майки, шорты, бельё).',
   iv_th_um:'Ед.изм.', iv_th_initial:'Начальный', iv_th_intrari:'Приход', iv_th_iesiri:'Расход', iv_th_curent:'Текущий',
   iv_th_minim:'Минимум', iv_th_stare:'Состояние',
 
@@ -1043,7 +1045,7 @@ async function fetchAll(){
       nrSursa:r.nr_sursa,
     })),
     arbitraj: (arbitrajR.data||[]).map(r=>({id:r.id, data:r.data, arbitru:r.arbitru, turneu:r.turneu, marcaMingi:r.marca_mingi, cantitateMingi:r.cantitate_mingi, observatii:r.observatii, sesiuneSchimbId:r.sesiune_schimb_id, slotSchimb:r.slot_schimb})),
-    inventar: (inventarR.data||[]).map(r=>({id:r.id, denumire:r.denumire, culoare:r.culoare, marime:r.marime, um:r.um, cantitateInitiala:r.cantitate_initiala, intrari:r.intrari, iesiri:r.iesiri, cantitateMinima:r.cantitate_minima, stare:r.stare, observatii:r.observatii})),
+    inventar: (inventarR.data||[]).map(r=>({id:r.id, denumire:r.denumire, culoare:r.culoare, marime:r.marime, um:r.um, cantitateInitiala:r.cantitate_initiala, intrari:r.intrari, iesiri:r.iesiri, cantitateMinima:r.cantitate_minima, stare:r.stare, observatii:r.observatii, conditie:r.conditie})),
     sarcini: (sarciniR.data||[]).map(r=>({id:r.id, dataInreg:r.data_inreg, administratorServiciuInregId:r.administrator_serviciu_inreg_id, adminInreg: serviciuAdminById[r.administrator_serviciu_inreg_id]?.nume || publicAdminName(adminById[r.admin_inreg_id]), status:r.status, actiuni:r.actiuni, dataSolutionare:r.data_solutionare, administratorServiciuSolutionareId:r.administrator_serviciu_solutionare_id, adminSolutionare: serviciuAdminById[r.administrator_serviciu_solutionare_id]?.nume || (r.admin_solutionare_id ? publicAdminName(adminById[r.admin_solutionare_id]) : ''), descriere:r.descriere})),
     observatii: (observatiiR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, categorie:r.categorie, descriere:r.descriere})),
     jurnal: (jurnalR.data||[]).map(r=>({id:r.id, cont: serviciuAdminById[r.administrator_serviciu_id]?.nume || publicAdminName(adminById[r.administrator_id]), data:String(r.data).slice(0,10), actiune:r.actiune})),
@@ -1063,7 +1065,7 @@ async function fetchAll(){
 
 async function refetchInventar(){
   const { data } = await sb.from('inventar').select('*').order('denumire');
-  DB.inventar = (data||[]).map(r=>({id:r.id, denumire:r.denumire, culoare:r.culoare, marime:r.marime, um:r.um, cantitateInitiala:r.cantitate_initiala, intrari:r.intrari, iesiri:r.iesiri, cantitateMinima:r.cantitate_minima, stare:r.stare, observatii:r.observatii}));
+  DB.inventar = (data||[]).map(r=>({id:r.id, denumire:r.denumire, culoare:r.culoare, marime:r.marime, um:r.um, cantitateInitiala:r.cantitate_initiala, intrari:r.intrari, iesiri:r.iesiri, cantitateMinima:r.cantitate_minima, stare:r.stare, observatii:r.observatii, conditie:r.conditie}));
 }
 
 async function logAction(actiune){
@@ -1280,8 +1282,8 @@ function inventoryStare(curent, minima){
 const INVENTAR_TOP_ORDER = { 'Mingi noi DHS':0, 'Mingi noi JOOLA':1, 'Seturi lenjerie':2, 'Șorturi':3 };
 const INVENTAR_SIZE_ORDER = ['M','L','XL','XXL','XXXL'];
 function inventarHasVariant(i){ return i.culoare && i.culoare!=='—' && i.marime && i.marime!=='—'; }
-function inventarSorted(){
-  return DB.inventar.slice().sort((a,b)=>{
+function inventarSorted(list){
+  return (list || DB.inventar).slice().sort((a,b)=>{
     const va = inventarHasVariant(a) ? 1 : 0, vb = inventarHasVariant(b) ? 1 : 0;
     if(va !== vb) return va - vb;
     if(a.denumire !== b.denumire) return va === 0
@@ -2755,7 +2757,7 @@ function renderInventar(){
   <div class="add-form">
     <div class="form-title">${t('iv_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:1.4fr 0.8fr ${showColoana?'0.8fr ':''}0.8fr auto">
-      <div class="field"><label>${t('iv_articol')}</label><select id="if2-item">${inventarSorted().map(i=>`<option value="${i.id}">${esc(trEnum(i.denumire))}${i.marime!=='—'?' — '+i.marime:''}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('iv_articol')}</label><select id="if2-item">${inventarSorted().map(i=>`<option value="${i.id}">${esc(trEnum(i.denumire))}${i.marime!=='—'?' — '+i.marime:''}${i.conditie==='uzat'?' — '+t('iv_uzateTitle'):''}</option>`).join('')}</select></div>
       <div class="field"><label>${t('iv_tipMiscare')}</label><select id="if2-tip" onchange="inventarAddState.tip=this.value; render();">
         <option value="intrare" ${inventarAddState.tip==='intrare'?'selected':''}>${t('iv_intrare')}</option>
         ${isFullAdmin() ? `<option value="iesire" ${inventarAddState.tip==='iesire'?'selected':''}>${t('iv_iesire')}</option>
@@ -2774,23 +2776,37 @@ function renderInventar(){
     <div class="table-header"><div class="table-title">${t('iv_structTitle')}</div></div>
     <div class="table-scroll"><table>
       <thead><tr><th>${t('iv_th_articol')}</th><th>${t('iv_th_culoare')}</th><th>${t('iv_th_marime')}</th><th>${t('iv_th_um')}</th><th>${t('iv_th_initial')}</th><th>${t('iv_th_intrari')}</th><th>${t('iv_th_iesiri')}</th><th>${t('iv_th_curent')}</th><th>${t('iv_th_minim')}</th><th>${t('iv_th_stare')}</th></tr></thead>
-      <tbody>${inventarSorted().map(i=>{
-        const curent = inventoryCurrent(i);
-        const low = curent < i.cantitateMinima;
-        const stare = inventoryStare(curent, i.cantitateMinima);
-        const stareBadge = stare==='bună' ? 'green' : stare==='minim' ? 'yellow' : stare==='sub minim' ? 'amber' : 'red';
-        return `<tr class="${low?'flag-yellow':''}">
-          <td class="td-name">${low?'<span class="row-flag yellow"></span>':''}${esc(trEnum(i.denumire))}</td>
-          <td class="td-muted">${esc(trEnum(i.culoare))}</td>
-          <td>${i.marime && i.marime!=='—' ? `<span class="inventory-size">${esc(i.marime)}</span>` : '<span class="td-muted">—</span>'}</td>
-          <td class="td-muted">${esc(i.um)}</td>
-          <td class="td-muted">${i.cantitateInitiala}</td><td class="td-muted">${i.intrari}</td><td class="td-muted">${i.iesiri}</td>
-          <td class="td-gold">${curent}</td><td class="td-muted">${i.cantitateMinima}</td>
-          <td><span class="badge ${stareBadge}">${esc(trEnum(stare))}</span></td>
-        </tr>`;
-      }).join('')}</tbody>
+      <tbody>${inventarRows(inventarSorted(DB.inventar.filter(i=>i.conditie!=='uzat')))}</tbody>
+    </table></div>
+  </div>
+
+  <div class="view-head"><div class="view-title">${t('iv_uzateTitle')}</div></div>
+  <div class="view-sub">${t('iv_uzateSub')}</div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${t('iv_uzateTitle')}</div></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>${t('iv_th_articol')}</th><th>${t('iv_th_culoare')}</th><th>${t('iv_th_marime')}</th><th>${t('iv_th_um')}</th><th>${t('iv_th_initial')}</th><th>${t('iv_th_intrari')}</th><th>${t('iv_th_iesiri')}</th><th>${t('iv_th_curent')}</th><th>${t('iv_th_minim')}</th><th>${t('iv_th_stare')}</th></tr></thead>
+      <tbody>${inventarRows(inventarSorted(DB.inventar.filter(i=>i.conditie==='uzat')))}</tbody>
     </table></div>
   </div>`;
+}
+function inventarRows(items){
+  return items.map(i=>{
+    const curent = inventoryCurrent(i);
+    const low = curent < i.cantitateMinima;
+    const stare = inventoryStare(curent, i.cantitateMinima);
+    const stareBadge = stare==='bună' ? 'green' : stare==='minim' ? 'yellow' : stare==='sub minim' ? 'amber' : 'red';
+    return `<tr class="${low?'flag-yellow':''}">
+      <td class="td-name">${low?'<span class="row-flag yellow"></span>':''}${esc(trEnum(i.denumire))}</td>
+      <td class="td-muted">${esc(trEnum(i.culoare))}</td>
+      <td>${i.marime && i.marime!=='—' ? `<span class="inventory-size">${esc(i.marime)}</span>` : '<span class="td-muted">—</span>'}</td>
+      <td class="td-muted">${esc(i.um)}</td>
+      <td class="td-muted">${i.cantitateInitiala}</td><td class="td-muted">${i.intrari}</td><td class="td-muted">${i.iesiri}</td>
+      <td class="td-gold">${curent}</td><td class="td-muted">${i.cantitateMinima}</td>
+      <td><span class="badge ${stareBadge}">${esc(trEnum(stare))}</span></td>
+    </tr>`;
+  }).join('');
 }
 async function adjustInventory(){
   const id = document.getElementById('if2-item').value;
