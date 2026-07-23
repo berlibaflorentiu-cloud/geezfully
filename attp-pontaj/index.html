@@ -603,6 +603,7 @@ ro: {
   da2_none:'Nicio daună înregistrată.', da2_valoare:'Prejudiciu estimat (MDL)', da2_avertizor:'Nume avertizor',
   da2_observatii:'Observații', da2_afectat:'afectat', da2_deteriorat:'deteriorat',
   da2_totalValoare:'Prejudiciu estimat total', da2_totalAfectate:'Bunuri afectate', da2_totalDeteriorate:'Bunuri deteriorate',
+  da2_filterMonth:'Schimbă luna', da2_month:'Lună', da2_allMonths:'Toate lunile',
 
   ar_title:'Arbitraj', ar_sub:'Arbitrii de turneu și cantitatea de mingi noi eliberate — scade automat din inventar.',
   ar_addTitle:'Eliberare mingi arbitru', ar_numeArbitru:'Nume arbitru', ar_numeArbitruPh:'Nume arbitru',
@@ -798,6 +799,7 @@ ru: {
   da2_none:'Случаев ущерба не зарегистрировано.', da2_valoare:'Оценочный ущерб (MDL)', da2_avertizor:'Кто сообщил',
   da2_observatii:'Примечания', da2_afectat:'затронуто', da2_deteriorat:'повреждено',
   da2_totalValoare:'Общий оценочный ущерб', da2_totalAfectate:'Затронутые предметы', da2_totalDeteriorate:'Повреждённые предметы',
+  da2_filterMonth:'Сменить месяц', da2_month:'Месяц', da2_allMonths:'Все месяцы',
 
   ar_title:'Судейство', ar_sub:'Судьи турниров и количество выданных новых мячей — автоматически списывается со склада.',
   ar_addTitle:'Выдача мячей судье', ar_numeArbitru:'Имя судьи', ar_numeArbitruPh:'Имя судьи',
@@ -2154,6 +2156,16 @@ function renderMedical(){
 }
 
 /* ══════════════════════ DAUNE ══════════════════════ */
+let dauneFilter={month:todayISO().slice(0,7)};
+function dauneMonthsAvailable(){
+  const months=new Set(DB.daune.map(d=>d.data.slice(0,7)));
+  months.add(todayISO().slice(0,7));
+  return [...months].sort().reverse();
+}
+function dauneRowsFiltered(){
+  const month=dauneFilter.month;
+  return DB.daune.filter(d=>!month||d.data.slice(0,7)===month);
+}
 function damageNotifierSelect(){
   if(!isFullAdmin()){
     const active=DB.serviciuAdministratori.find(a=>a.id===currentShift?.administratorServiciuId);
@@ -2164,15 +2176,27 @@ function damageNotifierSelect(){
   return `<select id="df-avertizor"><optgroup label="${esc(t('nav_serviciu'))}">${roster}</optgroup><optgroup label="${esc(t('st_admins'))}">${accounts}</optgroup></select>`;
 }
 function renderDaune(){
-  const totalValoare=DB.daune.reduce((sum,d)=>sum+Number(d.valoareEstimata||0),0);
+  const rows=dauneRowsFiltered();
+  const totalValoare=rows.reduce((sum,d)=>sum+Number(d.valoareEstimata||0),0);
   return `
   <div class="view-head"><div class="view-title">${t('da2_title')}</div></div>
   <div class="view-sub">${t('da2_sub')}</div>
 
   <div class="stats-row">
     <div class="stat-card"><div class="stat-label">${t('da2_totalValoare')}</div><div class="stat-value">${totalValoare.toLocaleString(LANG==='ru'?'ru-RU':'ro-RO')} MDL</div></div>
-    <div class="stat-card"><div class="stat-label">${t('da2_totalAfectate')}</div><div class="stat-value">${DB.daune.filter(d=>d.bunDeterioratDistrus==='afectat').length}</div></div>
-    <div class="stat-card warn"><div class="stat-label">${t('da2_totalDeteriorate')}</div><div class="stat-value c-yellow">${DB.daune.filter(d=>d.bunDeterioratDistrus==='deteriorat').length}</div></div>
+    <div class="stat-card"><div class="stat-label">${t('da2_totalAfectate')}</div><div class="stat-value">${rows.filter(d=>d.bunDeterioratDistrus==='afectat').length}</div></div>
+    <div class="stat-card warn"><div class="stat-label">${t('da2_totalDeteriorate')}</div><div class="stat-value c-yellow">${rows.filter(d=>d.bunDeterioratDistrus==='deteriorat').length}</div></div>
+  </div>
+
+  <div class="add-form">
+    <div class="form-title">${t('da2_filterMonth')}</div>
+    <div class="form-grid" style="grid-template-columns:1fr auto">
+      <div class="field"><label>${t('da2_month')}</label><select onchange="dauneFilter.month=this.value;render();">
+        <option value="" ${!dauneFilter.month?'selected':''}>${t('da2_allMonths')}</option>
+        ${dauneMonthsAvailable().map(m=>`<option value="${m}" ${dauneFilter.month===m?'selected':''}>${monthLabel(m)}</option>`).join('')}
+      </select></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-ghost" onclick="dauneFilter={month:''};render();">${t('da2_allMonths')}</button></div>
+    </div>
   </div>
 
   <div class="add-form">
@@ -2191,10 +2215,10 @@ function renderDaune(){
   </div>
 
   <div class="table-wrap">
-    <div class="table-header"><div class="table-title">${DB.daune.length} ${t('da2_countSuffix')}</div></div>
+    <div class="table-header"><div class="table-title">${rows.length} ${t('da2_countSuffix')}</div></div>
     <div class="table-scroll"><table>
       <thead><tr><th>Nr.</th><th>${t('th_data')}</th><th>${t('th_participant')}</th><th>${t('da2_th_inventarAfectat')}</th><th>${t('da2_th_natura')}</th><th>${t('da2_valoare')}</th><th>${t('da2_avertizor')}</th><th>${t('th_stare')}</th><th>${t('da2_observatii')}</th><th></th></tr></thead>
-      <tbody>${DB.daune.length ? DB.daune.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(d=>`
+      <tbody>${rows.length ? rows.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(d=>`
         <tr><td class="td-muted">${d.nrSursa||'—'}</td><td class="td-muted">${fmtDate(d.data)}</td><td class="td-name" onclick="openProfile('${d.participantId}')">${esc(participantName(d.participantId))}</td>
         <td>${esc(d.inventarAfectat)}</td><td class="td-muted">${esc(d.natura)}</td>
         <td class="td-gold">${Number(d.valoareEstimata||0).toLocaleString(LANG==='ru'?'ru-RU':'ro-RO')} MDL</td><td class="td-muted">${esc(d.avertizor)||'—'}</td>
