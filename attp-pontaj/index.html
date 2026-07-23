@@ -617,6 +617,8 @@ ro: {
   le_title:'Lenjerie', le_sub:'Evidența lenjeriei de hostel eliberate sportivilor.', le_addTitle:'Eliberare lenjerie',
   le_dataElib:'Data eliberării', le_countSuffix:'înregistrări', le_hint:'Apasă pe statut pentru a marca returnarea',
   le_th_eliberare:'Eliberare', le_th_returnare:'Returnare', le_none:'Nicio înregistrare.',
+  le_confirmReturn:'Confirmați marcarea lenjeriei ca returnată? Odată confirmată, doar administratorii mai pot anula acest lucru.',
+  le_lockedHint:'Returnare confirmată — doar administratorii pot anula.',
 
   me_title:'Medical', me_sub:'Avize medicale, ordonate crescător după numărul zilelor rămase. Valabilitate: 6 luni.',
   me_expirate:'Expirate', me_expira30:'Expiră < 30 zile', me_valabile:'Valabile', me_faraAviz:'Activi fără aviz medical',
@@ -824,6 +826,8 @@ ru: {
   le_title:'Постельное бельё', le_sub:'Учёт постельного белья, выданного спортсменам в хостеле.', le_addTitle:'Выдача белья',
   le_dataElib:'Дата выдачи', le_countSuffix:'записей', le_hint:'Нажмите на статус, чтобы отметить возврат',
   le_th_eliberare:'Выдача', le_th_returnare:'Возврат', le_none:'Записей нет.',
+  le_confirmReturn:'Подтвердить, что бельё возвращено? После подтверждения отменить это смогут только администраторы.',
+  le_lockedHint:'Возврат подтверждён — отменить может только администратор.',
 
   me_title:'Медицина', me_sub:'Медицинские справки, по возрастанию оставшихся дней. Срок действия: 6 месяцев.',
   me_expirate:'Истекли', me_expira30:'Истекают < 30 дней', me_valabile:'Действительны', me_faraAviz:'Активные без мед. справки',
@@ -2227,7 +2231,9 @@ function renderLenjerie(){
       <tbody>${DB.lenjerie.length ? DB.lenjerie.slice().sort((a,b)=>b.dataEliberare.localeCompare(a.dataEliberare)).map(l=>`
         <tr><td class="td-name" onclick="openProfile('${l.participantId}')">${esc(participantName(l.participantId))}</td>
         <td class="td-muted">${fmtDate(l.dataEliberare)}</td><td class="td-muted">${l.dataReturnare?fmtDate(l.dataReturnare):'—'}</td>
-        <td><button type="button" class="badge ${l.dataReturnare?'green':'yellow'}" ${disabledAttr()} onclick="toggleLenjerieReturn('${l.id}')" title="${t('le_hint')}">${trEnum(l.dataReturnare?'returnat':'nereturnat')}</button></td>
+        <td>${l.dataReturnare && !isFullAdmin()
+          ? `<span class="badge green" title="${t('le_lockedHint')}">${trEnum('returnat')}</span>`
+          : `<button type="button" class="badge ${l.dataReturnare?'green':'yellow'}" ${disabledAttr()} onclick="toggleLenjerieReturn('${l.id}')" title="${t('le_hint')}">${trEnum(l.dataReturnare?'returnat':'nereturnat')}</button>`}</td>
         <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('lenjerie','${l.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="5">${t('le_none')}</td></tr>`}</tbody>
     </table></div>
   </div>`;
@@ -2246,6 +2252,8 @@ async function addLenjerie(){
 async function toggleLenjerieReturn(id){
   const item = DB.lenjerie.find(l=>l.id===id);
   if(!item) return;
+  if(item.dataReturnare && !isFullAdmin()) return; // locked for locație — only admin can revert
+  if(!item.dataReturnare && !isFullAdmin() && !confirm(t('le_confirmReturn'))) return;
   const dataReturnare = item.dataReturnare ? null : todayISO();
   const { data, error } = await sb.from('lenjerie').update({ data_returnare:dataReturnare }).eq('id', id).select();
   if(error){ alert('Actualizarea statutului a eșuat: ' + error.message); return; }
