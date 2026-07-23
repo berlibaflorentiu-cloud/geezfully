@@ -224,6 +224,16 @@
   .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--gold); }
   .field input::placeholder, .field textarea::placeholder { color: var(--muted); }
 
+  .ac-wrap { position: relative; }
+  .ac-list {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 40; max-height: 220px; overflow-y: auto;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  }
+  .ac-item { padding: 9px 12px; font-size: 13.5px; cursor: pointer; }
+  .ac-item:hover, .ac-item.ac-active { background: var(--bg); }
+  .ac-item.ac-empty { color: var(--muted); cursor: default; }
+  .ac-item.ac-empty:hover { background: transparent; }
+
   .search-bar { position: relative; margin-bottom: 16px; max-width: 320px; }
   .search-bar input {
     background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13.5px;
@@ -510,6 +520,7 @@ ro: {
   sb_sub:'Registru · ATTP', sb_shift:'Schimb curent', hdr_logout:'Ieșire',
 
   th_cont:'Cont', th_data:'Data', th_actiune:'Acțiune', th_participant:'Participant', th_stare:'Stare',
+  ac_participantPh:'Caută după nume...', ac_noResults:'Niciun rezultat',
   th_administrator:'Administrator', th_categorie:'Categorie', th_descriere:'Descriere', th_statut:'Statut',
   btn_add:'+ Adaugă', btn_delete:'Șterge', btn_cancel:'Anulează', btn_save:'Salvează modificările',
   btn_saving:'Se salvează…', empty_dash:'—',
@@ -711,6 +722,7 @@ ru: {
   sb_sub:'Журнал · ATTP', sb_shift:'Текущая смена', hdr_logout:'Выход',
 
   th_cont:'Аккаунт', th_data:'Дата', th_actiune:'Действие', th_participant:'Участник', th_stare:'Состояние',
+  ac_participantPh:'Поиск по имени...', ac_noResults:'Нет результатов',
   th_administrator:'Администратор', th_categorie:'Категория', th_descriere:'Описание', th_statut:'Статус',
   btn_add:'+ Добавить', btn_delete:'Удалить', btn_cancel:'Отмена', btn_save:'Сохранить изменения',
   btn_saving:'Сохранение…', empty_dash:'—',
@@ -1275,17 +1287,61 @@ function render(){
   };
   main.innerHTML = fns[currentView] ? fns[currentView]() : '';
 }
-function participantOptions(selectedId){
-  return DB.participanti.filter(p=>p.statut==='activ').map(p=>`<option value="${p.id}" ${p.id===selectedId?'selected':''}>${esc(p.nume)} ${esc(p.prenume)}</option>`).join('');
+function participantAcOptions(extra){
+  const base = DB.participanti.filter(p=>p.statut==='activ').map(p=>({value:p.id, label:`${p.nume} ${p.prenume}`}));
+  return extra ? [...extra, ...base] : base;
 }
-function participantAndRefereeOptions(){
-  const participants = DB.participanti.filter(p=>p.statut==='activ').map(p=>`<option value="participant:${p.id}">${esc(p.nume)} ${esc(p.prenume)}</option>`).join('');
-  const referees = REFEREES.map(name=>`<option value="referee:${esc(name)}">${esc(name)} · Arbitru</option>`).join('');
-  return participants + referees;
+function participantAndRefereeAcOptions(){
+  const participants = DB.participanti.filter(p=>p.statut==='activ').map(p=>({value:'participant:'+p.id, label:`${p.nume} ${p.prenume}`}));
+  const referees = REFEREES.map(name=>({value:'referee:'+name, label:`${name} · Arbitru`}));
+  return [...participants, ...referees];
 }
 function selectedPerson(value){
   if(value.startsWith('referee:')) return { participantId:null, arbitru:value.slice(8) };
   return { participantId:value.replace(/^participant:/, ''), arbitru:null };
+}
+/* searchable autocomplete: keeps a hidden input with id `id` (same .value contract as the <select> it replaces) */
+const acData = {};
+function autocompleteField(id, options, opts){
+  opts = opts || {};
+  acData[id] = { options, filtered: options };
+  const selectedValue = opts.selectedValue !== undefined ? opts.selectedValue : '';
+  const sel = options.find(o=>o.value===selectedValue);
+  return `<div class="ac-wrap">
+    <input type="text" id="${id}-q" autocomplete="off" placeholder="${esc(t('ac_participantPh'))}" value="${esc(sel?sel.label:'')}" oninput="acFilter('${id}')" onfocus="acFilter('${id}')" onblur="acBlur('${id}')" onkeydown="acKey(event,'${id}')">
+    <input type="hidden" id="${id}" value="${esc(selectedValue)}">
+    <div class="ac-list" id="${id}-list" style="display:none"></div>
+  </div>`;
+}
+function acFilter(id){
+  const q = (document.getElementById(id+'-q').value||'').trim().toLowerCase();
+  const all = acData[id]?.options || [];
+  const items = q ? all.filter(o=>o.label.toLowerCase().includes(q)) : all;
+  acData[id].filtered = items;
+  const list = document.getElementById(id+'-list');
+  list.innerHTML = items.length ? items.slice(0,60).map((o,i)=>`<div class="ac-item" onmousedown="acSelect('${id}',${i})">${esc(o.label)}</div>`).join('') : `<div class="ac-item ac-empty">${esc(t('ac_noResults'))}</div>`;
+  list.style.display = 'block';
+}
+function acSelect(id, idx){
+  const o = acData[id]?.filtered?.[idx];
+  if(!o) return;
+  document.getElementById(id).value = o.value;
+  document.getElementById(id+'-q').value = o.label;
+  document.getElementById(id+'-list').style.display = 'none';
+}
+function acKey(e, id){
+  if(e.key==='Escape'){ document.getElementById(id+'-list').style.display='none'; e.target.blur(); }
+  if(e.key==='Enter'){ e.preventDefault(); const filtered = acData[id]?.filtered; if(filtered?.length===1) acSelect(id,0); }
+}
+function acBlur(id){
+  setTimeout(()=>{
+    const list = document.getElementById(id+'-list');
+    if(list) list.style.display = 'none';
+    const hidden = document.getElementById(id), q = document.getElementById(id+'-q');
+    if(!hidden || !q) return;
+    const opt = (acData[id]?.options||[]).find(o=>o.value===hidden.value);
+    q.value = opt ? opt.label : '';
+  }, 150);
 }
 function entryPersonName(row){ return row.arbitru || participantName(row.participantId); }
 function disabledAttr(adminOnly){
@@ -1819,7 +1875,7 @@ function renderIntarzieri(){
   <div class="add-form">
     <div class="form-title">${t('it_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:1fr 1fr 0.6fr 1fr auto">
-      <div class="field"><label>${t('th_participant')}</label><select id="if-participant">${participantAndRefereeOptions()}</select></div>
+      <div class="field"><label>${t('th_participant')}</label>${autocompleteField('if-participant', participantAndRefereeAcOptions())}</div>
       <div class="field"><label>${t('th_data')}</label><input id="if-data" type="date" value="${todayISO()}"></div>
       <div class="field"><label>${t('it_minute')}</label><input id="if-minute" type="number" min="0"></div>
       <div class="field"><label>${t('it_motiv')}</label><input id="if-motiv" type="text"></div>
@@ -1877,7 +1933,7 @@ function renderVestimentatie(){
   <div class="add-form">
     <div class="form-title">${t('ve_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:1fr 1fr 0.7fr 0.7fr 0.6fr auto">
-      <div class="field"><label>${t('th_participant')}</label><select id="vf-participant">${participantAndRefereeOptions()}</select></div>
+      <div class="field"><label>${t('th_participant')}</label>${autocompleteField('vf-participant', participantAndRefereeAcOptions())}</div>
       <div class="field"><label>${t('ve_tip')}</label><select id="vf-tip">${CLOTHING_TYPES.map(ct=>`<option value="${ct}">${trEnum(ct)}</option>`).join('')}</select></div>
       <div class="field"><label>${t('ve_marime')}</label><select id="vf-marime">${CLOTHING_SIZES.map(s=>`<option>${s}</option>`).join('')}</select></div>
       <div class="field"><label>${t('ve_cantitate')}</label><input id="vf-cantitate" type="number" min="1" value="1"></div>
@@ -2020,7 +2076,7 @@ function renderSpalatorie(){
   <div class="add-form">
     <div class="form-title">${t('sp_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:1fr 1fr 0.6fr 0.8fr 0.6fr auto">
-      <div class="field"><label>${t('th_participant')}</label><select id="sp-participant"><option value="">${t('sp_locatia')}</option>${participantOptions()}</select></div>
+      <div class="field"><label>${t('th_participant')}</label>${autocompleteField('sp-participant', participantAcOptions([{value:'',label:t('sp_locatia')}]), {selectedValue:''})}</div>
       <div class="field"><label>${t('sp_tipArt')}</label><input id="sp-tip" placeholder="${t('sp_tipArtPh')}"></div>
       <div class="field"><label>${t('sp_cantitate')}</label><input id="sp-cantitate" type="number" min="1" value="1"></div>
       <div class="field"><label>${t('sp_dataPredarii')}</label><input id="sp-data" type="date" value="${todayISO()}"></div>
@@ -2078,7 +2134,7 @@ function renderHostel(){
   <div class="add-form">
     <div class="form-title">${t('ho_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:1fr 1fr 1.4fr auto">
-      <div class="field"><label>${t('th_participant')}</label><select id="hf-participant">${participantOptions()}</select></div>
+      <div class="field"><label>${t('th_participant')}</label>${autocompleteField('hf-participant', participantAcOptions())}</div>
       <div class="field"><label>${t('ho_dataCazarii')}</label><input id="hf-data" type="date" value="${todayISO()}"></div>
       <div class="field"><label>${t('ho_observatii')}</label><input id="hf-obs" placeholder="${t('ho_observatiiPh')}"></div>
       <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addHostel()">${t('btn_add')}</button></div>
@@ -2122,7 +2178,7 @@ function renderLenjerie(){
   <div class="add-form">
     <div class="form-title">${t('le_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:1fr 1fr auto">
-      <div class="field"><label>${t('th_participant')}</label><select id="lf-participant">${participantOptions()}</select></div>
+      <div class="field"><label>${t('th_participant')}</label>${autocompleteField('lf-participant', participantAcOptions())}</div>
       <div class="field"><label>${t('le_dataElib')}</label><input id="lf-eliberare" type="date" value="${todayISO()}"></div>
       <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addLenjerie()">${t('btn_add')}</button></div>
     </div>
@@ -2291,7 +2347,7 @@ function renderDaune(){
     <div class="form-title">${t('da2_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:0.8fr 1.2fr 1.2fr 0.8fr">
       <div class="field"><label>${t('th_data')}</label><input id="df-data" type="date" value="${todayISO()}"></div>
-      <div class="field"><label>${t('th_participant')}</label><select id="df-participant">${participantOptions()}</select></div>
+      <div class="field"><label>${t('th_participant')}</label>${autocompleteField('df-participant', participantAcOptions())}</div>
       <div class="field"><label>${t('da2_avertizor')}</label>${damageNotifierSelect()}</div>
       <div class="field"><label>${t('da2_stareBun')}</label><select id="df-stare"><option value="afectat">${t('da2_afectat')}</option><option value="deteriorat">${t('da2_deteriorat')}</option></select></div>
       <div class="field"><label>${t('da2_teren')}</label><select id="df-teren">${DAUNE_TERENURI.map(t2=>`<option>${t2}</option>`).join('')}</select></div>
@@ -2672,7 +2728,7 @@ function renderObservatii(){
   <div class="add-form">
     <div class="form-title">${t('ob_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:1fr 1fr 1.4fr auto">
-      <div class="field"><label>${t('th_participant')}</label><select id="of-participant">${participantOptions()}</select></div>
+      <div class="field"><label>${t('th_participant')}</label>${autocompleteField('of-participant', participantAcOptions())}</div>
       <div class="field"><label>${t('ob_categorie')}</label><select id="of-categorie">${OBS_CATEGORIES.map(c=>`<option value="${c}">${trEnum(c)}</option>`).join('')}</select></div>
       <div class="field"><label>${t('ob_descScurta')}</label><input id="of-desc" placeholder="${t('ob_descScurtaPh')}"></div>
       <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addObservatie()">${t('btn_add')}</button></div>
