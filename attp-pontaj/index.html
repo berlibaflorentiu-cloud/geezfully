@@ -2784,7 +2784,10 @@ function renderInventar(){
   <div class="add-form">
     <div class="form-title">${t('iv_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:1.4fr 0.8fr ${showColoana?'0.8fr ':''}0.8fr auto">
-      <div class="field"><label>${t('iv_articol')}</label><select id="if2-item">${inventarSorted().map(i=>`<option value="${i.id}">${esc(trEnum(i.denumire))}${i.marime!=='—'?' — '+i.marime:''}${i.conditie==='uzat'?' — '+t('iv_uzateTitle'):''}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('iv_articol')}</label><select id="if2-item">
+        <optgroup label="${esc(t('iv_structTitle'))}">${inventarSorted(DB.inventar.filter(i=>i.conditie!=='uzat')).map(i=>`<option value="${i.id}">${esc(trEnum(i.denumire))}${i.marime!=='—'?' — '+i.marime:''}</option>`).join('')}</optgroup>
+        <optgroup label="${esc(t('iv_uzateTitle'))}">${inventarSorted(DB.inventar.filter(i=>i.conditie==='uzat')).map(i=>`<option value="${i.id}">${esc(trEnum(i.denumire))}${i.marime!=='—'?' — '+i.marime:''}</option>`).join('')}</optgroup>
+      </select></div>
       <div class="field"><label>${t('iv_tipMiscare')}</label><select id="if2-tip" onchange="inventarAddState.tip=this.value; render();">
         <option value="intrare" ${inventarAddState.tip==='intrare'?'selected':''}>${t('iv_intrare')}</option>
         ${isFullAdmin() ? `<option value="iesire" ${inventarAddState.tip==='iesire'?'selected':''}>${t('iv_iesire')}</option>
