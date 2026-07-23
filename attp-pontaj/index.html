@@ -2432,15 +2432,15 @@ function renderAntrenamente(){
     </table></div>
   </div>
 
-  ${isFullAdmin() ? `<div class="add-form">
+  ${hasActiveShift() ? `<div class="add-form">
     <div class="form-title">${t('an_eligibiliTitle')}</div>
     <div class="view-sub" style="margin:-4px 0 14px">${t('an_eligibiliSub')}</div>
     <div class="form-grid" style="grid-template-columns:1fr auto">
       <div class="field"><label>${t('an_adaugaEligibil')}</label><select id="tf-add-eligibil">${neeligibili.map(p=>`<option value="${p.id}">${esc(p.nume)} ${esc(p.prenume)}</option>`).join('')}</select></div>
-      <div class="field" style="justify-content:flex-end"><button class="btn-primary" onclick="addEligibleParticipant()">${t('an_eligibilAdaugat')}</button></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addEligibleParticipant()">${t('an_eligibilAdaugat')}</button></div>
     </div>
     <div class="mini-list" style="margin-top:14px">
-      ${eligibili.length ? eligibili.map(p=>`<div class="mini-row"><span class="td-name" onclick="openProfile('${p.id}')">${esc(p.nume)} ${esc(p.prenume)}</span><button class="btn-danger" onclick="removeEligibleParticipant('${p.id}')">${t('btn_delete')}</button></div>`).join('') : `<div class="mini-empty">${t('an_eligibilNone')}</div>`}
+      ${eligibili.length ? eligibili.map(p=>`<div class="mini-row"><span class="td-name" onclick="openProfile('${p.id}')">${esc(p.nume)} ${esc(p.prenume)}</span>${isFullAdmin()?`<button class="btn-danger" onclick="removeEligibleParticipant('${p.id}')">${t('btn_delete')}</button>`:''}</div>`).join('') : `<div class="mini-empty">${t('an_eligibilNone')}</div>`}
     </div>
   </div>` : ''}`;
 }
