@@ -530,6 +530,7 @@ ro: {
   sh_trainer:'Antrenor', sh_trainee:'Sportiv', sh_time:'Ora', sh_addTraining:'Salvează antrenamentul',
   sh_addRow:'+ Alt antrenament', sh_noEligible:'Nu există sportivi eligibili pentru antrenament.',
   sh_startError:'Schimbul nu a putut fi pornit.', sh_stopError:'Schimbul nu a putut fi oprit.',
+  sh_stopAlreadyEnded:'Acest schimb fusese deja încheiat (probabil dintr-un alt tab sau dispozitiv). Pagina a fost actualizată.',
   sh_stopConfirm:'Sigur doriți să opriți schimbul? După confirmare, registrul va fi blocat și va trebui început un schimb nou pentru a putea edita din nou.',
   sh_locked:'Registrul este blocat. Începeți un schimb din Tablou de bord.',
 
@@ -729,6 +730,7 @@ ru: {
   sh_trainer:'Тренер', sh_trainee:'Спортсмен', sh_time:'Время', sh_addTraining:'Сохранить тренировку',
   sh_addRow:'+ Ещё тренировка', sh_noEligible:'Нет спортсменов, допущенных к тренировкам.',
   sh_startError:'Не удалось начать смену.', sh_stopError:'Не удалось завершить смену.',
+  sh_stopAlreadyEnded:'Эта смена уже была завершена (вероятно, с другой вкладки или устройства). Страница обновлена.',
   sh_stopConfirm:'Вы уверены, что хотите завершить смену? После подтверждения журнал будет заблокирован, и для дальнейшего редактирования потребуется начать новую смену.',
   sh_locked:'Журнал заблокирован. Начните смену на панели управления.',
 
@@ -1319,7 +1321,21 @@ async function stopDashboardShift(){
   const endedAt = new Date().toISOString();
   const shiftName = currentShift.administrator;
   const { data, error } = await sb.from('sesiuni_schimb').update({ended_at:endedAt}).eq('id',currentShift.id).select();
-  if(error || !data?.length){ alert(t('sh_stopError')+(error?' '+error.message:'')); return; }
+  if(error){ alert(t('sh_stopError')+' '+error.message); return; }
+  if(!data?.length){
+    // Nothing matched — most likely this shift was already ended elsewhere (another tab/device
+    // sharing the location login, or an admin closed it). Resync from the server instead of
+    // leaving the UI stuck showing a "live" shift that no longer exists.
+    alert(t('sh_stopAlreadyEnded'));
+    currentShift = null;
+    dashboardTrainingRows = 1;
+    await fetchAll();
+    document.getElementById('sb-admin').textContent = currentShift ? currentShift.administrator : currentAdmin;
+    currentView = 'dashboard';
+    buildSidebar();
+    render();
+    return;
+  }
   await logAction(`A încheiat schimbul de locație: ${shiftName}`);
   currentShift = null;
   dashboardTrainingRows = 1;
