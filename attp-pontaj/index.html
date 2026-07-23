@@ -434,6 +434,21 @@
   </div>
 </div>
 
+<!-- ══ ARBITRU PROFILE MODAL ══ -->
+<div class="modal-overlay" id="arbitru-modal">
+  <div class="modal-box profile-modal-box">
+    <div class="modal-head">
+      <div class="modal-title" id="arbitru-modal-title" data-i18n="arb_fisa">Fișă arbitru</div>
+      <div class="modal-head-actions">
+        <button class="btn-primary btn-sm" id="arbitru-edit-btn" data-i18n="arb_editBtn" onclick="renderArbitruProfile(true)">Editează datele</button>
+        <button class="btn-danger btn-sm" id="arbitru-delete-btn" data-i18n="arb_deleteBtn" onclick="deleteArbitru()">Șterge arbitru</button>
+        <button class="modal-close" onclick="closeModal('arbitru-modal')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="arbitru-modal-body"></div>
+  </div>
+</div>
+
 <script>
 /* ══════════════════════ STATE ══════════════════════ */
 const SUPABASE_URL = 'https://ildoegipvcgxboijfksw.supabase.co';
@@ -442,7 +457,6 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const TOURNAMENTS = ['RIO','MEXICO Day','MEXICO Night'];
 const DAUNE_TERENURI = ['Mexico','Rio'];
-const REFEREES = ['Bambuleac Cristian','Barancean Iulia','Bulat Mihai','Calev Leonid','Ciubinidze Miroslav','Gribcov Dmitri','Iamandi Nadejda','Leu Igor','Malcoci Mihai','Melintii Vladimir','Meriacri Aurel','Mocreac Ilarion','Rusu Svetlana'];
 const TRAINERS = ['Dubrovin','Turcan','Iasciuc'];
 const TRAINING_SUMA_JUCATOR = 100;
 const TRAINING_SUMA_ANTRENOR = 200;
@@ -627,6 +641,11 @@ ro: {
   ar_turneu:'Turneu', ar_mingiNoi:'Mingi noi', ar_th_arbitru:'Arbitru', ar_th_turneu:'Turneu', ar_th_mingiNoi:'Mingi noi',
   ar_marcaMingi:'Marcă', ar_th_marcaMingi:'Marcă',
   ar_countSuffix:'eliberări', ar_none:'Nicio eliberare.', ar_needNume:'Introduceți numele arbitrului.',
+  arb_title:'Registru arbitri', arb_sub:'Arbitrii disponibili pentru turnee — gestionați lista aici.',
+  arb_addTitle:'Adăugare arbitru nou', arb_btnAdd:'+ Adaugă arbitru', arb_countSuffix:'arbitri', arb_none:'Niciun arbitru înregistrat.',
+  arb_fisa:'Fișă arbitru', arb_editTitle:'Modifică datele arbitrului', arb_editBtn:'Editează datele',
+  arb_deleteBtn:'Șterge arbitru', arb_deleteTitle:'Șterge arbitrul din registru',
+  arb_deleteConfirm:(nume)=>`Ștergeți definitiv arbitrul ${nume}? Această acțiune nu poate fi anulată.`,
 
   an_title:'Antrenamente', an_sub:'Sesiuni de antrenament individual — 100 MDL/sesiune de la jucător, 200 MDL/sesiune pentru antrenor.',
   an_totalSesiuni:'Sesiuni totale', an_totalIncasat:'Încasat de la jucători', an_sumarAntrenori:'Sumar pe antrenor',
@@ -829,6 +848,11 @@ ru: {
   ar_turneu:'Турнир', ar_mingiNoi:'Новые мячи', ar_th_arbitru:'Судья', ar_th_turneu:'Турнир', ar_th_mingiNoi:'Новые мячи',
   ar_marcaMingi:'Марка', ar_th_marcaMingi:'Марка',
   ar_countSuffix:'выдач', ar_none:'Выдач нет.', ar_needNume:'Введите имя судьи.',
+  arb_title:'Реестр судей', arb_sub:'Судьи, доступные для турниров — управляйте списком здесь.',
+  arb_addTitle:'Добавление нового судьи', arb_btnAdd:'+ Добавить судью', arb_countSuffix:'судей', arb_none:'Судьи не зарегистрированы.',
+  arb_fisa:'Карточка судьи', arb_editTitle:'Изменить данные судьи', arb_editBtn:'Редактировать данные',
+  arb_deleteBtn:'Удалить судью', arb_deleteTitle:'Удалить судью из реестра',
+  arb_deleteConfirm:(nume)=>`Окончательно удалить судью ${nume}? Это действие необратимо.`,
 
   an_title:'Тренировки', an_sub:'Индивидуальные тренировки — 100 MDL/сессию от игрока, 200 MDL/сессию тренеру.',
   an_totalSesiuni:'Всего сессий', an_totalIncasat:'Получено от игроков', an_sumarAntrenori:'Сводка по тренерам',
@@ -906,6 +930,7 @@ let currentAdmin = null;      // "Nume Prenume" afișat
 let currentAdminId = null;    // uuid din auth.users / administratori
 let currentRole = null;       // 'admin' | 'locatie'
 let currentProfileId = null;
+let currentArbitruId = null;
 let currentShift = null;
 let shiftStartPrompt = false;
 let adminDemoShiftActive = false;
@@ -950,12 +975,13 @@ function realAdmins(){ return DB.administratori.filter(a=>!a.ascuns && a.rol==='
 
 async function fetchAll(){
   const [
-    administratoriR, serviciuAdministratoriR, participantiR, intarzieriR, vestimentatieR, serviciuR, spalatorieR,
+    administratoriR, serviciuAdministratoriR, participantiR, arbitriR, intarzieriR, vestimentatieR, serviciuR, spalatorieR,
     hostelR, lenjerieR, dauneR, arbitrajR, inventarR, sarciniR, observatiiR, jurnalR, trustedIpsR, treninguriR, sesiuniR
   ] = await Promise.all([
     sb.from('administratori').select('*'),
     sb.from('serviciu_administratori').select('*').eq('activ', true).order('nume'),
     sb.from('participanti').select('*').order('created_at', {ascending:false}),
+    sb.from('arbitri').select('*').order('created_at', {ascending:false}),
     sb.from('intarzieri').select('*').order('data', {ascending:false}),
     sb.from('vestimentatie').select('*').order('data', {ascending:false}),
     sb.from('serviciu').select('*').order('data', {ascending:false}),
@@ -986,6 +1012,11 @@ async function fetchAll(){
       adresa:p.adresa, telefon:p.telefon, email:p.email, dataAvizMedical:p.data_aviz_medical,
       marime:p.marime, categorieSportiva:p.categorie_sportiva, statut:p.statut, dataInregistrarii:p.data_inregistrarii,
       eligibilAntrenament:p.eligibil_antrenament,
+    })),
+    arbitri: (arbitriR.data||[]).map(a=>({
+      id:a.id, nrDulap:a.nr_dulap, nume:a.nume, prenume:a.prenume, dataNasterii:a.data_nasterii,
+      adresa:a.adresa, telefon:a.telefon, email:a.email, dataAvizMedical:a.data_aviz_medical,
+      statut:a.statut, dataInregistrarii:a.data_inregistrarii,
     })),
     intarzieri: (intarzieriR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, arbitru:r.arbitru, data:r.data, minuteIntarziere:r.minute_intarziere, motiv:r.motiv})),
     vestimentatie: (vestimentatieR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, arbitru:r.arbitru, tip:r.tip, culoare:r.culoare, marime:r.marime, cantitate:r.cantitate, dataReturnare:r.data_returnare, stareReturnare:r.stare_returnare})),
@@ -1040,6 +1071,8 @@ async function logAction(actiune){
 
 function participant(id){ return DB.participanti.find(p=>p.id===id); }
 function participantName(id){ const p=participant(id); return p ? `${p.nume} ${p.prenume}` : '—'; }
+function arbitru(id){ return DB.arbitri.find(a=>a.id===id); }
+function arbitriActivi(){ return DB.arbitri.filter(a=>a.statut==='activ').sort((a,b)=>a.nume.localeCompare(b.nume,'ro')||a.prenume.localeCompare(b.prenume,'ro')); }
 
 /* ══════════════════════ AUTH ══════════════════════ */
 function setAuthMode(mode){
@@ -1293,7 +1326,7 @@ function participantAcOptions(extra){
 }
 function participantAndRefereeAcOptions(){
   const participants = DB.participanti.filter(p=>p.statut==='activ').map(p=>({value:'participant:'+p.id, label:`${p.nume} ${p.prenume}`}));
-  const referees = REFEREES.map(name=>({value:'referee:'+name, label:`${name} · Arbitru`}));
+  const referees = arbitriActivi().map(a=>({value:'referee:'+a.nume+' '+a.prenume, label:`${a.nume} ${a.prenume} · Arbitru`}));
   return [...participants, ...referees];
 }
 function selectedPerson(value){
@@ -1451,7 +1484,7 @@ function renderShiftWorkflow(){
           const saved = refs.find(r=>r.slotSchimb===slot) || (isFullAdmin() ? refs[slot-1] : null);
           return `<div class="ops-row">
             <div class="field"><div class="ops-slot">#${slot} · ${t('sh_referee')} ${saved?'<span class="ops-saved">· '+t('sh_saved')+'</span>':''}</div>
-              ${saved ? `<input value="${esc(saved.arbitru)}" disabled>` : `<select id="shift-ref-${slot}">${REFEREES.map(name=>`<option value="${esc(name)}">${esc(name)}</option>`).join('')}</select>`}
+              ${saved ? `<input value="${esc(saved.arbitru)}" disabled>` : `<select id="shift-ref-${slot}">${arbitriActivi().map(a=>`<option value="${esc(a.nume+' '+a.prenume)}">${esc(a.nume)} ${esc(a.prenume)}</option>`).join('')}</select>`}
             </div>
             <div class="field"><label>${t('sh_venue')}</label>${saved?`<input value="${esc(saved.turneu)}" disabled>`:`<select id="shift-venue-${slot}">${TOURNAMENTS.map(v=>`<option>${esc(v)}</option>`).join('')}</select>`}</div>
             ${saved ? `<div class="field"><label>${t('sh_balls')}</label><div style="display:grid;grid-template-columns:.9fr .7fr;gap:6px"><select id="shift-ball-brand-${saved.id}"><option ${saved.marcaMingi==='DHS'?'selected':''}>DHS</option><option ${saved.marcaMingi==='JOOLA'?'selected':''}>JOOLA</option></select><input id="shift-ball-qty-${saved.id}" type="number" min="0" value="${saved.cantitateMingi||0}"></div></div>
@@ -2406,7 +2439,7 @@ function renderArbitraj(){
     <div class="form-title">${t('ar_addTitle')}</div>
     <div class="form-grid" style="grid-template-columns:0.8fr 1.2fr 1fr 0.6fr 0.7fr auto">
       <div class="field"><label>${t('th_data')}</label><input id="af-data" type="date" value="${todayISO()}"></div>
-      <div class="field"><label>${t('ar_numeArbitru')}</label><select id="af-arbitru">${REFEREES.map(r=>`<option>${r}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('ar_numeArbitru')}</label><select id="af-arbitru">${arbitriActivi().map(a=>`<option>${esc(a.nume)} ${esc(a.prenume)}</option>`).join('')}</select></div>
       <div class="field"><label>${t('ar_turneu')}</label><select id="af-turneu">${TOURNAMENTS.map(tour=>`<option>${tour}</option>`).join('')}</select></div>
       <div class="field"><label>${t('ar_marcaMingi')}</label><select id="af-marca"><option value="DHS">DHS</option><option value="JOOLA">JOOLA</option></select></div>
       <div class="field"><label>${t('ar_mingiNoi')}</label><input id="af-mingi" type="number" min="0" value="0"></div>
@@ -2422,7 +2455,155 @@ function renderArbitraj(){
         <tr><td class="td-muted">${fmtDate(a.data)}</td><td>${esc(a.arbitru)}</td><td><span class="badge gold">${esc(a.turneu)}</span></td>
         <td>${esc(a.marcaMingi||'DHS')}</td><td class="td-gold">${a.cantitateMingi}</td><td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('arbitraj','${a.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="6">${t('ar_none')}</td></tr>`}</tbody>
     </table></div>
+  </div>
+
+  <div class="view-head"><div class="view-title">${t('arb_title')}</div></div>
+  <div class="view-sub">${t('arb_sub')}</div>
+
+  ${!hasActiveShift() ? '' : `<div class="add-form">
+    <div class="form-title">${t('arb_addTitle')}</div>
+    <div class="form-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="field"><label>${t('pa_dulap')}</label><input id="abf-dulap" placeholder="${t('pa_dulapPh')}"></div>
+      <div class="field"><label>${t('pa_nume')}</label><input id="abf-nume" placeholder="${t('pa_nume')}"></div>
+      <div class="field"><label>${t('pa_prenume')}</label><input id="abf-prenume" placeholder="${t('pa_prenume')}"></div>
+      <div class="field"><label>${t('pa_nastere')}</label><input id="abf-nastere" type="date"></div>
+      <div class="field"><label>${t('pa_telefon')}</label><input id="abf-telefon" placeholder="${t('pa_telefonPh')}"></div>
+      <div class="field"><label>${t('pa_email')}</label><input id="abf-email" placeholder="${t('pa_emailPh')}"></div>
+      <div class="field"><label>${t('pa_adresa')}</label><input id="abf-adresa" placeholder="${t('pa_adresaPh')}"></div>
+      <div class="field"><label>${t('pa_aviz')}</label><input id="abf-aviz" type="date" value="${todayISO()}"></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addArbitru()">${t('arb_btnAdd')}</button></div>
+    </div>
+  </div>`}
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${DB.arbitri.length} ${t('arb_countSuffix')}</div></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>${t('pa_th_dulap')}</th><th>${t('pa_nume')}</th><th>${t('pa_prenume')}</th><th>${t('pa_th_naștere')}</th><th>${t('pa_telefon')}</th><th>${t('th_statut')}</th></tr></thead>
+      <tbody>${DB.arbitri.length ? DB.arbitri.slice().sort((a,b)=>(a.statut==='inactiv')-(b.statut==='inactiv')||a.nume.localeCompare(b.nume,'ro')||a.prenume.localeCompare(b.prenume,'ro')).map(a=>`
+        <tr class="clickable" onclick="openArbitruProfile('${a.id}')">
+          <td class="td-muted">${esc(a.nrDulap)}</td><td class="td-name">${esc(a.nume)}</td><td>${esc(a.prenume)}</td>
+          <td class="td-muted">${fmtDate(a.dataNasterii)}</td><td class="td-muted">${esc(a.telefon)}</td>
+          <td><span class="badge ${a.statut==='activ'?'green':'muted'}">${trEnum(a.statut)}</span></td>
+        </tr>`).join('') : `<tr><td class="td-empty" colspan="6">${t('arb_none')}</td></tr>`}</tbody>
+    </table></div>
   </div>`;
+}
+async function addArbitru(){
+  const nume = document.getElementById('abf-nume').value.trim();
+  const prenume = document.getElementById('abf-prenume').value.trim();
+  if(!nume || !prenume){ alert(t('pa_needNumePrenume')); return; }
+  const row = {
+    nr_dulap: document.getElementById('abf-dulap').value.trim() || null,
+    nume, prenume,
+    data_nasterii: document.getElementById('abf-nastere').value || null,
+    adresa: document.getElementById('abf-adresa').value.trim() || null,
+    telefon: document.getElementById('abf-telefon').value.trim() || null,
+    email: document.getElementById('abf-email').value.trim() || null,
+    data_aviz_medical: document.getElementById('abf-aviz').value || null,
+    statut: 'activ',
+  };
+  const { data, error } = await sb.from('arbitri').insert(row).select().single();
+  if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
+  DB.arbitri.unshift({
+    id:data.id, nrDulap:data.nr_dulap, nume:data.nume, prenume:data.prenume, dataNasterii:data.data_nasterii,
+    adresa:data.adresa, telefon:data.telefon, email:data.email, dataAvizMedical:data.data_aviz_medical,
+    statut:data.statut, dataInregistrarii:data.data_inregistrarii,
+  });
+  await logAction(`A înregistrat arbitru nou: ${nume} ${prenume}`);
+  render();
+}
+function openArbitruProfile(id){
+  currentArbitruId = id;
+  renderArbitruProfile(false);
+  openModal('arbitru-modal');
+}
+function renderArbitruProfile(editing = false){
+  const a = arbitru(currentArbitruId); if(!a) return;
+  document.getElementById('arbitru-modal-title').textContent = `${a.nume} ${a.prenume}`;
+  const editBtn = document.getElementById('arbitru-edit-btn');
+  editBtn.style.display = (editing || !isFullAdmin()) ? 'none' : '';
+  editBtn.title = t('arb_editTitle');
+  const deleteBtn = document.getElementById('arbitru-delete-btn');
+  deleteBtn.style.display = (editing || !isFullAdmin()) ? 'none' : '';
+  deleteBtn.title = t('arb_deleteTitle');
+
+  if(editing){
+    document.getElementById('arbitru-modal-body').innerHTML = `
+      <div class="profile-edit-grid">
+        <div class="field"><label>${t('pa_dulap')}</label><input id="eab-dulap" value="${esc(a.nrDulap)}" placeholder="${t('pa_dulapPh')}"></div>
+        <div class="field"><label>${t('th_statut')}</label><select id="eab-statut">
+          <option value="activ" ${a.statut==='activ'?'selected':''}>${trEnum('activ')}</option>
+          <option value="inactiv" ${a.statut==='inactiv'?'selected':''}>${trEnum('inactiv')}</option>
+        </select></div>
+        <div class="field"><label>${t('pa_nume')}</label><input id="eab-nume" value="${esc(a.nume)}"></div>
+        <div class="field"><label>${t('pa_prenume')}</label><input id="eab-prenume" value="${esc(a.prenume)}"></div>
+        <div class="field"><label>${t('pa_nastere')}</label><input id="eab-nastere" type="date" value="${esc(a.dataNasterii)}"></div>
+        <div class="field"><label>${t('pa_telefon')}</label><input id="eab-telefon" value="${esc(a.telefon)}"></div>
+        <div class="field"><label>${t('pa_email')}</label><input id="eab-email" type="email" value="${esc(a.email)}"></div>
+        <div class="field"><label>${t('pa_adresa')}</label><input id="eab-adresa" value="${esc(a.adresa)}"></div>
+        <div class="field"><label>${t('pa_aviz')}</label><input id="eab-aviz" type="date" value="${esc(a.dataAvizMedical)}"></div>
+      </div>
+      <div class="profile-edit-actions">
+        <button class="btn-ghost" onclick="renderArbitruProfile(false)">${t('btn_cancel')}</button>
+        <button class="btn-primary" onclick="saveArbitruProfile()">${t('btn_save')}</button>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('arbitru-modal-body').innerHTML = `
+    <div class="profile-grid">
+      <div><div class="k">${t('pa_dulap')}</div><div class="v">${esc(a.nrDulap)||'—'}</div></div>
+      <div><div class="k">${t('th_statut')}</div><div class="v"><span class="badge ${a.statut==='activ'?'green':'muted'}">${trEnum(a.statut)}</span></div></div>
+      <div><div class="k">${t('pa_nastere')}</div><div class="v">${fmtDate(a.dataNasterii)}</div></div>
+      <div><div class="k">${t('pa_adresa')}</div><div class="v">${esc(a.adresa)||'—'}</div></div>
+      <div><div class="k">${t('pa_telefon')}</div><div class="v">${esc(a.telefon)||'—'}</div></div>
+      <div><div class="k">${t('pa_email')}</div><div class="v">${esc(a.email)||'—'}</div></div>
+      <div><div class="k">${t('pa_aviz')}</div><div class="v">${fmtDate(a.dataAvizMedical)||'—'}</div></div>
+    </div>`;
+}
+async function saveArbitruProfile(){
+  const a = arbitru(currentArbitruId); if(!a) return;
+  const nume = document.getElementById('eab-nume').value.trim();
+  const prenume = document.getElementById('eab-prenume').value.trim();
+  if(!nume || !prenume){ alert(t('pa_needNumePrenume2')); return; }
+  const row = {
+    nr_dulap: document.getElementById('eab-dulap').value.trim() || null,
+    nume, prenume,
+    data_nasterii: document.getElementById('eab-nastere').value || null,
+    telefon: document.getElementById('eab-telefon').value.trim() || null,
+    email: document.getElementById('eab-email').value.trim() || null,
+    adresa: document.getElementById('eab-adresa').value.trim() || null,
+    data_aviz_medical: document.getElementById('eab-aviz').value || null,
+    statut: document.getElementById('eab-statut').value,
+  };
+  const saveBtn = document.querySelector('#arbitru-modal-body .btn-primary');
+  if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = t('btn_saving'); }
+  const { data, error } = await sb.from('arbitri').update(row).eq('id', a.id).select().single();
+  if(error){
+    alert('Actualizarea a eșuat: ' + error.message);
+    if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = t('btn_save'); }
+    return;
+  }
+  Object.assign(a, {
+    nrDulap:data.nr_dulap, nume:data.nume, prenume:data.prenume, dataNasterii:data.data_nasterii,
+    adresa:data.adresa, telefon:data.telefon, email:data.email, dataAvizMedical:data.data_aviz_medical,
+    statut:data.statut,
+  });
+  await logAction(`A actualizat profilul arbitrului ${data.nume} ${data.prenume}`);
+  render();
+  renderArbitruProfile(false);
+}
+async function deleteArbitru(){
+  const a = arbitru(currentArbitruId); if(!a) return;
+  const nume = `${a.nume} ${a.prenume}`;
+  if(!confirm(t('arb_deleteConfirm')(nume))) return;
+  const { data, error } = await sb.from('arbitri').delete().eq('id', a.id).select();
+  if(error){ alert('Ștergerea a eșuat: ' + error.message); return; }
+  if(!data || !data.length){ alert('Ștergerea a eșuat: nu aveți permisiunea necesară.'); return; }
+  await logAction(`A șters arbitrul ${nume}`);
+  closeModal('arbitru-modal');
+  await fetchAll();
+  render();
 }
 async function addArbitraj(){
   const arbitru = document.getElementById('af-arbitru').value.trim();
@@ -3193,7 +3374,7 @@ async function rotateLocatiePin(){
 }
 
 /* ══════════════════════ INIT ══════════════════════ */
-document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeModal('profile-modal'); } });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeModal('profile-modal'); closeModal('arbitru-modal'); } });
 </script>
 </body>
 </html>
