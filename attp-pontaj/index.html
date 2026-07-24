@@ -751,7 +751,7 @@ ro: {
   act_numeArbitru:'Nume arbitru', act_cartonas:'Cartonaș', act_descriere:'Descriere', act_platou:'Platou',
   act_tipMiscare:'Intrare/Ieșire', act_articol:'Articol', act_cantitate:'Cantitate', act_sursa:'Nume participant/furnizor',
   act_camera:'Cameră', act_oraCazarii:'Ora cazării', act_statut:'Statut',
-  act_antrenor:'Antrenor', act_ora:'Ora', act_da:'DA', act_nu:'NU',
+  act_antrenor:'Antrenor', act_data:'Data', act_ora:'Ora', act_programat:'Programat', act_desfasurat:'Desfășurat', act_da:'DA', act_nu:'NU',
   act_goale:'—', act_generat:'Act generat și salvat în Rapoarte.', act_needShift:'Nu există un schimb activ.',
   re_print:'Imprimare', re_sect_participanti:'Rapoarte privind participanții', re_sect_admin:'Rapoarte administrative',
   re_sect_fin:'Rapoarte financiare', re_sect_inv:'Rapoarte de inventar',
@@ -992,7 +992,7 @@ ru: {
   act_numeArbitru:'Имя судьи', act_cartonas:'Карточка', act_descriere:'Описание', act_platou:'Площадка',
   act_tipMiscare:'Приход/расход', act_articol:'Товар', act_cantitate:'Количество', act_sursa:'Имя участника/поставщика',
   act_camera:'Комната', act_oraCazarii:'Время заселения', act_statut:'Статус',
-  act_antrenor:'Тренер', act_ora:'Время', act_da:'ДА', act_nu:'НЕТ',
+  act_antrenor:'Тренер', act_data:'Дата', act_ora:'Время', act_programat:'Запланировано', act_desfasurat:'Проведено', act_da:'ДА', act_nu:'НЕТ',
   act_goale:'—', act_generat:'Акт сформирован и сохранён в Отчётах.', act_needShift:'Нет активной смены.',
   re_print:'Печать', re_sect_participanti:'Отчёты об участниках', re_sect_admin:'Административные отчёты',
   re_sect_fin:'Финансовые отчёты', re_sect_inv:'Отчёты по складу',
@@ -1543,6 +1543,14 @@ async function confirmLocationShift(){
    date, since these are night shifts and a date filter would wrongly split one shift's data
    across two days. */
 const INVENTAR_ADMIN_MOTIV_PREFIXES = ['Ajustare manuală din pagina Inventar', 'Corecție manuală din pagina Inventar', 'Anulare returnare'];
+function trainingStatusAt(row, cutoffIso){
+  const cutoffLocal = new Intl.DateTimeFormat('sv-SE', {
+    timeZone:'Europe/Chisinau', year:'numeric', month:'2-digit', day:'2-digit',
+    hour:'2-digit', minute:'2-digit', hourCycle:'h23',
+  }).format(new Date(cutoffIso)).replace(' ', 'T');
+  return `${row.data}T${String(row.ora||'23:59').slice(0,5)}` > cutoffLocal ? 'programat' : 'desfășurat';
+}
+
 async function buildActContinut(startedAt, endedAt, shiftId){
   const inShift = createdAt => !!createdAt && createdAt >= startedAt && createdAt <= endedAt;
   const { data: miscariData, error: miscariError } = await sb.from('inventar_miscari').select('*').gte('created_at', startedAt).lte('created_at', endedAt).order('created_at');
@@ -1563,9 +1571,9 @@ async function buildActContinut(startedAt, endedAt, shiftId){
       return { tip: r.tip, articol: item ? `${item.denumire}${item.marime && item.marime!=='—' ? ' — '+item.marime : ''}` : r.inventar_id, cantitate: r.cantitate, motiv: r.motiv || '' };
     }),
     hostel: DB.hostel.filter(r=>inShift(r.createdAt)).map(r=>({ nume: participantName(r.participantId), camera: r.observatii || '', ora: fmtTime(r.createdAt), statut: r.statut })),
-    treninguri: DB.treninguri.filter(r=>inShift(r.createdAt)).map(r=>({ nume: participantName(r.participantId), antrenor: r.antrenor, ora: r.ora ? String(r.ora).slice(0,5) : '' })),
+    treninguri: DB.treninguri.filter(r=>inShift(r.createdAt)).map(r=>({ nume: participantName(r.participantId), antrenor: r.antrenor, data: r.data, ora: r.ora ? String(r.ora).slice(0,5) : '', statut: trainingStatusAt(r, endedAt) })),
     sarcini: DB.sarcini.filter(r=>inShift(r.createdAt)).map(r=>({ statut: r.status, descriere: r.descriere || '' })),
-    observatii: DB.observatii.filter(r=>inShift(r.createdAt)).map(r=>({ descriere: r.descriere || '' })),
+    observatii: DB.observatii.filter(r=>inShift(r.createdAt)).map(r=>({ nume: participantName(r.participantId), descriere: r.descriere || '' })),
   };
 }
 async function saveActSchimb({ shiftId, administratorServiciuId, administratorId, numeAdministrator, startedAt, endedAt }){
@@ -1626,9 +1634,9 @@ function actSections(c){
     { titleKey:'act_s_daune', headers:[t('act_numeSportiv'), t('act_platou'), t('act_descriere')], rows:(c.daune||[]).map(r=>[r.nume, r.platou||'', r.descriere||'']) },
     { titleKey:'act_s_inventar', headers:[t('act_tipMiscare'), t('act_articol'), t('act_cantitate'), t('act_motiv')], rows:(c.inventar||[]).map(r=>[trEnum(r.tip), r.articol, r.cantitate, r.motiv||'']) },
     { titleKey:'act_s_hostel', headers:[t('act_numeSportiv'), t('act_camera'), t('act_oraCazarii'), t('act_statut')], rows:(c.hostel||[]).map(r=>[r.nume, r.camera||'', r.ora||'', trEnum(r.statut)]) },
-    { titleKey:'act_s_treninguri', headers:[t('act_numeSportiv'), t('act_antrenor'), t('act_ora')], rows:(c.treninguri||[]).map(r=>[r.nume, r.antrenor, r.ora||'']) },
+    { titleKey:'act_s_treninguri', headers:[t('act_numeSportiv'), t('act_antrenor'), t('act_data'), t('act_ora'), t('act_statut')], rows:(c.treninguri||[]).map(r=>[r.nume, r.antrenor, r.data?fmtDate(r.data):'', r.ora||'', r.statut==='programat'?t('act_programat'):t('act_desfasurat')]) },
     { titleKey:'act_s_sarcini', headers:[t('act_statut'), t('act_descriere')], rows:(c.sarcini||[]).map(r=>[trEnum(r.statut), r.descriere||'']) },
-    { titleKey:'act_s_observatii', headers:[t('act_descriere')], rows:(c.observatii||[]).map(r=>[r.descriere||'']) },
+    { titleKey:'act_s_observatii', headers:[t('act_numeSportiv'), t('act_descriere')], rows:(c.observatii||[]).map(r=>[r.nume||'—', r.descriere||'']) },
   ];
 }
 function actSectionTable(titleKey, headers, rows){
