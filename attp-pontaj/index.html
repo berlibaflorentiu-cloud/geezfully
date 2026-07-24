@@ -1543,6 +1543,10 @@ async function confirmLocationShift(){
    date, since these are night shifts and a date filter would wrongly split one shift's data
    across two days. */
 const INVENTAR_ADMIN_MOTIV_PREFIXES = ['Ajustare manuală din pagina Inventar', 'Corecție manuală din pagina Inventar', 'Anulare returnare'];
+function cleanActReason(value){
+  return String(value||'').replace(/\s*#[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b/ig, '').trim();
+}
+
 function trainingStatusAt(row, cutoffIso){
   const cutoffLocal = new Intl.DateTimeFormat('sv-SE', {
     timeZone:'Europe/Chisinau', year:'numeric', month:'2-digit', day:'2-digit',
@@ -1568,7 +1572,7 @@ async function buildActContinut(startedAt, endedAt, shiftId){
     // the Inventar tab are administrative bookkeeping, not something the person on duty did.
     inventar: (miscariData||[]).filter(r => !INVENTAR_ADMIN_MOTIV_PREFIXES.some(p => (r.motiv||'').startsWith(p))).map(r=>{
       const item = inventarById[r.inventar_id];
-      return { tip: r.tip, articol: item ? `${item.denumire}${item.marime && item.marime!=='—' ? ' — '+item.marime : ''}` : r.inventar_id, cantitate: r.cantitate, motiv: r.motiv || '' };
+      return { tip: r.tip, articol: item ? `${item.denumire}${item.marime && item.marime!=='—' ? ' — '+item.marime : ''}` : r.inventar_id, cantitate: r.cantitate, motiv: cleanActReason(r.motiv) };
     }),
     hostel: DB.hostel.filter(r=>inShift(r.createdAt)).map(r=>({ nume: participantName(r.participantId), camera: r.observatii || '', ora: fmtTime(r.createdAt), statut: r.statut })),
     treninguri: DB.treninguri.filter(r=>inShift(r.createdAt)).map(r=>({ nume: participantName(r.participantId), antrenor: r.antrenor, data: r.data, ora: r.ora ? String(r.ora).slice(0,5) : '', statut: trainingStatusAt(r, endedAt) })),
@@ -1632,7 +1636,7 @@ function actSections(c){
     { titleKey:'act_s_arbitraj', headers:[t('act_platou'), t('act_numeArbitru')], rows:(c.arbitraj||[]).map(r=>[r.platou, r.arbitru]) },
     { titleKey:'act_s_fairplay', headers:[t('act_numeSportiv'), t('act_cartonas'), t('act_descriere')], rows:(c.fairPlay||[]).map(r=>[r.nume, trEnum(r.cartonas), r.descriere||'']) },
     { titleKey:'act_s_daune', headers:[t('act_numeSportiv'), t('act_platou'), t('act_descriere')], rows:(c.daune||[]).map(r=>[r.nume, r.platou||'', r.descriere||'']) },
-    { titleKey:'act_s_inventar', headers:[t('act_tipMiscare'), t('act_articol'), t('act_cantitate'), t('act_motiv')], rows:(c.inventar||[]).map(r=>[trEnum(r.tip), r.articol, r.cantitate, r.motiv||'']) },
+    { titleKey:'act_s_inventar', headers:[t('act_tipMiscare'), t('act_articol'), t('act_cantitate'), t('act_motiv')], rows:(c.inventar||[]).map(r=>[trEnum(r.tip), r.articol, r.cantitate, cleanActReason(r.motiv)]) },
     { titleKey:'act_s_hostel', headers:[t('act_numeSportiv'), t('act_camera'), t('act_oraCazarii'), t('act_statut')], rows:(c.hostel||[]).map(r=>[r.nume, r.camera||'', r.ora||'', trEnum(r.statut)]) },
     { titleKey:'act_s_treninguri', headers:[t('act_numeSportiv'), t('act_antrenor'), t('act_data'), t('act_ora'), t('act_statut')], rows:(c.treninguri||[]).map(r=>[r.nume, r.antrenor, r.data?fmtDate(r.data):'', r.ora||'', r.statut==='programat'?t('act_programat'):t('act_desfasurat')]) },
     { titleKey:'act_s_sarcini', headers:[t('act_statut'), t('act_descriere')], rows:(c.sarcini||[]).map(r=>[trEnum(r.statut), r.descriere||'']) },
