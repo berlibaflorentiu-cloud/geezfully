@@ -480,6 +480,8 @@
     <div class="modal-head">
       <div class="modal-title" data-i18n="act_docTitle">Act de schimb</div>
       <div class="modal-head-actions">
+        <button class="btn-ghost btn-sm" onclick="exportActExcel(currentActPreview)" data-i18n="re_excel">Excel</button>
+        <button class="btn-ghost btn-sm" onclick="exportActPdf(currentActPreview)" data-i18n="re_pdf">PDF</button>
         <button class="btn-ghost btn-sm" onclick="window.print()" data-i18n="re_print">Imprimare</button>
         <button class="modal-close" onclick="closeModal('act-modal')">✕</button>
       </div>
@@ -1534,15 +1536,19 @@ async function confirmLocationShift(){
 async function generateActSchimb(){
   const active = isFullAdmin() ? adminDemoShiftActive : !!currentShift;
   if(!active){ alert(t('act_needShift')); return; }
+  // Scoped by the shift's actual entry/exit window (sesiuni_schimb.started_at → generation time),
+  // never by calendar date — these are night shifts, so a date filter would wrongly split one
+  // shift's data across two days.
   const startedAt = isFullAdmin() ? new Date(Date.now() - 8*3600*1000).toISOString() : currentShift.startedAt;
+  const now = new Date().toISOString();
   const shiftId = isFullAdmin() ? null : currentShift.id;
   const administratorServiciuId = isFullAdmin() ? null : currentShift.administratorServiciuId;
   const numeAdministrator = activeShiftName();
   const btn = document.getElementById('act-generate-btn');
   if(btn){ btn.disabled = true; btn.textContent = t('act_generating'); }
 
-  const inShift = createdAt => !!createdAt && createdAt >= startedAt;
-  const { data: miscariData, error: miscariError } = await sb.from('inventar_miscari').select('*').gte('created_at', startedAt).order('created_at');
+  const inShift = createdAt => !!createdAt && createdAt >= startedAt && createdAt <= now;
+  const { data: miscariData, error: miscariError } = await sb.from('inventar_miscari').select('*').gte('created_at', startedAt).lte('created_at', now).order('created_at');
   if(miscariError){
     if(btn){ btn.disabled = false; btn.textContent = t('act_btnGenerate'); }
     alert('Generarea actului a eșuat: ' + miscariError.message);
@@ -1572,6 +1578,7 @@ async function generateActSchimb(){
     administrator_id: isFullAdmin() ? currentAdminId : null,
     data: todayISO(),
     inceput_perioada: startedAt,
+    sfarsit_perioada: now,
     nume_administrator: numeAdministrator,
     continut,
   };
@@ -1582,17 +1589,33 @@ async function generateActSchimb(){
   await logAction(`A generat actul de schimb pentru ${numeAdministrator}`);
   openActPreview(DB.acteSchimb[0]);
 }
+let currentActPreview = null;
 function openActPreview(act){
   if(!act) return;
+  currentActPreview = act;
   document.getElementById('act-modal-body').innerHTML = renderActDoc(act);
   openModal('act-modal');
 }
-function actSectionTable(titleKey, headers, rows, rowFn){
+/* Section definitions shared by the on-screen preview and both exports, so all three always agree. */
+function actSections(c){
+  return [
+    { titleKey:'act_s_intarzieri', headers:[t('act_numeSportiv'), t('act_min'), t('act_motiv')], rows:(c.intarzieri||[]).map(r=>[r.nume, r.min ?? '', r.motiv||'']) },
+    { titleKey:'act_s_arbitraj', headers:[t('act_platou'), t('act_numeArbitru')], rows:(c.arbitraj||[]).map(r=>[r.platou, r.arbitru]) },
+    { titleKey:'act_s_fairplay', headers:[t('act_numeSportiv'), t('act_cartonas'), t('act_descriere')], rows:(c.fairPlay||[]).map(r=>[r.nume, trEnum(r.cartonas), r.descriere||'']) },
+    { titleKey:'act_s_daune', headers:[t('act_numeSportiv'), t('act_platou'), t('act_descriere')], rows:(c.daune||[]).map(r=>[r.nume, r.platou||'', r.descriere||'']) },
+    { titleKey:'act_s_inventar', headers:[t('act_tipMiscare'), t('act_articol'), t('act_cantitate'), t('act_motiv')], rows:(c.inventar||[]).map(r=>[trEnum(r.tip), r.articol, r.cantitate, r.motiv||'']) },
+    { titleKey:'act_s_hostel', headers:[t('act_numeSportiv'), t('act_camera'), t('act_oraCazarii'), t('act_statut')], rows:(c.hostel||[]).map(r=>[r.nume, r.camera||'', r.ora||'', trEnum(r.statut)]) },
+    { titleKey:'act_s_treninguri', headers:[t('act_numeSportiv'), t('act_antrenor'), t('act_ora')], rows:(c.treninguri||[]).map(r=>[r.nume, r.antrenor, r.ora||'']) },
+    { titleKey:'act_s_sarcini', headers:[t('act_statut'), t('act_descriere')], rows:(c.sarcini||[]).map(r=>[trEnum(r.statut), r.descriere||'']) },
+    { titleKey:'act_s_observatii', headers:[t('act_descriere')], rows:(c.observatii||[]).map(r=>[r.descriere||'']) },
+  ];
+}
+function actSectionTable(titleKey, headers, rows){
   return `<div class="act-section">
     <div class="act-section-title">${t(titleKey)}</div>
     <table class="act-table">
       <thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead>
-      <tbody>${rows.length ? rows.map(rowFn).join('') : `<tr class="act-empty-row"><td colspan="${headers.length}">${t('act_goale')}</td></tr>`}</tbody>
+      <tbody>${rows.length ? rows.map(r=>`<tr>${r.map(cell=>`<td>${cell===''||cell==null?'—':esc(cell)}</td>`).join('')}</tr>`).join('') : `<tr class="act-empty-row"><td colspan="${headers.length}">${t('act_goale')}</td></tr>`}</tbody>
     </table>
   </div>`;
 }
@@ -1614,17 +1637,66 @@ function renderActDoc(act){
       </div>
       ${actStampHtml(act.data)}
     </div>
-
-    ${actSectionTable('act_s_intarzieri', [t('act_numeSportiv'), t('act_min'), t('act_motiv')], c.intarzieri||[], r=>`<tr><td>${esc(r.nume)}</td><td>${r.min ?? '—'}</td><td>${esc(r.motiv)||'—'}</td></tr>`)}
-    ${actSectionTable('act_s_arbitraj', [t('act_platou'), t('act_numeArbitru')], c.arbitraj||[], r=>`<tr><td>${esc(r.platou)}</td><td>${esc(r.arbitru)}</td></tr>`)}
-    ${actSectionTable('act_s_fairplay', [t('act_numeSportiv'), t('act_cartonas'), t('act_descriere')], c.fairPlay||[], r=>`<tr><td>${esc(r.nume)}</td><td>${esc(trEnum(r.cartonas))}</td><td>${esc(r.descriere)||'—'}</td></tr>`)}
-    ${actSectionTable('act_s_daune', [t('act_numeSportiv'), t('act_platou'), t('act_descriere')], c.daune||[], r=>`<tr><td>${esc(r.nume)}</td><td>${esc(r.platou)||'—'}</td><td>${esc(r.descriere)}</td></tr>`)}
-    ${actSectionTable('act_s_inventar', [t('act_tipMiscare'), t('act_articol'), t('act_cantitate'), t('act_motiv')], c.inventar||[], r=>`<tr><td>${esc(trEnum(r.tip))}</td><td>${esc(r.articol)}</td><td>${r.cantitate}</td><td>${esc(r.motiv)||'—'}</td></tr>`)}
-    ${actSectionTable('act_s_hostel', [t('act_numeSportiv'), t('act_camera'), t('act_oraCazarii'), t('act_statut')], c.hostel||[], r=>`<tr><td>${esc(r.nume)}</td><td>${esc(r.camera)||'—'}</td><td>${esc(r.ora)}</td><td>${esc(trEnum(r.statut))}</td></tr>`)}
-    ${actSectionTable('act_s_treninguri', [t('act_numeSportiv'), t('act_antrenor'), t('act_ora')], c.treninguri||[], r=>`<tr><td>${esc(r.nume)}</td><td>${esc(r.antrenor)}</td><td>${esc(r.ora)||'—'}</td></tr>`)}
-    ${actSectionTable('act_s_sarcini', [t('act_statut'), t('act_descriere')], c.sarcini||[], r=>`<tr><td>${esc(trEnum(r.statut))}</td><td>${esc(r.descriere)}</td></tr>`)}
-    ${actSectionTable('act_s_observatii', [t('act_descriere')], c.observatii||[], r=>`<tr><td>${esc(r.descriere)}</td></tr>`)}
+    ${actSections(c).map(s=>actSectionTable(s.titleKey, s.headers, s.rows)).join('')}
   </div>`;
+}
+function actFileBase(act){
+  return `Act-schimb_${act.data}_${String(act.numeAdministrator||'').trim().replace(/\s+/g,'-')}`;
+}
+function exportActExcel(act){
+  if(!act) return;
+  if(!window.XLSX){ alert(t('re_noExcel')); return; }
+  const sections = actSections(act.continut || {});
+  const rows = [
+    [t('act_docTitle').toUpperCase()],
+    [`${t('act_dataSchimb')}: ${fmtDate(act.data)}    ${t('act_numeAdmin')}: ${act.numeAdministrator||''}`],
+    [],
+  ];
+  const boldRowIdx = [0];
+  sections.forEach(s=>{
+    boldRowIdx.push(rows.length);
+    rows.push([t(s.titleKey)]);
+    rows.push(s.headers);
+    if(s.rows.length) s.rows.forEach(r=>rows.push(r.map(cell=>cell===''||cell==null?'—':cell)));
+    else rows.push([t('act_goale')]);
+    rows.push([]);
+  });
+  const sheet = XLSX.utils.aoa_to_sheet(rows);
+  sheet['!cols'] = [{wch:26},{wch:22},{wch:42},{wch:16}];
+  const titleStyle = { font:{bold:true,sz:14,color:{rgb:'C8A96E'}}, fill:{fgColor:{rgb:'111820'}} };
+  const sectionStyle = { font:{bold:true,color:{rgb:'FFFFFF'}}, fill:{fgColor:{rgb:'343D49'}} };
+  boldRowIdx.forEach((r,i)=>{
+    const cell = sheet[XLSX.utils.encode_cell({r,c:0})];
+    if(cell) cell.s = i===0 ? titleStyle : sectionStyle;
+  });
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, sheet, 'Act');
+  XLSX.writeFile(workbook, actFileBase(act)+'.xlsx');
+}
+function exportActPdf(act){
+  if(!act) return;
+  if(!window.jspdf?.jsPDF){ alert(t('re_noPdf')); return; }
+  const pdfSafe = value => String(value==null?'':value).normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[șş]/g,'s').replace(/[țţ]/g,'t').replace(/[ȘŞ]/g,'S').replace(/[ȚŢ]/g,'T').replace(/[—–]/g,'-');
+  const doc = new window.jspdf.jsPDF();
+  doc.setFontSize(16); doc.text(pdfSafe(t('act_docTitle')), 12, 14);
+  doc.setFontSize(9); doc.setTextColor(85);
+  doc.text(pdfSafe(`${t('act_dataSchimb')}: ${fmtDate(act.data)}    ${t('act_numeAdmin')}: ${act.numeAdministrator||''}`), 12, 20);
+  let y = 26;
+  actSections(act.continut || {}).forEach(s=>{
+    doc.autoTable({
+      startY:y,
+      head:[[{content:pdfSafe(t(s.titleKey)), colSpan:s.headers.length, styles:{fillColor:[232,235,240], textColor:[35,42,52], fontStyle:'bold'}}], s.headers.map(pdfSafe)],
+      body: s.rows.length ? s.rows.map(r=>r.map(cell=>cell===''||cell==null?'-':pdfSafe(cell))) : [[{content:pdfSafe(t('act_goale')), colSpan:s.headers.length, styles:{fontStyle:'italic', textColor:[150,150,150]}}]],
+      theme:'grid',
+      margin:{left:12,right:12},
+      styles:{fontSize:8, cellPadding:2, lineColor:[205,210,218], lineWidth:.15, overflow:'linebreak'},
+      headStyles:{fillColor:[55,65,81], textColor:255, fontStyle:'bold'},
+      rowPageBreak:'avoid',
+    });
+    y = doc.lastAutoTable.finalY + 6;
+  });
+  doc.save(actFileBase(act)+'.pdf');
 }
 function renderActeSchimbList(){
   const acts = DB.acteSchimb || [];
