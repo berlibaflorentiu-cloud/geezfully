@@ -740,6 +740,8 @@ ro: {
   re_title:'Rapoarte și statistici', re_sub:'Generare rapoarte pentru orice perioadă. Export: Excel, PDF, imprimare.',
   re_perioada:'Perioadă raport', re_de_la:'De la', re_pana_la:'Până la', re_excel:'Excel', re_pdf:'PDF',
   act_sectionTitle:'Acte de schimb', act_sectionSub:'Actele generate la închiderea fiecărui schimb.',
+  act_pastTitle:'Generează act pentru un schimb anterior', act_pastLoad:'Încarcă schimburile', act_pastPick:'Schimb',
+  act_pastNone:'Niciun schimb încheiat găsit.', act_pastAlready:'(act deja generat)',
   act_none:'Niciun act generat încă.', act_btnGenerate:'Generează act', act_generating:'Se generează…',
   act_docTitle:'Act de schimb', act_perioada:'Perioada',
   act_s_admin:'Admin', act_s_intarzieri:'Întârzieri', act_s_arbitraj:'Arbitraj', act_s_fairplay:'Fair Play',
@@ -979,6 +981,8 @@ ru: {
   re_title:'Отчёты и статистика', re_sub:'Формирование отчётов за любой период. Экспорт: Excel, PDF, печать.',
   re_perioada:'Период отчёта', re_de_la:'С', re_pana_la:'По', re_excel:'Excel', re_pdf:'PDF',
   act_sectionTitle:'Акты смены', act_sectionSub:'Акты, сформированные при закрытии каждой смены.',
+  act_pastTitle:'Сформировать акт для прошедшей смены', act_pastLoad:'Загрузить смены', act_pastPick:'Смена',
+  act_pastNone:'Завершённых смен не найдено.', act_pastAlready:'(акт уже создан)',
   act_none:'Акты ещё не созданы.', act_btnGenerate:'Сформировать акт', act_generating:'Формируется…',
   act_docTitle:'Акт смены', act_perioada:'Период',
   act_s_admin:'Админ', act_s_intarzieri:'Опоздания', act_s_arbitraj:'Арбитраж', act_s_fairplay:'Фэйр-плей',
@@ -1533,33 +1537,21 @@ async function confirmLocationShift(){
   render();
 }
 /* ══════════════════════ ACT DE SCHIMB ══════════════════════ */
-async function generateActSchimb(){
-  const active = isFullAdmin() ? adminDemoShiftActive : !!currentShift;
-  if(!active){ alert(t('act_needShift')); return; }
-  // Scoped by the shift's actual entry/exit window (sesiuni_schimb.started_at → generation time),
-  // never by calendar date — these are night shifts, so a date filter would wrongly split one
-  // shift's data across two days.
-  const startedAt = isFullAdmin() ? new Date(Date.now() - 8*3600*1000).toISOString() : currentShift.startedAt;
-  const now = new Date().toISOString();
-  const shiftId = isFullAdmin() ? null : currentShift.id;
-  const administratorServiciuId = isFullAdmin() ? null : currentShift.administratorServiciuId;
-  const numeAdministrator = activeShiftName();
-  const btn = document.getElementById('act-generate-btn');
-  if(btn){ btn.disabled = true; btn.textContent = t('act_generating'); }
-
-  const inShift = createdAt => !!createdAt && createdAt >= startedAt && createdAt <= now;
-  const { data: miscariData, error: miscariError } = await sb.from('inventar_miscari').select('*').gte('created_at', startedAt).lte('created_at', now).order('created_at');
-  if(miscariError){
-    if(btn){ btn.disabled = false; btn.textContent = t('act_btnGenerate'); }
-    alert('Generarea actului a eșuat: ' + miscariError.message);
-    return;
-  }
+/* Core builder shared by the live "generate for current shift" button and the admin
+   "generate for a past shift" picker — always scoped by the shift's actual entry/exit window
+   (sesiuni_schimb.started_at → ended_at, or → now for a still-open shift), never by calendar
+   date, since these are night shifts and a date filter would wrongly split one shift's data
+   across two days. */
+async function buildActContinut(startedAt, endedAt, shiftId){
+  const inShift = createdAt => !!createdAt && createdAt >= startedAt && createdAt <= endedAt;
+  const { data: miscariData, error: miscariError } = await sb.from('inventar_miscari').select('*').gte('created_at', startedAt).lte('created_at', endedAt).order('created_at');
+  if(miscariError) throw miscariError;
   const inventarById = Object.fromEntries(DB.inventar.map(i=>[i.id,i]));
 
-  const continut = {
-    admin: { data: todayISO(), nume: numeAdministrator },
+  return {
+    admin: { data: startedAt.slice(0,10), nume: '' },
     intarzieri: DB.intarzieri.filter(r=>inShift(r.createdAt)).map(r=>({ nume: entryPersonName(r), min: r.minuteIntarziere, motiv: r.motiv || '' })),
-    arbitraj: (isFullAdmin() ? DB.arbitraj.filter(r=>demoShiftArbitrajIds.includes(r.id)) : DB.arbitraj.filter(r=>r.sesiuneSchimbId===shiftId)).map(r=>({ platou: r.turneu, arbitru: r.arbitru })),
+    arbitraj: DB.arbitraj.filter(r=>r.sesiuneSchimbId===shiftId).map(r=>({ platou: r.turneu, arbitru: r.arbitru })),
     fairPlay: DB.fairPlay.filter(r=>inShift(r.createdAt)).map(r=>({ nume: participantName(r.participantId), cartonas: r.tipCartonas, descriere: r.descriere || '' })),
     daune: DB.daune.filter(r=>inShift(r.createdAt)).map(r=>({ nume: participantName(r.participantId), platou: r.teren || '', descriere: `${r.inventarAfectat} — ${r.natura}` })),
     inventar: (miscariData||[]).map(r=>{
@@ -1571,23 +1563,45 @@ async function generateActSchimb(){
     sarcini: DB.sarcini.filter(r=>inShift(r.createdAt)).map(r=>({ statut: r.status, descriere: r.descriere || '' })),
     observatii: DB.observatii.filter(r=>inShift(r.createdAt)).map(r=>({ descriere: r.descriere || '' })),
   };
-
+}
+async function saveActSchimb({ shiftId, administratorServiciuId, administratorId, numeAdministrator, startedAt, endedAt }){
+  const continut = await buildActContinut(startedAt, endedAt, shiftId);
+  continut.admin.nume = numeAdministrator;
   const row = {
     sesiune_schimb_id: shiftId,
     administrator_serviciu_id: administratorServiciuId,
-    administrator_id: isFullAdmin() ? currentAdminId : null,
-    data: todayISO(),
+    administrator_id: administratorId,
+    data: startedAt.slice(0,10),
     inceput_perioada: startedAt,
-    sfarsit_perioada: now,
+    sfarsit_perioada: endedAt,
     nume_administrator: numeAdministrator,
     continut,
   };
   const { data, error } = await sb.from('acte_schimb').insert(row).select().single();
-  if(btn){ btn.disabled = false; btn.textContent = t('act_btnGenerate'); }
-  if(error){ alert('Generarea actului a eșuat: ' + error.message); return; }
-  DB.acteSchimb.unshift({ id:data.id, data:data.data, numeAdministrator:data.nume_administrator, inceputPerioada:data.inceput_perioada, sfarsitPerioada:data.sfarsit_perioada, continut:data.continut });
-  await logAction(`A generat actul de schimb pentru ${numeAdministrator}`);
-  openActPreview(DB.acteSchimb[0]);
+  if(error) throw error;
+  const act = { id:data.id, data:data.data, numeAdministrator:data.nume_administrator, inceputPerioada:data.inceput_perioada, sfarsitPerioada:data.sfarsit_perioada, continut:data.continut };
+  DB.acteSchimb.unshift(act);
+  return act;
+}
+async function generateActSchimb(){
+  const active = isFullAdmin() ? adminDemoShiftActive : !!currentShift;
+  if(!active){ alert(t('act_needShift')); return; }
+  const startedAt = isFullAdmin() ? new Date(Date.now() - 8*3600*1000).toISOString() : currentShift.startedAt;
+  const now = new Date().toISOString();
+  const shiftId = isFullAdmin() ? null : currentShift.id;
+  const administratorServiciuId = isFullAdmin() ? null : currentShift.administratorServiciuId;
+  const numeAdministrator = activeShiftName();
+  const btn = document.getElementById('act-generate-btn');
+  if(btn){ btn.disabled = true; btn.textContent = t('act_generating'); }
+  try{
+    const act = await saveActSchimb({ shiftId, administratorServiciuId, administratorId: isFullAdmin() ? currentAdminId : null, numeAdministrator, startedAt, endedAt: now });
+    await logAction(`A generat actul de schimb pentru ${numeAdministrator}`);
+    openActPreview(act);
+  } catch(error){
+    alert('Generarea actului a eșuat: ' + error.message);
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = t('act_btnGenerate'); }
+  }
 }
 let currentActPreview = null;
 function openActPreview(act){
@@ -1720,9 +1734,57 @@ async function exportActPdf(act){
   });
   doc.save(actFileBase(act)+'.pdf');
 }
+let pastShiftsForAct = null; // null = not loaded yet
+async function loadPastShiftsForAct(){
+  const { data, error } = await sb.from('sesiuni_schimb').select('*').not('ended_at','is',null).order('ended_at',{ascending:false}).limit(30);
+  if(error){ alert('Nu s-au putut încărca schimburile: ' + error.message); return; }
+  pastShiftsForAct = data||[];
+  render();
+}
+async function generateActForPastShift(){
+  const select = document.getElementById('act-past-select');
+  if(!select || !select.value) return;
+  const sesiune = pastShiftsForAct.find(s=>s.id===select.value);
+  if(!sesiune) return;
+  const employee = DB.serviciuAdministratori.find(a=>a.id===sesiune.administrator_serviciu_id);
+  const numeAdministrator = employee?.nume || '—';
+  const btn = document.getElementById('act-past-generate-btn');
+  if(btn){ btn.disabled = true; btn.textContent = t('act_generating'); }
+  try{
+    const act = await saveActSchimb({
+      shiftId: sesiune.id,
+      administratorServiciuId: sesiune.administrator_serviciu_id,
+      administratorId: null,
+      numeAdministrator,
+      startedAt: sesiune.started_at,
+      endedAt: sesiune.ended_at,
+    });
+    await logAction(`A generat actul de schimb (retroactiv) pentru ${numeAdministrator}`);
+    render();
+    openActPreview(act);
+  } catch(error){
+    alert('Generarea actului a eșuat: ' + error.message);
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = t('act_btnGenerate'); }
+  }
+}
 function renderActeSchimbList(){
   const acts = DB.acteSchimb || [];
+  const generatedShiftIds = new Set(acts.map(a=>a.inceputPerioada).filter(Boolean));
   return `
+  ${isFullAdmin() ? `<div class="add-form">
+    <div class="form-title">${t('act_pastTitle')}</div>
+    ${pastShiftsForAct === null ? `<button class="btn-ghost" onclick="loadPastShiftsForAct()">${t('act_pastLoad')}</button>` : `
+    <div class="form-grid" style="grid-template-columns:1fr auto">
+      <div class="field"><label>${t('act_pastPick')}</label><select id="act-past-select">${pastShiftsForAct.length ? pastShiftsForAct.map(s=>{
+        const employee = DB.serviciuAdministratori.find(a=>a.id===s.administrator_serviciu_id);
+        const already = generatedShiftIds.has(s.started_at);
+        return `<option value="${s.id}">${fmtDateTime(s.started_at)} → ${fmtDateTime(s.ended_at)} — ${esc(employee?.nume||'—')}${already?' '+t('act_pastAlready'):''}</option>`;
+      }).join('') : `<option value="">${t('act_pastNone')}</option>`}</select></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" id="act-past-generate-btn" ${pastShiftsForAct.length?'':'disabled'} onclick="generateActForPastShift()">${t('act_btnGenerate')}</button></div>
+    </div>`}
+  </div>` : ''}
+
   <div class="table-wrap">
     <div class="table-header"><div><div class="table-title">${t('act_sectionTitle')}</div><div class="view-sub" style="margin:4px 0 0">${t('act_sectionSub')}</div></div></div>
     <div class="table-scroll"><table>
