@@ -605,6 +605,8 @@ ro: {
   sh_addRow:'+ Alt antrenament', sh_noEligible:'Nu există sportivi eligibili pentru antrenament.',
   sh_startError:'Schimbul nu a putut fi pornit.', sh_stopError:'Schimbul nu a putut fi oprit.',
   sh_stopAlreadyEnded:'Acest schimb fusese deja încheiat (probabil dintr-un alt tab sau dispozitiv). Pagina a fost actualizată.',
+  sh_reportRequired:'Schimbul nu poate fi încheiat înainte de generarea raportului de schimb. Generați și salvați raportul, apoi încercați din nou.',
+  sh_reportCheckError:'Nu s-a putut verifica raportul de schimb. Schimbul rămâne deschis. Încercați din nou.',
   sh_stopConfirm:'Sigur doriți să opriți schimbul? După confirmare, registrul va fi blocat și va trebui început un schimb nou pentru a putea edita din nou.',
   sh_locked:'Registrul este blocat. Începeți un schimb din Tablou de bord.',
 
@@ -847,6 +849,8 @@ ru: {
   sh_addRow:'+ Ещё тренировка', sh_noEligible:'Нет спортсменов, допущенных к тренировкам.',
   sh_startError:'Не удалось начать смену.', sh_stopError:'Не удалось завершить смену.',
   sh_stopAlreadyEnded:'Эта смена уже была завершена (вероятно, с другой вкладки или устройства). Страница обновлена.',
+  sh_reportRequired:'Смену нельзя завершить до создания отчёта смены. Создайте и сохраните отчёт, затем повторите попытку.',
+  sh_reportCheckError:'Не удалось проверить отчёт смены. Смена останется открытой. Повторите попытку.',
   sh_stopConfirm:'Вы уверены, что хотите завершить смену? После подтверждения журнал будет заблокирован, и для дальнейшего редактирования потребуется начать новую смену.',
   sh_locked:'Журнал заблокирован. Начните смену на панели управления.',
 
@@ -1851,6 +1855,14 @@ function renderActeSchimbList(){
 async function stopDashboardShift(){
   if(isFullAdmin()) return;
   if(!currentShift) return;
+  const shiftId = currentShift.id;
+  const { data:reports, error:reportError } = await sb.from('acte_schimb').select('id').eq('sesiune_schimb_id',shiftId).limit(1);
+  if(reportError){ alert(t('sh_reportCheckError')+' '+reportError.message); return; }
+  if(!reports?.length){
+    alert(t('sh_reportRequired'));
+    document.getElementById('act-generate-btn')?.focus();
+    return;
+  }
   if(!window.confirm(t('sh_stopConfirm'))) return;
   const endedAt = new Date().toISOString();
   const shiftName = currentShift.administrator;
