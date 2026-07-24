@@ -1542,6 +1542,7 @@ async function confirmLocationShift(){
    (sesiuni_schimb.started_at → ended_at, or → now for a still-open shift), never by calendar
    date, since these are night shifts and a date filter would wrongly split one shift's data
    across two days. */
+const INVENTAR_ADMIN_MOTIV_PREFIXES = ['Ajustare manuală din pagina Inventar', 'Corecție manuală din pagina Inventar', 'Anulare returnare'];
 async function buildActContinut(startedAt, endedAt, shiftId){
   const inShift = createdAt => !!createdAt && createdAt >= startedAt && createdAt <= endedAt;
   const { data: miscariData, error: miscariError } = await sb.from('inventar_miscari').select('*').gte('created_at', startedAt).lte('created_at', endedAt).order('created_at');
@@ -1554,7 +1555,10 @@ async function buildActContinut(startedAt, endedAt, shiftId){
     arbitraj: DB.arbitraj.filter(r=>r.sesiuneSchimbId===shiftId).map(r=>({ platou: r.turneu, arbitru: r.arbitru })),
     fairPlay: DB.fairPlay.filter(r=>inShift(r.createdAt)).map(r=>({ nume: participantName(r.participantId), cartonas: r.tipCartonas, descriere: r.descriere || '' })),
     daune: DB.daune.filter(r=>inShift(r.createdAt)).map(r=>({ nume: participantName(r.participantId), platou: r.teren || '', descriere: `${r.inventarAfectat} — ${r.natura}` })),
-    inventar: (miscariData||[]).map(r=>{
+    // Only the automatic consequences of duty actions (issuing gear, marking returns, referee
+    // ball issuance) belong in a shift act — manual stock corrections/adjustments/reverts from
+    // the Inventar tab are administrative bookkeeping, not something the person on duty did.
+    inventar: (miscariData||[]).filter(r => !INVENTAR_ADMIN_MOTIV_PREFIXES.some(p => (r.motiv||'').startsWith(p))).map(r=>{
       const item = inventarById[r.inventar_id];
       return { tip: r.tip, articol: item ? `${item.denumire}${item.marime && item.marime!=='—' ? ' — '+item.marime : ''}` : r.inventar_id, cantitate: r.cantitate, motiv: r.motiv || '' };
     }),
