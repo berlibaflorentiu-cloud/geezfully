@@ -495,7 +495,7 @@ const ENUM_RU = {
   'afectat':'затронуто', 'deteriorat':'повреждено', 'distrus':'уничтожено',
   'expirat':'истёк', 'expiră curând':'скоро истекает', 'valabil':'действителен', 'fără aviz':'нет справки',
   'returnat':'возвращено', 'nereturnat':'не возвращено',
-  'galben':'жёлтая', 'roșu':'красная',
+  'galben':'жёлтая', 'roșu':'красная', 'închis':'закрыто',
   'bună':'хорошее', 'minim':'минимум', 'sub minim':'ниже минимума', 'zero':'ноль',
   'Maiou roșu':'Красная майка', 'Maiou albastru':'Синяя майка',
   'Roșu':'Красный', 'Albastru':'Синий', 'Albă':'Белый',
@@ -618,6 +618,7 @@ ro: {
   ho_observatii:'Observații', ho_observatiiPh:'ex. Cameră 2', ho_noptiTitle:'Nopți per participant',
   ho_nrNopti:'Nr. nopți', ho_faraDate:'Fără date.', ho_toateCazarile:'Toate cazările', ho_th_observatii:'Observații',
   ho_none:'Nicio cazare.',
+  ho_cazatiActivAcum:'Cazați activ acum', ho_th_statut:'Statut', ho_statutHint:'Apasă pe statut pentru a marca închiderea cazării',
 
   le_title:'Lenjerie', le_sub:'Evidența lenjeriei de hostel eliberate sportivilor.', le_addTitle:'Eliberare lenjerie',
   le_dataElib:'Data eliberării', le_countSuffix:'înregistrări', le_hint:'Apasă pe statut pentru a marca returnarea',
@@ -844,6 +845,7 @@ ru: {
   ho_observatii:'Замечания', ho_observatiiPh:'напр. Комната 2', ho_noptiTitle:'Ночей на участника',
   ho_nrNopti:'Кол-во ночей', ho_faraDate:'Нет данных.', ho_toateCazarile:'Все заселения', ho_th_observatii:'Замечания',
   ho_none:'Заселений нет.',
+  ho_cazatiActivAcum:'Активно проживают сейчас', ho_th_statut:'Статус', ho_statutHint:'Нажмите на статус, чтобы закрыть проживание',
 
   le_title:'Постельное бельё', le_sub:'Учёт постельного белья, выданного спортсменам в хостеле.', le_addTitle:'Выдача белья',
   le_dataElib:'Дата выдачи', le_countSuffix:'записей', le_hint:'Нажмите на статус, чтобы отметить возврат',
@@ -1070,7 +1072,7 @@ async function fetchAll(){
       administrator: serviciuAdminById[r.administrator_serviciu_id]?.nume || publicAdminName(adminById[r.administrator_id]),
     })),
     spalatorie: (spalatorieR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, tipArticole:r.tip_articole, cantitate:r.cantitate, suma:Number(r.suma)})),
-    hostel: (hostelR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, dataCazare:r.data_cazare, observatii:r.observatii})),
+    hostel: (hostelR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, dataCazare:r.data_cazare, observatii:r.observatii, statut:r.statut})),
     lenjerie: (lenjerieR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, dataEliberare:r.data_eliberare, dataReturnare:r.data_returnare})),
     daune: (dauneR.data||[]).map(r=>({
       id:r.id, data:r.data, participantId:r.participant_id, inventarAfectat:r.inventar_afectat, natura:r.natura, teren:r.teren,
@@ -2217,12 +2219,14 @@ function renderHostel(){
   const nights = {};
   DB.hostel.forEach(h=>{ nights[h.participantId]=(nights[h.participantId]||0)+1; });
   const cazatiAzi = DB.hostel.filter(h=>h.dataCazare===todayISO());
+  const cazatiActivAcum = DB.hostel.filter(h=>h.statut==='activ');
   return `
   <div class="view-head"><div class="view-title">${t('ho_title')}</div></div>
   <div class="view-sub">${t('ho_sub')}</div>
 
   <div class="stats-row">
     <div class="stat-card"><div class="stat-label">${t('ho_cazatiAzi')}</div><div class="stat-value">${cazatiAzi.length}</div></div>
+    <div class="stat-card"><div class="stat-label">${t('ho_cazatiActivAcum')}</div><div class="stat-value">${cazatiActivAcum.length}</div></div>
     <div class="stat-card"><div class="stat-label">${t('ho_totalNopti')}</div><div class="stat-value">${DB.hostel.length}</div></div>
   </div>
 
@@ -2244,12 +2248,17 @@ function renderHostel(){
   </div>
 
   <div class="table-wrap">
-    <div class="table-header"><div class="table-title">${t('ho_toateCazarile')}</div></div>
+    <div class="table-header">
+      <div class="table-title">${t('ho_toateCazarile')}</div>
+      <div class="table-hint">${t('ho_statutHint')}</div>
+    </div>
     <div class="table-scroll"><table>
-      <thead><tr><th>${t('th_data')}</th><th>${t('th_participant')}</th><th>${t('ho_th_observatii')}</th><th></th></tr></thead>
+      <thead><tr><th>${t('th_data')}</th><th>${t('th_participant')}</th><th>${t('ho_th_observatii')}</th><th>${t('ho_th_statut')}</th><th></th></tr></thead>
       <tbody>${DB.hostel.length ? DB.hostel.slice().sort((a,b)=>b.dataCazare.localeCompare(a.dataCazare)).map(h=>`
         <tr><td class="td-muted">${fmtDate(h.dataCazare)}</td><td class="td-name" onclick="openProfile('${h.participantId}')">${esc(participantName(h.participantId))}</td>
-        <td class="td-muted">${esc(h.observatii)||'—'}</td><td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('hostel','${h.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="4">${t('ho_none')}</td></tr>`}</tbody>
+        <td class="td-muted">${esc(h.observatii)||'—'}</td>
+        <td><button type="button" class="badge ${h.statut==='activ'?'green':'muted'}" ${disabledAttr()} onclick="toggleHostelStatus('${h.id}')">${trEnum(h.statut)}</button></td>
+        <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('hostel','${h.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="5">${t('ho_none')}</td></tr>`}</tbody>
     </table></div>
   </div>`;
 }
@@ -2259,8 +2268,19 @@ async function addHostel(){
   const row = { participant_id:participantId, data_cazare: document.getElementById('hf-data').value||todayISO(), observatii: document.getElementById('hf-obs').value.trim() || null };
   const { data, error } = await sb.from('hostel').insert(row).select().single();
   if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
-  DB.hostel.unshift({id:data.id, participantId:data.participant_id, dataCazare:data.data_cazare, observatii:data.observatii});
+  DB.hostel.unshift({id:data.id, participantId:data.participant_id, dataCazare:data.data_cazare, observatii:data.observatii, statut:data.statut});
   await logAction(`A înregistrat cazare hostel pentru ${participantName(participantId)}`);
+  render();
+}
+async function toggleHostelStatus(id){
+  const item = DB.hostel.find(h=>h.id===id);
+  if(!item) return;
+  const statut = item.statut==='activ' ? 'închis' : 'activ';
+  const { data, error } = await sb.from('hostel').update({ statut }).eq('id', id).select();
+  if(error){ alert('Actualizarea statutului a eșuat: ' + error.message); return; }
+  if(!data || !data.length){ alert('Actualizarea a eșuat: nu aveți permisiunea necesară.'); return; }
+  item.statut = statut;
+  await logAction(`A marcat cazarea lui ${participantName(item.participantId)} ca ${statut}`);
   render();
 }
 
