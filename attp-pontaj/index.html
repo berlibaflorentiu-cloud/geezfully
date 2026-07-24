@@ -301,6 +301,30 @@
   .modal-overlay.visible { display: flex; }
   .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 100%; max-width: 720px; padding: 0; }
   .profile-modal-box { max-width: 980px; }
+  .act-modal-box { max-width: 900px; }
+
+  /* ── Act de schimb: rendered as a paper document inside the dark modal chrome ── */
+  .act-doc { position: relative; background: #f3eee0; color: #211d14; border-radius: 4px; padding: 34px 38px 30px; font-family: 'DM Sans', sans-serif; overflow: hidden; }
+  .act-doc::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(180deg, rgba(0,0,0,.015) 0px, rgba(0,0,0,.015) 1px, transparent 1px, transparent 27px); }
+  .act-doc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; border-bottom: 2px solid #211d14; padding-bottom: 16px; margin-bottom: 22px; }
+  .act-doc-eyebrow { font-size: 10.5px; text-transform: uppercase; letter-spacing: .18em; color: #8a7f63; margin-bottom: 6px; }
+  .act-doc-title { font-family: Georgia, 'Times New Roman', serif; font-size: 25px; letter-spacing: .01em; }
+  .act-doc-meta { margin-top: 8px; font-size: 12.5px; color: #5b5340; line-height: 1.6; }
+  .act-doc-meta b { color: #211d14; }
+  .act-stamp { flex: none; width: 92px; height: 92px; border-radius: 50%; border: 2px solid #a3492f; color: #a3492f; display: flex; align-items: center; justify-content: center; text-align: center; transform: rotate(-9deg); font-family: Georgia, serif; font-size: 10.5px; line-height: 1.35; letter-spacing: .04em; opacity: .82; }
+  .act-stamp b { display: block; font-size: 15px; letter-spacing: .02em; }
+  .act-section { margin-bottom: 20px; position: relative; }
+  .act-section-title { font-family: Georgia, serif; font-size: 12.5px; text-transform: uppercase; letter-spacing: .14em; color: #6b5f43; border-bottom: 1px solid #d9cfb2; padding-bottom: 5px; margin-bottom: 7px; }
+  .act-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .act-table td, .act-table th { padding: 6px 9px; border-bottom: 1px solid #e6dfc9; text-align: left; vertical-align: top; }
+  .act-table th { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: #8a7f63; font-weight: 600; }
+  .act-table tr:last-child td { border-bottom: none; }
+  .act-empty-row td { color: #a89c7c; font-style: italic; }
+  @media (max-width: 640px) {
+    .act-doc { padding: 24px 20px; }
+    .act-doc-head { flex-direction: column; }
+    .act-stamp { align-self: flex-end; }
+  }
   .modal-head { padding: 20px 26px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
   .modal-head-actions { display: flex; align-items: center; gap: 10px; }
   .modal-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 600; color: var(--gold); }
@@ -447,6 +471,20 @@
       </div>
     </div>
     <div class="modal-body" id="arbitru-modal-body"></div>
+  </div>
+</div>
+
+<!-- ══ ACT DE SCHIMB MODAL ══ -->
+<div class="modal-overlay" id="act-modal">
+  <div class="modal-box act-modal-box">
+    <div class="modal-head">
+      <div class="modal-title" data-i18n="act_docTitle">Act de schimb</div>
+      <div class="modal-head-actions">
+        <button class="btn-ghost btn-sm" onclick="window.print()" data-i18n="re_print">Imprimare</button>
+        <button class="modal-close" onclick="closeModal('act-modal')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="act-modal-body"></div>
   </div>
 </div>
 
@@ -699,6 +737,18 @@ ro: {
 
   re_title:'Rapoarte și statistici', re_sub:'Generare rapoarte pentru orice perioadă. Export: Excel, PDF, imprimare.',
   re_perioada:'Perioadă raport', re_de_la:'De la', re_pana_la:'Până la', re_excel:'Excel', re_pdf:'PDF',
+  act_sectionTitle:'Acte de schimb', act_sectionSub:'Actele generate la închiderea fiecărui schimb.',
+  act_none:'Niciun act generat încă.', act_btnGenerate:'Generează act', act_generating:'Se generează…',
+  act_docTitle:'Act de schimb', act_perioada:'Perioada',
+  act_s_admin:'Admin', act_s_intarzieri:'Întârzieri', act_s_arbitraj:'Arbitraj', act_s_fairplay:'Fair Play',
+  act_s_daune:'Daune', act_s_inventar:'Inventar', act_s_hostel:'Hostel', act_s_treninguri:'Trening', act_s_sarcini:'Sarcini', act_s_observatii:'Observații',
+  act_dataSchimb:'Data schimb', act_numeAdmin:'Nume administrator',
+  act_numeSportiv:'Nume sportiv', act_min:'Min', act_motiv:'Motiv',
+  act_numeArbitru:'Nume arbitru', act_cartonas:'Cartonaș', act_descriere:'Descriere', act_platou:'Platou',
+  act_tipMiscare:'Intrare/Ieșire', act_articol:'Articol', act_cantitate:'Cantitate', act_sursa:'Nume participant/furnizor',
+  act_camera:'Cameră', act_oraCazarii:'Ora cazării', act_statut:'Statut',
+  act_antrenor:'Antrenor', act_ora:'Ora', act_da:'DA', act_nu:'NU',
+  act_goale:'—', act_generat:'Act generat și salvat în Rapoarte.', act_needShift:'Nu există un schimb activ.',
   re_print:'Imprimare', re_sect_participanti:'Rapoarte privind participanții', re_sect_admin:'Rapoarte administrative',
   re_sect_fin:'Rapoarte financiare', re_sect_inv:'Rapoarte de inventar',
   re_r_intarzieri:'Întârzieri înregistrate', re_r_obsAbs:'Observații / absențe', re_r_cazariHostel:'Cazări hostel',
@@ -926,6 +976,18 @@ ru: {
 
   re_title:'Отчёты и статистика', re_sub:'Формирование отчётов за любой период. Экспорт: Excel, PDF, печать.',
   re_perioada:'Период отчёта', re_de_la:'С', re_pana_la:'По', re_excel:'Excel', re_pdf:'PDF',
+  act_sectionTitle:'Акты смены', act_sectionSub:'Акты, сформированные при закрытии каждой смены.',
+  act_none:'Акты ещё не созданы.', act_btnGenerate:'Сформировать акт', act_generating:'Формируется…',
+  act_docTitle:'Акт смены', act_perioada:'Период',
+  act_s_admin:'Админ', act_s_intarzieri:'Опоздания', act_s_arbitraj:'Арбитраж', act_s_fairplay:'Фэйр-плей',
+  act_s_daune:'Ущерб', act_s_inventar:'Инвентарь', act_s_hostel:'Хостел', act_s_treninguri:'Тренировки', act_s_sarcini:'Задачи', act_s_observatii:'Замечания',
+  act_dataSchimb:'Дата смены', act_numeAdmin:'Имя администратора',
+  act_numeSportiv:'Имя спортсмена', act_min:'Мин', act_motiv:'Причина',
+  act_numeArbitru:'Имя судьи', act_cartonas:'Карточка', act_descriere:'Описание', act_platou:'Площадка',
+  act_tipMiscare:'Приход/расход', act_articol:'Товар', act_cantitate:'Количество', act_sursa:'Имя участника/поставщика',
+  act_camera:'Комната', act_oraCazarii:'Время заселения', act_statut:'Статус',
+  act_antrenor:'Тренер', act_ora:'Время', act_da:'ДА', act_nu:'НЕТ',
+  act_goale:'—', act_generat:'Акт сформирован и сохранён в Отчётах.', act_needShift:'Нет активной смены.',
   re_print:'Печать', re_sect_participanti:'Отчёты об участниках', re_sect_admin:'Административные отчёты',
   re_sect_fin:'Финансовые отчёты', re_sect_inv:'Отчёты по складу',
   re_r_intarzieri:'Зарегистрированные опоздания', re_r_obsAbs:'Замечания / отсутствия', re_r_cazariHostel:'Заселения в хостел',
@@ -1018,7 +1080,7 @@ function realAdmins(){ return DB.administratori.filter(a=>!a.ascuns && a.rol==='
 async function fetchAll(){
   const [
     administratoriR, serviciuAdministratoriR, participantiR, arbitriR, intarzieriR, vestimentatieR, serviciuR, spalatorieR,
-    hostelR, lenjerieR, dauneR, fairPlayR, arbitrajR, inventarR, sarciniR, observatiiR, jurnalR, trustedIpsR, treninguriR, sesiuniR
+    hostelR, lenjerieR, dauneR, fairPlayR, arbitrajR, inventarR, sarciniR, observatiiR, jurnalR, trustedIpsR, treninguriR, sesiuniR, acteSchimbR
   ] = await Promise.all([
     sb.from('administratori').select('*'),
     sb.from('serviciu_administratori').select('*').eq('activ', true).order('nume'),
@@ -1040,6 +1102,7 @@ async function fetchAll(){
     sb.from('trusted_ips').select('*').order('created_at', {ascending:false}),
     sb.from('treninguri').select('*').order('data', {ascending:false}),
     sb.from('sesiuni_schimb').select('*').eq('cont_id', currentAdminId).is('ended_at', null).order('started_at', {ascending:false}).limit(1),
+    sb.from('acte_schimb').select('*').order('created_at', {ascending:false}).limit(60),
   ]);
 
   const administratori = administratoriR.data || [];
@@ -1061,7 +1124,7 @@ async function fetchAll(){
       adresa:a.adresa, telefon:a.telefon, email:a.email, dataAvizMedical:a.data_aviz_medical,
       statut:a.statut, dataInregistrarii:a.data_inregistrarii,
     })),
-    intarzieri: (intarzieriR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, arbitru:r.arbitru, data:r.data, minuteIntarziere:r.minute_intarziere, motiv:r.motiv})),
+    intarzieri: (intarzieriR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, arbitru:r.arbitru, data:r.data, minuteIntarziere:r.minute_intarziere, motiv:r.motiv, createdAt:r.created_at})),
     vestimentatie: (vestimentatieR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, arbitru:r.arbitru, tip:r.tip, culoare:r.culoare, marime:r.marime, cantitate:r.cantitate, dataReturnare:r.data_returnare, stareReturnare:r.stare_returnare})),
     serviciu: (serviciuR.data||[]).map(r=>({
       id:r.id, data:r.data,
@@ -1072,23 +1135,27 @@ async function fetchAll(){
       administrator: serviciuAdminById[r.administrator_serviciu_id]?.nume || publicAdminName(adminById[r.administrator_id]),
     })),
     spalatorie: (spalatorieR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, tipArticole:r.tip_articole, cantitate:r.cantitate, suma:Number(r.suma)})),
-    hostel: (hostelR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, dataCazare:r.data_cazare, observatii:r.observatii, statut:r.statut})),
+    hostel: (hostelR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, dataCazare:r.data_cazare, observatii:r.observatii, statut:r.statut, createdAt:r.created_at})),
     lenjerie: (lenjerieR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, dataEliberare:r.data_eliberare, dataReturnare:r.data_returnare})),
     daune: (dauneR.data||[]).map(r=>({
       id:r.id, data:r.data, participantId:r.participant_id, inventarAfectat:r.inventar_afectat, natura:r.natura, teren:r.teren,
       bunDeterioratDistrus:r.stare, observatii:r.observatii, valoareEstimata:Number(r.valoare_estimata||0),
       administratorServiciuAvertizorId:r.administrator_serviciu_avertizor_id, adminAvertizorId:r.admin_avertizor_id,
       avertizor: serviciuAdminById[r.administrator_serviciu_avertizor_id]?.nume || (r.admin_avertizor_id ? publicAdminName(adminById[r.admin_avertizor_id]) : ''),
-      nrSursa:r.nr_sursa,
+      nrSursa:r.nr_sursa, createdAt:r.created_at,
     })),
-    fairPlay: (fairPlayR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, data:r.data, platou:r.platou, descriere:r.descriere, tipCartonas:r.tip_cartonas})),
+    fairPlay: (fairPlayR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, data:r.data, platou:r.platou, descriere:r.descriere, tipCartonas:r.tip_cartonas, createdAt:r.created_at})),
     arbitraj: (arbitrajR.data||[]).map(r=>({id:r.id, data:r.data, arbitru:r.arbitru, turneu:r.turneu, marcaMingi:r.marca_mingi, cantitateMingi:r.cantitate_mingi, observatii:r.observatii, sesiuneSchimbId:r.sesiune_schimb_id, slotSchimb:r.slot_schimb})),
     inventar: (inventarR.data||[]).map(r=>({id:r.id, denumire:r.denumire, culoare:r.culoare, marime:r.marime, um:r.um, cantitateInitiala:r.cantitate_initiala, intrari:r.intrari, iesiri:r.iesiri, cantitateMinima:r.cantitate_minima, stare:r.stare, observatii:r.observatii, conditie:r.conditie})),
-    sarcini: (sarciniR.data||[]).map(r=>({id:r.id, dataInreg:r.data_inreg, administratorServiciuInregId:r.administrator_serviciu_inreg_id, adminInreg: serviciuAdminById[r.administrator_serviciu_inreg_id]?.nume || publicAdminName(adminById[r.admin_inreg_id]), status:r.status, actiuni:r.actiuni, dataSolutionare:r.data_solutionare, administratorServiciuSolutionareId:r.administrator_serviciu_solutionare_id, adminSolutionare: serviciuAdminById[r.administrator_serviciu_solutionare_id]?.nume || (r.admin_solutionare_id ? publicAdminName(adminById[r.admin_solutionare_id]) : ''), descriere:r.descriere})),
-    observatii: (observatiiR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, categorie:r.categorie, descriere:r.descriere})),
+    sarcini: (sarciniR.data||[]).map(r=>({id:r.id, dataInreg:r.data_inreg, administratorServiciuInregId:r.administrator_serviciu_inreg_id, adminInreg: serviciuAdminById[r.administrator_serviciu_inreg_id]?.nume || publicAdminName(adminById[r.admin_inreg_id]), status:r.status, actiuni:r.actiuni, dataSolutionare:r.data_solutionare, administratorServiciuSolutionareId:r.administrator_serviciu_solutionare_id, adminSolutionare: serviciuAdminById[r.administrator_serviciu_solutionare_id]?.nume || (r.admin_solutionare_id ? publicAdminName(adminById[r.admin_solutionare_id]) : ''), descriere:r.descriere, createdAt:r.created_at})),
+    observatii: (observatiiR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, categorie:r.categorie, descriere:r.descriere, createdAt:r.created_at})),
     jurnal: (jurnalR.data||[]).map(r=>({id:r.id, cont: serviciuAdminById[r.administrator_serviciu_id]?.nume || publicAdminName(adminById[r.administrator_id]), data:String(r.data).slice(0,10), actiune:r.actiune})),
     trustedIps: (trustedIpsR.data||[]).map(r=>({id:r.id, ip:r.ip, eticheta:r.eticheta, createdAt:r.created_at})),
-    treninguri: (treninguriR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, antrenor:r.antrenor, data:r.data, ora:r.ora, sumaJucator:Number(r.suma_jucator), sumaAntrenor:Number(r.suma_antrenor), observatii:r.observatii})),
+    treninguri: (treninguriR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, antrenor:r.antrenor, data:r.data, ora:r.ora, sumaJucator:Number(r.suma_jucator), sumaAntrenor:Number(r.suma_antrenor), observatii:r.observatii, createdAt:r.created_at})),
+    acteSchimb: (acteSchimbR.data||[]).map(r=>({
+      id:r.id, data:r.data, numeAdministrator:r.nume_administrator,
+      inceputPerioada:r.inceput_perioada, sfarsitPerioada:r.sfarsit_perioada, continut:r.continut,
+    })),
   };
   if(!isFullAdmin()){
     const open = (sesiuniR.data||[])[0];
@@ -1463,6 +1530,114 @@ async function confirmLocationShift(){
   buildSidebar();
   render();
 }
+/* ══════════════════════ ACT DE SCHIMB ══════════════════════ */
+async function generateActSchimb(){
+  const active = isFullAdmin() ? adminDemoShiftActive : !!currentShift;
+  if(!active){ alert(t('act_needShift')); return; }
+  const startedAt = isFullAdmin() ? new Date(Date.now() - 8*3600*1000).toISOString() : currentShift.startedAt;
+  const shiftId = isFullAdmin() ? null : currentShift.id;
+  const administratorServiciuId = isFullAdmin() ? null : currentShift.administratorServiciuId;
+  const numeAdministrator = activeShiftName();
+  const btn = document.getElementById('act-generate-btn');
+  if(btn){ btn.disabled = true; btn.textContent = t('act_generating'); }
+
+  const inShift = createdAt => !!createdAt && createdAt >= startedAt;
+  const { data: miscariData, error: miscariError } = await sb.from('inventar_miscari').select('*').gte('created_at', startedAt).order('created_at');
+  if(miscariError){
+    if(btn){ btn.disabled = false; btn.textContent = t('act_btnGenerate'); }
+    alert('Generarea actului a eșuat: ' + miscariError.message);
+    return;
+  }
+  const inventarById = Object.fromEntries(DB.inventar.map(i=>[i.id,i]));
+
+  const continut = {
+    admin: { data: todayISO(), nume: numeAdministrator },
+    intarzieri: DB.intarzieri.filter(r=>inShift(r.createdAt)).map(r=>({ nume: entryPersonName(r), min: r.minuteIntarziere, motiv: r.motiv || '' })),
+    arbitraj: (isFullAdmin() ? DB.arbitraj.filter(r=>demoShiftArbitrajIds.includes(r.id)) : DB.arbitraj.filter(r=>r.sesiuneSchimbId===shiftId)).map(r=>({ platou: r.turneu, arbitru: r.arbitru })),
+    fairPlay: DB.fairPlay.filter(r=>inShift(r.createdAt)).map(r=>({ nume: participantName(r.participantId), cartonas: r.tipCartonas, descriere: r.descriere || '' })),
+    daune: DB.daune.filter(r=>inShift(r.createdAt)).map(r=>({ nume: participantName(r.participantId), platou: r.teren || '', descriere: `${r.inventarAfectat} — ${r.natura}` })),
+    inventar: (miscariData||[]).map(r=>{
+      const item = inventarById[r.inventar_id];
+      return { tip: r.tip, articol: item ? `${item.denumire}${item.marime && item.marime!=='—' ? ' — '+item.marime : ''}` : r.inventar_id, cantitate: r.cantitate, motiv: r.motiv || '' };
+    }),
+    hostel: DB.hostel.filter(r=>inShift(r.createdAt)).map(r=>({ nume: participantName(r.participantId), camera: r.observatii || '', ora: fmtTime(r.createdAt), statut: r.statut })),
+    treninguri: DB.treninguri.filter(r=>inShift(r.createdAt)).map(r=>({ nume: participantName(r.participantId), antrenor: r.antrenor, ora: r.ora ? String(r.ora).slice(0,5) : '' })),
+    sarcini: DB.sarcini.filter(r=>inShift(r.createdAt)).map(r=>({ statut: r.status, descriere: r.descriere || '' })),
+    observatii: DB.observatii.filter(r=>inShift(r.createdAt)).map(r=>({ descriere: r.descriere || '' })),
+  };
+
+  const row = {
+    sesiune_schimb_id: shiftId,
+    administrator_serviciu_id: administratorServiciuId,
+    administrator_id: isFullAdmin() ? currentAdminId : null,
+    data: todayISO(),
+    inceput_perioada: startedAt,
+    nume_administrator: numeAdministrator,
+    continut,
+  };
+  const { data, error } = await sb.from('acte_schimb').insert(row).select().single();
+  if(btn){ btn.disabled = false; btn.textContent = t('act_btnGenerate'); }
+  if(error){ alert('Generarea actului a eșuat: ' + error.message); return; }
+  DB.acteSchimb.unshift({ id:data.id, data:data.data, numeAdministrator:data.nume_administrator, inceputPerioada:data.inceput_perioada, sfarsitPerioada:data.sfarsit_perioada, continut:data.continut });
+  await logAction(`A generat actul de schimb pentru ${numeAdministrator}`);
+  openActPreview(DB.acteSchimb[0]);
+}
+function openActPreview(act){
+  if(!act) return;
+  document.getElementById('act-modal-body').innerHTML = renderActDoc(act);
+  openModal('act-modal');
+}
+function actSectionTable(titleKey, headers, rows, rowFn){
+  return `<div class="act-section">
+    <div class="act-section-title">${t(titleKey)}</div>
+    <table class="act-table">
+      <thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead>
+      <tbody>${rows.length ? rows.map(rowFn).join('') : `<tr class="act-empty-row"><td colspan="${headers.length}">${t('act_goale')}</td></tr>`}</tbody>
+    </table>
+  </div>`;
+}
+function actStampHtml(dateIso){
+  const [y,m,d] = (dateIso||todayISO()).split('-');
+  const monthAbbr = (MONTH_NAMES[LANG==='ru'?'ru':'ro'][Number(m)-1]||'').slice(0,3).toUpperCase();
+  return `<div class="act-stamp"><div>${esc(monthAbbr)}<b>${esc(d)}</b>${esc(y)}</div></div>`;
+}
+function renderActDoc(act){
+  const c = act.continut || {};
+  const dateLabel = fmtDate(act.data);
+  return `
+  <div class="act-doc">
+    <div class="act-doc-head">
+      <div>
+        <div class="act-doc-eyebrow">ATTP · Registru electronic</div>
+        <div class="act-doc-title">${t('act_docTitle')}</div>
+        <div class="act-doc-meta"><b>${t('act_dataSchimb')}:</b> ${dateLabel} &nbsp;·&nbsp; <b>${t('act_numeAdmin')}:</b> ${esc(c.admin?.nume || act.numeAdministrator)}</div>
+      </div>
+      ${actStampHtml(act.data)}
+    </div>
+
+    ${actSectionTable('act_s_intarzieri', [t('act_numeSportiv'), t('act_min'), t('act_motiv')], c.intarzieri||[], r=>`<tr><td>${esc(r.nume)}</td><td>${r.min ?? '—'}</td><td>${esc(r.motiv)||'—'}</td></tr>`)}
+    ${actSectionTable('act_s_arbitraj', [t('act_platou'), t('act_numeArbitru')], c.arbitraj||[], r=>`<tr><td>${esc(r.platou)}</td><td>${esc(r.arbitru)}</td></tr>`)}
+    ${actSectionTable('act_s_fairplay', [t('act_numeSportiv'), t('act_cartonas'), t('act_descriere')], c.fairPlay||[], r=>`<tr><td>${esc(r.nume)}</td><td>${esc(trEnum(r.cartonas))}</td><td>${esc(r.descriere)||'—'}</td></tr>`)}
+    ${actSectionTable('act_s_daune', [t('act_numeSportiv'), t('act_platou'), t('act_descriere')], c.daune||[], r=>`<tr><td>${esc(r.nume)}</td><td>${esc(r.platou)||'—'}</td><td>${esc(r.descriere)}</td></tr>`)}
+    ${actSectionTable('act_s_inventar', [t('act_tipMiscare'), t('act_articol'), t('act_cantitate'), t('act_motiv')], c.inventar||[], r=>`<tr><td>${esc(trEnum(r.tip))}</td><td>${esc(r.articol)}</td><td>${r.cantitate}</td><td>${esc(r.motiv)||'—'}</td></tr>`)}
+    ${actSectionTable('act_s_hostel', [t('act_numeSportiv'), t('act_camera'), t('act_oraCazarii'), t('act_statut')], c.hostel||[], r=>`<tr><td>${esc(r.nume)}</td><td>${esc(r.camera)||'—'}</td><td>${esc(r.ora)}</td><td>${esc(trEnum(r.statut))}</td></tr>`)}
+    ${actSectionTable('act_s_treninguri', [t('act_numeSportiv'), t('act_antrenor'), t('act_ora')], c.treninguri||[], r=>`<tr><td>${esc(r.nume)}</td><td>${esc(r.antrenor)}</td><td>${esc(r.ora)||'—'}</td></tr>`)}
+    ${actSectionTable('act_s_sarcini', [t('act_statut'), t('act_descriere')], c.sarcini||[], r=>`<tr><td>${esc(trEnum(r.statut))}</td><td>${esc(r.descriere)}</td></tr>`)}
+    ${actSectionTable('act_s_observatii', [t('act_descriere')], c.observatii||[], r=>`<tr><td>${esc(r.descriere)}</td></tr>`)}
+  </div>`;
+}
+function renderActeSchimbList(){
+  const acts = DB.acteSchimb || [];
+  return `
+  <div class="table-wrap">
+    <div class="table-header"><div><div class="table-title">${t('act_sectionTitle')}</div><div class="view-sub" style="margin:4px 0 0">${t('act_sectionSub')}</div></div></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>${t('th_data')}</th><th>${t('act_numeAdmin')}</th><th></th></tr></thead>
+      <tbody>${acts.length ? acts.map(a=>`<tr><td class="td-muted">${fmtDate(a.data)}</td><td>${esc(a.numeAdministrator)}</td><td><button class="btn-ghost btn-sm" onclick="openActPreview(DB.acteSchimb.find(x=>x.id===${JSON.stringify(a.id)}))">${t('act_docTitle')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="3">${t('act_none')}</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+
 async function stopDashboardShift(){
   if(isFullAdmin()) return;
   if(!currentShift) return;
@@ -1519,7 +1694,10 @@ function renderShiftWorkflow(){
   return `<section class="daily-ops">
     <div class="daily-ops-head">
       <div class="shift-identity"><span class="shift-live-dot"></span><div><strong>${esc(shiftName)}</strong><span>${t(isFullAdmin()?'sh_demo':'sh_active')} · ${fmtDateTime(startedAt)}</span></div></div>
-      <button class="btn-stop-shift" onclick="stopDashboardShift()">${t('sh_stop')}</button>
+      <div style="display:flex;gap:10px">
+        <button class="btn-ghost" id="act-generate-btn" onclick="generateActSchimb()">${t('act_btnGenerate')}</button>
+        <button class="btn-stop-shift" onclick="stopDashboardShift()">${t('sh_stop')}</button>
+      </div>
     </div>
     <div class="daily-ops-grid">
       <div class="ops-card">
@@ -3193,7 +3371,9 @@ function renderRapoarte(){
   <div class="report-card">
     <div class="form-title" style="margin-bottom:10px">${esc(section.title)}</div>
     ${section.rows.map(row=>`<div class="report-row"><span>${esc(row[0])}</span><span class="td-gold">${esc(row[1])}</span></div>`).join('')}
-  </div>`).join('')}`;
+  </div>`).join('')}
+
+  ${renderActeSchimbList()}`;
 }
 
 function reportRange(){
@@ -3593,7 +3773,7 @@ async function rotateLocatiePin(){
 }
 
 /* ══════════════════════ INIT ══════════════════════ */
-document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeModal('profile-modal'); closeModal('arbitru-modal'); } });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeModal('profile-modal'); closeModal('arbitru-modal'); closeModal('act-modal'); } });
 </script>
 </body>
 </html>
