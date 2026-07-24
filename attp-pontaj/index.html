@@ -495,6 +495,7 @@ const ENUM_RU = {
   'afectat':'затронуто', 'deteriorat':'повреждено', 'distrus':'уничтожено',
   'expirat':'истёк', 'expiră curând':'скоро истекает', 'valabil':'действителен', 'fără aviz':'нет справки',
   'returnat':'возвращено', 'nereturnat':'не возвращено',
+  'galben':'жёлтая', 'roșu':'красная',
   'bună':'хорошее', 'minim':'минимум', 'sub minim':'ниже минимума', 'zero':'ноль',
   'Maiou roșu':'Красная майка', 'Maiou albastru':'Синяя майка',
   'Roșu':'Красный', 'Albastru':'Синий', 'Albă':'Белый',
@@ -529,7 +530,7 @@ ro: {
 
   nav_dashboard:'Tablou de bord', nav_participanti:'Participanți', nav_intarzieri:'Întârzieri',
   nav_vestimentatie:'Vestimentație', nav_serviciu:'Serviciu administratori', nav_spalatorie:'Spălătorie',
-  nav_hostel:'Hostel', nav_lenjerie:'Lenjerie', nav_medical:'Medical', nav_daune:'Daune și recuperări',
+  nav_hostel:'Hostel', nav_lenjerie:'Lenjerie', nav_medical:'Medical', nav_daune:'Daune și recuperări', nav_fairplay:'Fair Play',
   nav_arbitraj:'Arbitraj', nav_antrenamente:'Antrenamente', nav_inventar:'Inventar', nav_sarcini:'Sarcini', nav_observatii:'Observații',
   nav_rapoarte:'Rapoarte', nav_setari:'Setări',
   sb_sub:'Registru · ATTP', sb_shift:'Schimb curent', hdr_logout:'Ieșire',
@@ -642,6 +643,19 @@ ro: {
   da2_reportSub:'Clasament după numărul daunelor provocate, indiferent de valoarea lor.',
   da2_reportCount:'Nr. daune', da2_reportNone:'Nicio daună în perioada selectată.',
 
+  fp_title:'Fair Play', fp_sub:'Evidența cartonașelor galbene și roșii acordate sportivilor.',
+  fp_addTitle:'Înregistrare sancțiune', fp_numeSportiv:'Nume sportiv', fp_platou:'Platoul de joc',
+  fp_descriere:'Descrierea faptei', fp_descrierePh:'ex. Comportament nesportiv față de arbitru',
+  fp_cartonas:'Cartonaș', fp_galben:'galben', fp_rosu:'roșu',
+  fp_th_platou:'Platou', fp_th_descriere:'Descriere', fp_th_cartonas:'Cartonaș',
+  fp_countSuffix:'sancțiuni înregistrate', fp_none:'Nicio sancțiune înregistrată.',
+  fp_totalSanctiuni:'Total sancțiuni', fp_totalGalbene:'Cartonașe galbene', fp_totalRosii:'Cartonașe roșii',
+  fp_filterMonth:'Perioada raportului', fp_month:'Lună', fp_sixMonths:'6 luni', fp_year:'An',
+  fp_endMonth:'Luna de sfârșit', fp_reportTitle:'Clasament cartonașe — după număr',
+  fp_reportSub:'Clasament sportivilor după numărul de cartonașe primite.',
+  fp_reportGalbene:'Galbene', fp_reportRosii:'Roșii', fp_reportTotal:'Total',
+  fp_reportNone:'Nicio sancțiune în perioada selectată.', fp_needSportiv:'Selectați sportivul.',
+
   ar_title:'Arbitraj', ar_sub:'Arbitrii de turneu și cantitatea de mingi noi eliberate — scade automat din inventar.',
   ar_addTitle:'Eliberare mingi arbitru', ar_numeArbitru:'Nume arbitru', ar_numeArbitruPh:'Nume arbitru',
   ar_turneu:'Turneu', ar_mingiNoi:'Mingi noi', ar_th_arbitru:'Arbitru', ar_th_turneu:'Turneu', ar_th_mingiNoi:'Mingi noi',
@@ -742,7 +756,7 @@ ru: {
 
   nav_dashboard:'Панель управления', nav_participanti:'Участники', nav_intarzieri:'Опоздания',
   nav_vestimentatie:'Форма', nav_serviciu:'Смены администраторов', nav_spalatorie:'Прачечная',
-  nav_hostel:'Хостел', nav_lenjerie:'Постельное бельё', nav_medical:'Медицина', nav_daune:'Ущерб и возмещение',
+  nav_hostel:'Хостел', nav_lenjerie:'Постельное бельё', nav_medical:'Медицина', nav_daune:'Ущерб и возмещение', nav_fairplay:'Фэйр-плей',
   nav_arbitraj:'Судейство', nav_antrenamente:'Тренировки', nav_inventar:'Инвентарь', nav_sarcini:'Задачи', nav_observatii:'Замечания',
   nav_rapoarte:'Отчёты', nav_setari:'Настройки',
   sb_sub:'Журнал · ATTP', sb_shift:'Текущая смена', hdr_logout:'Выход',
@@ -854,6 +868,19 @@ ru: {
   da2_endMonth:'Конечный месяц', da2_reportTitle:'Отчёт по причинённому ущербу — по количеству',
   da2_reportSub:'Рейтинг по количеству случаев ущерба независимо от их стоимости.',
   da2_reportCount:'Кол-во случаев', da2_reportNone:'За выбранный период ущерб не зарегистрирован.',
+
+  fp_title:'Фэйр-плей', fp_sub:'Учёт жёлтых и красных карточек, выданных спортсменам.',
+  fp_addTitle:'Регистрация санкции', fp_numeSportiv:'Имя спортсмена', fp_platou:'Игровая площадка',
+  fp_descriere:'Описание нарушения', fp_descrierePh:'напр. Неспортивное поведение по отношению к судье',
+  fp_cartonas:'Карточка', fp_galben:'жёлтая', fp_rosu:'красная',
+  fp_th_platou:'Площадка', fp_th_descriere:'Описание', fp_th_cartonas:'Карточка',
+  fp_countSuffix:'зарегистрированных санкций', fp_none:'Санкции не зарегистрированы.',
+  fp_totalSanctiuni:'Всего санкций', fp_totalGalbene:'Жёлтые карточки', fp_totalRosii:'Красные карточки',
+  fp_filterMonth:'Период отчёта', fp_month:'Месяц', fp_sixMonths:'6 месяцев', fp_year:'Год',
+  fp_endMonth:'Конечный месяц', fp_reportTitle:'Рейтинг карточек — по количеству',
+  fp_reportSub:'Рейтинг спортсменов по количеству полученных карточек.',
+  fp_reportGalbene:'Жёлтые', fp_reportRosii:'Красные', fp_reportTotal:'Всего',
+  fp_reportNone:'За выбранный период санкций не зарегистрировано.', fp_needSportiv:'Выберите спортсмена.',
 
   ar_title:'Судейство', ar_sub:'Судьи турниров и количество выданных новых мячей — автоматически списывается со склада.',
   ar_addTitle:'Выдача мячей судье', ar_numeArbitru:'Имя судьи', ar_numeArbitruPh:'Имя судьи',
@@ -989,7 +1016,7 @@ function realAdmins(){ return DB.administratori.filter(a=>!a.ascuns && a.rol==='
 async function fetchAll(){
   const [
     administratoriR, serviciuAdministratoriR, participantiR, arbitriR, intarzieriR, vestimentatieR, serviciuR, spalatorieR,
-    hostelR, lenjerieR, dauneR, arbitrajR, inventarR, sarciniR, observatiiR, jurnalR, trustedIpsR, treninguriR, sesiuniR
+    hostelR, lenjerieR, dauneR, fairPlayR, arbitrajR, inventarR, sarciniR, observatiiR, jurnalR, trustedIpsR, treninguriR, sesiuniR
   ] = await Promise.all([
     sb.from('administratori').select('*'),
     sb.from('serviciu_administratori').select('*').eq('activ', true).order('nume'),
@@ -1002,6 +1029,7 @@ async function fetchAll(){
     sb.from('hostel').select('*').order('data_cazare', {ascending:false}),
     sb.from('lenjerie').select('*').order('data_eliberare', {ascending:false}),
     sb.from('daune').select('*').order('data', {ascending:false}),
+    sb.from('fair_play').select('*').order('data', {ascending:false}),
     sb.from('arbitraj').select('*').order('data', {ascending:false}),
     sb.from('inventar').select('*').order('denumire'),
     sb.from('sarcini').select('*').order('data_inreg', {ascending:false}),
@@ -1051,6 +1079,7 @@ async function fetchAll(){
       avertizor: serviciuAdminById[r.administrator_serviciu_avertizor_id]?.nume || (r.admin_avertizor_id ? publicAdminName(adminById[r.admin_avertizor_id]) : ''),
       nrSursa:r.nr_sursa,
     })),
+    fairPlay: (fairPlayR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, data:r.data, platou:r.platou, descriere:r.descriere, tipCartonas:r.tip_cartonas})),
     arbitraj: (arbitrajR.data||[]).map(r=>({id:r.id, data:r.data, arbitru:r.arbitru, turneu:r.turneu, marcaMingi:r.marca_mingi, cantitateMingi:r.cantitate_mingi, observatii:r.observatii, sesiuneSchimbId:r.sesiune_schimb_id, slotSchimb:r.slot_schimb})),
     inventar: (inventarR.data||[]).map(r=>({id:r.id, denumire:r.denumire, culoare:r.culoare, marime:r.marime, um:r.um, cantitateInitiala:r.cantitate_initiala, intrari:r.intrari, iesiri:r.iesiri, cantitateMinima:r.cantitate_minima, stare:r.stare, observatii:r.observatii, conditie:r.conditie})),
     sarcini: (sarciniR.data||[]).map(r=>({id:r.id, dataInreg:r.data_inreg, administratorServiciuInregId:r.administrator_serviciu_inreg_id, adminInreg: serviciuAdminById[r.administrator_serviciu_inreg_id]?.nume || publicAdminName(adminById[r.admin_inreg_id]), status:r.status, actiuni:r.actiuni, dataSolutionare:r.data_solutionare, administratorServiciuSolutionareId:r.administrator_serviciu_solutionare_id, adminSolutionare: serviciuAdminById[r.administrator_serviciu_solutionare_id]?.nume || (r.admin_solutionare_id ? publicAdminName(adminById[r.admin_solutionare_id]) : ''), descriere:r.descriere})),
@@ -1202,6 +1231,7 @@ const NAV = [
   {id:'lenjerie', key:'nav_lenjerie', icon:'▧'},
   {id:'medical', key:'nav_medical', icon:'✚'},
   {id:'daune', key:'nav_daune', icon:'⚠'},
+  {id:'fairplay', key:'nav_fairplay', icon:'▮'},
   {id:'arbitraj', key:'nav_arbitraj', icon:'●'},
   {id:'antrenamente', key:'nav_antrenamente', icon:'★'},
   {id:'inventar', key:'nav_inventar', icon:'▣'},
@@ -1327,7 +1357,7 @@ function render(){
   const fns = {
     dashboard: renderDashboard, participanti: renderParticipanti, intarzieri: renderIntarzieri,
     vestimentatie: renderVestimentatie, serviciu: renderServiciu, spalatorie: renderSpalatorie,
-    hostel: renderHostel, lenjerie: renderLenjerie, medical: renderMedical, daune: renderDaune,
+    hostel: renderHostel, lenjerie: renderLenjerie, medical: renderMedical, daune: renderDaune, fairplay: renderFairPlay,
     arbitraj: renderArbitraj, antrenamente: renderAntrenamente, inventar: renderInventar, sarcini: renderSarcini, observatii: renderObservatii,
     rapoarte: renderRapoarte, setari: renderSetari,
   };
@@ -1963,7 +1993,7 @@ async function removeRow(collection, id){
   const { data, error } = await sb.from(collection).delete().eq('id', id).select();
   if(error){ alert('Ștergerea a eșuat: ' + error.message); return; }
   if(!data || !data.length){ alert('Ștergerea a eșuat: nu aveți permisiunea necesară.'); return; }
-  const stateKey = collection==='trusted_ips' ? 'trustedIps' : collection;
+  const stateKey = collection==='trusted_ips' ? 'trustedIps' : collection==='fair_play' ? 'fairPlay' : collection;
   if(Array.isArray(DB[stateKey])) DB[stateKey] = DB[stateKey].filter(r=>r.id!==id);
   else await fetchAll();
   await logAction(`A șters o înregistrare din „${collection}”`);
@@ -2463,6 +2493,120 @@ async function addDauna(){
   const avertizor=avertizorType==='service' ? DB.serviciuAdministratori.find(a=>a.id===avertizorId)?.nume : publicAdminName(DB.administratori.find(a=>a.id===avertizorId));
   DB.daune.unshift({id:data.id, data:data.data, participantId:data.participant_id, teren:data.teren, inventarAfectat:data.inventar_afectat, natura:data.natura, bunDeterioratDistrus:data.stare, observatii:data.observatii, valoareEstimata:Number(data.valoare_estimata||0), administratorServiciuAvertizorId:data.administrator_serviciu_avertizor_id, adminAvertizorId:data.admin_avertizor_id, avertizor, nrSursa:null});
   await logAction(`A înregistrat o daună provocată de ${participantName(participantId)}`);
+  render();
+}
+
+/* ══════════════════════ FAIR PLAY ══════════════════════ */
+let fairPlayFilter={mode:'month',month:todayISO().slice(0,7),year:todayISO().slice(0,4)};
+function fairPlayMonthsAvailable(){
+  const months=new Set(DB.fairPlay.map(f=>f.data.slice(0,7)));
+  months.add(todayISO().slice(0,7));
+  return [...months].sort().reverse();
+}
+function fairPlayYearsAvailable(){
+  const years=new Set(DB.fairPlay.map(f=>f.data.slice(0,4)));
+  years.add(todayISO().slice(0,4));
+  return [...years].sort().reverse();
+}
+function fairPlayRowsFiltered(){
+  if(fairPlayFilter.mode==='year') return DB.fairPlay.filter(f=>f.data.slice(0,4)===fairPlayFilter.year);
+  const endMonth=fairPlayFilter.month;
+  if(fairPlayFilter.mode==='sixMonths'){
+    const startMonth=dauneShiftMonth(endMonth,-5);
+    return DB.fairPlay.filter(f=>f.data.slice(0,7)>=startMonth&&f.data.slice(0,7)<=endMonth);
+  }
+  return DB.fairPlay.filter(f=>f.data.slice(0,7)===endMonth);
+}
+function fairPlayPeriodLabel(){
+  if(fairPlayFilter.mode==='year') return fairPlayFilter.year;
+  if(fairPlayFilter.mode==='sixMonths') return `${monthLabel(dauneShiftMonth(fairPlayFilter.month,-5))} — ${monthLabel(fairPlayFilter.month)}`;
+  return monthLabel(fairPlayFilter.month);
+}
+function fairPlayRanking(rows){
+  const counts={};
+  rows.forEach(f=>{
+    if(!f.participantId) return;
+    const c = counts[f.participantId] || (counts[f.participantId] = {galben:0, rosu:0});
+    if(f.tipCartonas==='galben') c.galben++; else c.rosu++;
+  });
+  return Object.entries(counts).map(([participantId,c])=>({participantId, galben:c.galben, rosu:c.rosu, total:c.galben+c.rosu, name:participantName(participantId)}))
+    .sort((a,b)=>b.total-a.total||b.rosu-a.rosu||a.name.localeCompare(b.name,LANG==='ru'?'ru':'ro'));
+}
+function renderFairPlay(){
+  const rows=fairPlayRowsFiltered();
+  const ranking=fairPlayRanking(rows);
+  return `
+  <div class="view-head"><div class="view-title">${t('fp_title')}</div></div>
+  <div class="view-sub">${t('fp_sub')}</div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">${t('fp_totalSanctiuni')}</div><div class="stat-value">${rows.length}</div></div>
+    <div class="stat-card warn"><div class="stat-label">${t('fp_totalGalbene')}</div><div class="stat-value c-yellow">${rows.filter(f=>f.tipCartonas==='galben').length}</div></div>
+    <div class="stat-card crit"><div class="stat-label">${t('fp_totalRosii')}</div><div class="stat-value c-red">${rows.filter(f=>f.tipCartonas==='roșu').length}</div></div>
+  </div>
+
+  <div class="add-form">
+    <div class="form-title">${t('fp_filterMonth')}</div>
+    <div class="toggle-group" role="group" aria-label="${esc(t('fp_filterMonth'))}" style="margin-bottom:14px">
+      <button type="button" class="toggle-btn ${fairPlayFilter.mode==='month'?'active':''}" aria-pressed="${fairPlayFilter.mode==='month'}" onclick="fairPlayFilter.mode='month';render();">${t('fp_month')}</button>
+      <button type="button" class="toggle-btn ${fairPlayFilter.mode==='sixMonths'?'active':''}" aria-pressed="${fairPlayFilter.mode==='sixMonths'}" onclick="fairPlayFilter.mode='sixMonths';render();">${t('fp_sixMonths')}</button>
+      <button type="button" class="toggle-btn ${fairPlayFilter.mode==='year'?'active':''}" aria-pressed="${fairPlayFilter.mode==='year'}" onclick="fairPlayFilter.mode='year';render();">${t('fp_year')}</button>
+    </div>
+    <div class="form-grid" style="grid-template-columns:1fr">
+      ${fairPlayFilter.mode==='year' ? `<div class="field"><label>${t('fp_year')}</label><select onchange="fairPlayFilter.year=this.value;render();">
+        ${fairPlayYearsAvailable().map(y=>`<option value="${y}" ${fairPlayFilter.year===y?'selected':''}>${y}</option>`).join('')}
+      </select></div>` : `<div class="field"><label>${t(fairPlayFilter.mode==='sixMonths'?'fp_endMonth':'fp_month')}</label><select onchange="fairPlayFilter.month=this.value;render();">
+        ${fairPlayMonthsAvailable().map(m=>`<option value="${m}" ${fairPlayFilter.month===m?'selected':''}>${monthLabel(m)}</option>`).join('')}
+      </select></div>`}
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div><div class="table-title">${t('fp_reportTitle')}</div><div class="view-sub" style="margin:4px 0 0">${t('fp_reportSub')}</div></div><div class="table-hint">${esc(fairPlayPeriodLabel())}</div></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>#</th><th>${t('th_participant')}</th><th>${t('fp_reportGalbene')}</th><th>${t('fp_reportRosii')}</th><th>${t('fp_reportTotal')}</th></tr></thead>
+      <tbody>${ranking.length ? ranking.map((row,index)=>`<tr><td class="td-muted">${index+1}</td><td class="td-name" onclick="openProfile('${row.participantId}')">${esc(row.name)}</td><td><span class="badge yellow">${row.galben}</span></td><td><span class="badge red">${row.rosu}</span></td><td class="td-gold">${row.total}</td></tr>`).join('') : `<tr><td class="td-empty" colspan="5">${t('fp_reportNone')}</td></tr>`}</tbody>
+    </table></div>
+  </div>
+
+  <div class="add-form">
+    <div class="form-title">${t('fp_addTitle')}</div>
+    <div class="form-grid" style="grid-template-columns:0.8fr 1.2fr 1fr 1.4fr 0.8fr auto">
+      <div class="field"><label>${t('th_data')}</label><input id="ff-data" type="date" value="${todayISO()}"></div>
+      <div class="field"><label>${t('fp_numeSportiv')}</label>${autocompleteField('ff-participant', participantAcOptions())}</div>
+      <div class="field"><label>${t('fp_platou')}</label><select id="ff-platou">${TOURNAMENTS.map(tour=>`<option>${tour}</option>`).join('')}</select></div>
+      <div class="field"><label>${t('fp_descriere')}</label><input id="ff-descriere" placeholder="${t('fp_descrierePh')}"></div>
+      <div class="field"><label>${t('fp_cartonas')}</label><select id="ff-cartonas"><option value="galben">${t('fp_galben')}</option><option value="roșu">${t('fp_rosu')}</option></select></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addFairPlay()">${t('btn_add')}</button></div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header"><div class="table-title">${DB.fairPlay.length} ${t('fp_countSuffix')}</div></div>
+    <div class="table-scroll recent-actions-scroll"><table>
+      <thead><tr><th>${t('th_data')}</th><th>${t('th_participant')}</th><th>${t('fp_th_platou')}</th><th>${t('fp_th_descriere')}</th><th>${t('fp_th_cartonas')}</th><th></th></tr></thead>
+      <tbody>${DB.fairPlay.length ? DB.fairPlay.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(f=>`
+        <tr><td class="td-muted">${fmtDate(f.data)}</td><td class="td-name" onclick="openProfile('${f.participantId}')">${esc(participantName(f.participantId))}</td>
+        <td><span class="badge gold">${esc(f.platou)}</span></td><td class="td-muted">${esc(f.descriere)||'—'}</td>
+        <td><span class="badge ${f.tipCartonas==='roșu'?'red':'yellow'}">${trEnum(f.tipCartonas)}</span></td>
+        <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('fair_play','${f.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="6">${t('fp_none')}</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+async function addFairPlay(){
+  const participantId = document.getElementById('ff-participant').value;
+  if(!participantId){ alert(t('fp_needSportiv')); return; }
+  const row = {
+    participant_id: participantId,
+    data: document.getElementById('ff-data').value || todayISO(),
+    platou: document.getElementById('ff-platou').value,
+    descriere: document.getElementById('ff-descriere').value.trim() || null,
+    tip_cartonas: document.getElementById('ff-cartonas').value,
+  };
+  const { data, error } = await sb.from('fair_play').insert(row).select().single();
+  if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
+  DB.fairPlay.unshift({id:data.id, participantId:data.participant_id, data:data.data, platou:data.platou, descriere:data.descriere, tipCartonas:data.tip_cartonas});
+  await logAction(`A înregistrat un cartonaș ${trEnum(row.tip_cartonas)} pentru ${participantName(participantId)}`);
   render();
 }
 
