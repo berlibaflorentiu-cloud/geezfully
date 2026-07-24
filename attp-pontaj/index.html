@@ -695,8 +695,8 @@ ro: {
   fp_title:'Fair Play', fp_sub:'Evidența cartonașelor galbene și roșii acordate sportivilor.',
   fp_addTitle:'Înregistrare sancțiune', fp_numeSportiv:'Nume sportiv', fp_platou:'Platoul de joc',
   fp_descriere:'Descrierea faptei', fp_descrierePh:'ex. Comportament nesportiv față de arbitru',
-  fp_cartonas:'Cartonaș', fp_galben:'galben', fp_rosu:'roșu',
-  fp_th_platou:'Platou', fp_th_descriere:'Descriere', fp_th_cartonas:'Cartonaș',
+  fp_cartonas:'Cartonaș', fp_galben:'galben', fp_rosu:'roșu', fp_ora:'Ora (opțional)',
+  fp_th_ora:'Ora', fp_th_platou:'Platou', fp_th_descriere:'Descriere', fp_th_cartonas:'Cartonaș',
   fp_countSuffix:'sancțiuni înregistrate', fp_none:'Nicio sancțiune înregistrată.',
   fp_totalSanctiuni:'Total sancțiuni', fp_totalGalbene:'Cartonașe galbene', fp_totalRosii:'Cartonașe roșii',
   fp_filterMonth:'Perioada raportului', fp_month:'Lună', fp_sixMonths:'6 luni', fp_year:'An',
@@ -939,8 +939,8 @@ ru: {
   fp_title:'Фэйр-плей', fp_sub:'Учёт жёлтых и красных карточек, выданных спортсменам.',
   fp_addTitle:'Регистрация санкции', fp_numeSportiv:'Имя спортсмена', fp_platou:'Игровая площадка',
   fp_descriere:'Описание нарушения', fp_descrierePh:'напр. Неспортивное поведение по отношению к судье',
-  fp_cartonas:'Карточка', fp_galben:'жёлтая', fp_rosu:'красная',
-  fp_th_platou:'Площадка', fp_th_descriere:'Описание', fp_th_cartonas:'Карточка',
+  fp_cartonas:'Карточка', fp_galben:'жёлтая', fp_rosu:'красная', fp_ora:'Время (необязательно)',
+  fp_th_ora:'Время', fp_th_platou:'Площадка', fp_th_descriere:'Описание', fp_th_cartonas:'Карточка',
   fp_countSuffix:'зарегистрированных санкций', fp_none:'Санкции не зарегистрированы.',
   fp_totalSanctiuni:'Всего санкций', fp_totalGalbene:'Жёлтые карточки', fp_totalRosii:'Красные карточки',
   fp_filterMonth:'Период отчёта', fp_month:'Месяц', fp_sixMonths:'6 месяцев', fp_year:'Год',
@@ -1162,7 +1162,7 @@ async function fetchAll(){
       avertizor: serviciuAdminById[r.administrator_serviciu_avertizor_id]?.nume || (r.admin_avertizor_id ? publicAdminName(adminById[r.admin_avertizor_id]) : ''),
       nrSursa:r.nr_sursa, createdAt:r.created_at,
     })),
-    fairPlay: (fairPlayR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, data:r.data, platou:r.platou, descriere:r.descriere, tipCartonas:r.tip_cartonas, createdAt:r.created_at})),
+    fairPlay: (fairPlayR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, data:r.data, ora:r.ora ? String(r.ora).slice(0,5) : '', platou:r.platou, descriere:r.descriere, tipCartonas:r.tip_cartonas, createdAt:r.created_at})),
     arbitraj: (arbitrajR.data||[]).map(r=>({id:r.id, data:r.data, arbitru:r.arbitru, turneu:r.turneu, marcaMingi:r.marca_mingi, cantitateMingi:r.cantitate_mingi, observatii:r.observatii, sesiuneSchimbId:r.sesiune_schimb_id, slotSchimb:r.slot_schimb})),
     inventar: (inventarR.data||[]).map(r=>({id:r.id, denumire:r.denumire, culoare:r.culoare, marime:r.marime, um:r.um, cantitateInitiala:r.cantitate_initiala, intrari:r.intrari, iesiri:r.iesiri, cantitateMinima:r.cantitate_minima, stare:r.stare, observatii:r.observatii, conditie:r.conditie})),
     sarcini: (sarciniR.data||[]).map(r=>({id:r.id, dataInreg:r.data_inreg, administratorServiciuInregId:r.administrator_serviciu_inreg_id, adminInreg: serviciuAdminById[r.administrator_serviciu_inreg_id]?.nume || publicAdminName(adminById[r.admin_inreg_id]), status:r.status, actiuni:r.actiuni, dataSolutionare:r.data_solutionare, administratorServiciuSolutionareId:r.administrator_serviciu_solutionare_id, adminSolutionare: serviciuAdminById[r.administrator_serviciu_solutionare_id]?.nume || (r.admin_solutionare_id ? publicAdminName(adminById[r.admin_solutionare_id]) : ''), descriere:r.descriere, createdAt:r.created_at})),
@@ -1593,7 +1593,7 @@ async function buildActContinut(startedAt, endedAt, shiftId){
     admin: { data: startedAt.slice(0,10), nume: '' },
     intarzieri: DB.intarzieri.filter(r=>inShift(r.createdAt)).map(r=>({ nume: entryPersonName(r), min: r.minuteIntarziere, motiv: r.motiv || '' })),
     arbitraj: DB.arbitraj.filter(r=>r.sesiuneSchimbId===shiftId).map(r=>({ platou: r.turneu, arbitru: r.arbitru })),
-    fairPlay: DB.fairPlay.filter(r=>inShift(r.createdAt)).map(r=>({ nume: participantName(r.participantId), cartonas: r.tipCartonas, descriere: r.descriere || '' })),
+    fairPlay: DB.fairPlay.filter(r=>inShift(r.createdAt)).map(r=>({ nume: participantName(r.participantId), ora: r.ora ? String(r.ora).slice(0,5) : '', cartonas: r.tipCartonas, descriere: r.descriere || '' })),
     daune: DB.daune.filter(r=>inShift(r.createdAt)).map(r=>({ nume: participantName(r.participantId), platou: r.teren || '', descriere: `${r.inventarAfectat} — ${r.natura}` })),
     // Only the automatic consequences of duty actions (issuing gear, marking returns, referee
     // ball issuance) belong in a shift act — manual stock corrections/adjustments/reverts from
@@ -1674,7 +1674,7 @@ function actSections(c, lang=LANG){
   return [
     { titleKey:'act_s_intarzieri', headers:[t('act_numeSportiv',lang), t('act_min',lang), t('act_motiv',lang)], rows:(c.intarzieri||[]).map(r=>[r.nume, r.min ?? '', r.motiv||'']) },
     { titleKey:'act_s_arbitraj', headers:[t('act_platou',lang), t('act_numeArbitru',lang)], rows:(c.arbitraj||[]).map(r=>[r.platou, r.arbitru]) },
-    { titleKey:'act_s_fairplay', headers:[t('act_numeSportiv',lang), t('act_cartonas',lang), t('act_descriere',lang)], rows:(c.fairPlay||[]).map(r=>[r.nume, trEnum(r.cartonas,lang), r.descriere||'']) },
+    { titleKey:'act_s_fairplay', headers:[t('act_numeSportiv',lang), t('act_ora',lang), t('act_cartonas',lang), t('act_descriere',lang)], rows:(c.fairPlay||[]).map(r=>[r.nume, r.ora||'', trEnum(r.cartonas,lang), r.descriere||'']) },
     { titleKey:'act_s_daune', headers:[t('act_numeSportiv',lang), t('act_platou',lang), t('act_descriere',lang)], rows:(c.daune||[]).map(r=>[r.nume, r.platou||'', r.descriere||'']) },
     { titleKey:'act_s_inventar', headers:[t('act_tipMiscare',lang), t('act_articol',lang), t('act_cantitate',lang), t('act_motiv',lang)], rows:(c.inventar||[]).map(r=>[trEnum(r.tip,lang), r.articol, r.cantitate, cleanActReason(r.motiv)]) },
     { titleKey:'act_s_hostel', headers:[t('act_numeSportiv',lang), t('act_camera',lang), t('act_oraCazarii',lang), t('act_statut',lang)], rows:(c.hostel||[]).map(r=>[r.nume, r.camera||'', r.ora||'', trEnum(r.statut,lang)]) },
@@ -2120,7 +2120,7 @@ function renderParticipanti(){
       <div class="field"><label>${t('pa_telefon')}</label><input id="pf-telefon" placeholder="${t('pa_telefonPh')}"></div>
       <div class="field"><label>${t('pa_email')}</label><input id="pf-email" placeholder="${t('pa_emailPh')}"></div>
       <div class="field"><label>${t('pa_adresa')}</label><input id="pf-adresa" placeholder="${t('pa_adresaPh')}"></div>
-      <div class="field"><label>${t('pa_aviz')}</label><input id="pf-aviz" type="date" value="${todayISO()}"></div>
+      <div class="field"><label>${t('pa_aviz')}</label><input id="pf-aviz" type="date"></div>
       <div class="field"><label>${t('pa_marime')}</label><select id="pf-marime">${CLOTHING_SIZES.map(s=>`<option>${s}</option>`).join('')}</select></div>
       <div class="field"><label>${t('pa_categorieSp')}</label><select id="pf-categorie"><option value="">${t('pa_nespecificata')}</option>${SPORT_CATEGORIES.map(c=>`<option>${c}</option>`).join('')}</select></div>
       <div class="field" style="justify-content:flex-end"><button class="btn-primary" ${disabledAttr()} onclick="addParticipant()">${t('pa_btnAdd')}</button></div>
@@ -2208,7 +2208,7 @@ async function addParticipant(){
     adresa: document.getElementById('pf-adresa').value.trim() || null,
     telefon: document.getElementById('pf-telefon').value.trim() || null,
     email: document.getElementById('pf-email').value.trim() || null,
-    data_aviz_medical: document.getElementById('pf-aviz').value || todayISO(),
+    data_aviz_medical: document.getElementById('pf-aviz').value || null,
     marime: document.getElementById('pf-marime').value,
     categorie_sportiva: document.getElementById('pf-categorie').value || null,
     statut: 'activ',
@@ -3024,8 +3024,9 @@ function renderFairPlay(){
 
   <div class="add-form">
     <div class="form-title">${t('fp_addTitle')}</div>
-    <div class="form-grid" style="grid-template-columns:0.8fr 1.2fr 1fr 1.4fr 0.8fr auto">
+    <div class="form-grid" style="grid-template-columns:0.8fr 0.7fr 1.2fr 1fr 1.4fr 0.8fr auto">
       <div class="field"><label>${t('th_data')}</label><input id="ff-data" type="date" value="${todayISO()}"></div>
+      <div class="field"><label>${t('fp_ora')}</label><input id="ff-ora" type="time"></div>
       <div class="field"><label>${t('fp_numeSportiv')}</label>${autocompleteField('ff-participant', participantAcOptions())}</div>
       <div class="field"><label>${t('fp_platou')}</label><select id="ff-platou">${TOURNAMENTS.map(tour=>`<option>${tour}</option>`).join('')}</select></div>
       <div class="field"><label>${t('fp_descriere')}</label><input id="ff-descriere" placeholder="${t('fp_descrierePh')}"></div>
@@ -3037,12 +3038,12 @@ function renderFairPlay(){
   <div class="table-wrap">
     <div class="table-header"><div class="table-title">${DB.fairPlay.length} ${t('fp_countSuffix')}</div></div>
     <div class="table-scroll recent-actions-scroll"><table>
-      <thead><tr><th>${t('th_data')}</th><th>${t('th_participant')}</th><th>${t('fp_th_platou')}</th><th>${t('fp_th_descriere')}</th><th>${t('fp_th_cartonas')}</th><th></th></tr></thead>
-      <tbody>${DB.fairPlay.length ? DB.fairPlay.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(f=>`
-        <tr><td class="td-muted">${fmtDate(f.data)}</td><td class="td-name" onclick="openProfile('${f.participantId}')">${esc(participantName(f.participantId))}</td>
+      <thead><tr><th>${t('th_data')}</th><th>${t('fp_th_ora')}</th><th>${t('th_participant')}</th><th>${t('fp_th_platou')}</th><th>${t('fp_th_descriere')}</th><th>${t('fp_th_cartonas')}</th><th></th></tr></thead>
+      <tbody>${DB.fairPlay.length ? DB.fairPlay.slice().sort((a,b)=>`${b.data}T${b.ora||''}`.localeCompare(`${a.data}T${a.ora||''}`)).map(f=>`
+        <tr><td class="td-muted">${fmtDate(f.data)}</td><td class="td-muted">${esc(f.ora)||'—'}</td><td class="td-name" onclick="openProfile('${f.participantId}')">${esc(participantName(f.participantId))}</td>
         <td><span class="badge gold">${esc(f.platou)}</span></td><td class="td-muted">${esc(f.descriere)||'—'}</td>
         <td><span class="badge ${f.tipCartonas==='roșu'?'red':'yellow'}">${trEnum(f.tipCartonas)}</span></td>
-        <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('fair_play','${f.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="6">${t('fp_none')}</td></tr>`}</tbody>
+        <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('fair_play','${f.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="7">${t('fp_none')}</td></tr>`}</tbody>
     </table></div>
   </div>`;
 }
@@ -3052,13 +3053,14 @@ async function addFairPlay(){
   const row = {
     participant_id: participantId,
     data: document.getElementById('ff-data').value || todayISO(),
+    ora: document.getElementById('ff-ora').value || null,
     platou: document.getElementById('ff-platou').value,
     descriere: document.getElementById('ff-descriere').value.trim() || null,
     tip_cartonas: document.getElementById('ff-cartonas').value,
   };
   const { data, error } = await sb.from('fair_play').insert(row).select().single();
   if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
-  DB.fairPlay.unshift({id:data.id, participantId:data.participant_id, data:data.data, platou:data.platou, descriere:data.descriere, tipCartonas:data.tip_cartonas});
+  DB.fairPlay.unshift({id:data.id, participantId:data.participant_id, data:data.data, ora:data.ora ? String(data.ora).slice(0,5) : '', platou:data.platou, descriere:data.descriere, tipCartonas:data.tip_cartonas, createdAt:data.created_at});
   await logAction(`A înregistrat un cartonaș ${trEnum(row.tip_cartonas)} pentru ${participantName(participantId)}`);
   render();
 }
