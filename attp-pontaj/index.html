@@ -197,6 +197,7 @@
   .ops-row:first-of-type { border-top: none; padding-top: 0; }
   .ops-row.training-row { grid-template-columns: 1fr .8fr .55fr auto; }
   .ops-row.inventory-row { grid-template-columns: 1fr .5fr auto; }
+  .ops-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .ops-slot { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .08em; margin-bottom: 5px; }
   .ops-saved { color: var(--green); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
   .ops-today-list { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
@@ -596,7 +597,8 @@ ro: {
   sh_active:'Schimb activ', sh_demo:'Mod demonstrativ pentru administrator', sh_stop:'Oprește schimbul',
   sh_refTitle:'Arbitri pentru astăzi', sh_refHelp:'Salvează numele și sala acum. Numărul mingilor poate fi completat aici mai târziu.',
   sh_referee:'Arbitru', sh_venue:'Sală', sh_saveRef:'Salvează', sh_saved:'salvat', sh_balls:'Mingi',
-  sh_updateBalls:'Actualizează', sh_inventoryTitle:'Intrări inventar', sh_inventoryHelp:'Înregistrează imediat marfa sau echipamentul primit astăzi.',
+  sh_updateBalls:'Actualizează', sh_correctRef:'Corectează', sh_saveCorrection:'Salvează corectarea', sh_cancelCorrection:'Renunță', sh_correcting:'în corectare',
+  sh_correctionError:'Corectarea nu a putut fi salvată.', sh_inventoryTitle:'Intrări inventar', sh_inventoryHelp:'Înregistrează imediat marfa sau echipamentul primit astăzi.',
   sh_item:'Articol', sh_quantity:'Cantitate', sh_addStock:'Adaugă în stoc',
   sh_trainingTitle:'Antrenamente programate azi', sh_trainingHelp:'Adaugă antrenorul, sportivul și ora; înregistrarea apare automat în Antrenamente.',
   sh_trainer:'Antrenor', sh_trainee:'Sportiv', sh_time:'Ora', sh_addTraining:'Salvează antrenamentul',
@@ -837,7 +839,8 @@ ru: {
   sh_active:'Смена активна', sh_demo:'Демонстрационный режим администратора', sh_stop:'Завершить смену',
   sh_refTitle:'Судьи на сегодня', sh_refHelp:'Сохраните имя и зал сейчас. Количество мячей можно заполнить здесь позже.',
   sh_referee:'Судья', sh_venue:'Зал', sh_saveRef:'Сохранить', sh_saved:'сохранено', sh_balls:'Мячи',
-  sh_updateBalls:'Обновить', sh_inventoryTitle:'Поступление инвентаря', sh_inventoryHelp:'Сразу зарегистрируйте полученный сегодня товар или оборудование.',
+  sh_updateBalls:'Обновить', sh_correctRef:'Исправить', sh_saveCorrection:'Сохранить исправление', sh_cancelCorrection:'Отмена', sh_correcting:'исправляется',
+  sh_correctionError:'Не удалось сохранить исправление.', sh_inventoryTitle:'Поступление инвентаря', sh_inventoryHelp:'Сразу зарегистрируйте полученный сегодня товар или оборудование.',
   sh_item:'Позиция', sh_quantity:'Количество', sh_addStock:'Добавить на склад',
   sh_trainingTitle:'Тренировки на сегодня', sh_trainingHelp:'Добавьте тренера, спортсмена и время; запись сразу появится в разделе тренировок.',
   sh_trainer:'Тренер', sh_trainee:'Спортсмен', sh_time:'Время', sh_addTraining:'Сохранить тренировку',
@@ -1050,6 +1053,7 @@ let shiftStartPrompt = false;
 let adminDemoShiftActive = false;
 let dashboardTrainingRows = 1;
 let demoShiftArbitrajIds = [];
+let dashboardRefereeEditId = null;
 function isFullAdmin(){ return currentRole === 'admin'; }
 function hasActiveShift(){ return isFullAdmin() || !!currentShift; }
 function activeShiftName(){
@@ -1512,10 +1516,25 @@ function dashboardArbitrajRows(){
   if(isFullAdmin()) return DB.arbitraj.filter(a=>demoShiftArbitrajIds.includes(a.id));
   return currentShift ? DB.arbitraj.filter(a=>a.sesiuneSchimbId===currentShift.id) : [];
 }
+function dashboardRefereeOptions(selectedName){
+  const names = arbitriActivi().map(a=>`${a.nume} ${a.prenume}`);
+  if(selectedName && !names.includes(selectedName)) names.unshift(selectedName);
+  return names.map(name=>`<option value="${esc(name)}" ${name===selectedName?'selected':''}>${esc(name)}</option>`).join('');
+}
+function dashboardVenueOptions(selectedVenue){
+  const venues = TOURNAMENTS.includes(selectedVenue) ? TOURNAMENTS : [selectedVenue, ...TOURNAMENTS].filter(Boolean);
+  return venues.map(venue=>`<option value="${esc(venue)}" ${venue===selectedVenue?'selected':''}>${esc(venue)}</option>`).join('');
+}
+function canCorrectDashboardReferee(row){
+  if(!row) return false;
+  if(isFullAdmin()) return adminDemoShiftActive && demoShiftArbitrajIds.includes(row.id);
+  return !!currentShift && row.sesiuneSchimbId===currentShift.id;
+}
 function openShiftPanel(){
   if(isFullAdmin()){
     adminDemoShiftActive = true;
     demoShiftArbitrajIds = [];
+    dashboardRefereeEditId = null;
     dashboardTrainingRows = 1;
     render();
     return;
@@ -1534,6 +1553,7 @@ async function confirmLocationShift(){
   if(error){ alert(t('sh_startError')+' '+error.message); return; }
   currentShift = { id:data.id, administratorServiciuId:employeeId, administrator:employee.nume, startedAt:data.started_at };
   shiftStartPrompt = false;
+  dashboardRefereeEditId = null;
   dashboardTrainingRows = 1;
   document.getElementById('sb-admin').textContent = employee.nume;
   await logAction(`A început schimbul de locație: ${employee.nume}`);
@@ -1842,6 +1862,7 @@ async function stopDashboardShift(){
     // leaving the UI stuck showing a "live" shift that no longer exists.
     alert(t('sh_stopAlreadyEnded'));
     currentShift = null;
+    dashboardRefereeEditId = null;
     dashboardTrainingRows = 1;
     await fetchAll();
     document.getElementById('sb-admin').textContent = currentShift ? currentShift.administrator : currentAdmin;
@@ -1852,6 +1873,7 @@ async function stopDashboardShift(){
   }
   await logAction(`A încheiat schimbul de locație: ${shiftName}`);
   currentShift = null;
+  dashboardRefereeEditId = null;
   dashboardTrainingRows = 1;
   document.getElementById('sb-admin').textContent = currentAdmin;
   currentView = 'dashboard';
@@ -1895,13 +1917,14 @@ function renderShiftWorkflow(){
         <div class="ops-help">${t('sh_refHelp')}</div>
         ${[1,2,3].map(slot=>{
           const saved = refs.find(r=>r.slotSchimb===slot) || (isFullAdmin() ? refs[slot-1] : null);
+          const editing = !!saved && dashboardRefereeEditId===saved.id;
           return `<div class="ops-row">
-            <div class="field"><div class="ops-slot">#${slot} · ${t('sh_referee')} ${saved?'<span class="ops-saved">· '+t('sh_saved')+'</span>':''}</div>
-              ${saved ? `<input value="${esc(saved.arbitru)}" disabled>` : `<select id="shift-ref-${slot}">${arbitriActivi().map(a=>`<option value="${esc(a.nume+' '+a.prenume)}">${esc(a.nume)} ${esc(a.prenume)}</option>`).join('')}</select>`}
+            <div class="field"><div class="ops-slot">#${slot} · ${t('sh_referee')} ${saved?'<span class="ops-saved">· '+t(editing?'sh_correcting':'sh_saved')+'</span>':''}</div>
+              ${editing ? `<select id="shift-ref-correction-${saved.id}">${dashboardRefereeOptions(saved.arbitru)}</select>` : saved ? `<input value="${esc(saved.arbitru)}" disabled>` : `<select id="shift-ref-${slot}">${dashboardRefereeOptions('')}</select>`}
             </div>
-            <div class="field"><label>${t('sh_venue')}</label>${saved?`<input value="${esc(saved.turneu)}" disabled>`:`<select id="shift-venue-${slot}">${TOURNAMENTS.map(v=>`<option>${esc(v)}</option>`).join('')}</select>`}</div>
-            ${saved ? `<div class="field"><label>${t('sh_balls')}</label><div style="display:grid;grid-template-columns:.9fr .7fr;gap:6px"><select id="shift-ball-brand-${saved.id}"><option ${saved.marcaMingi==='DHS'?'selected':''}>DHS</option><option ${saved.marcaMingi==='JOOLA'?'selected':''}>JOOLA</option></select><input id="shift-ball-qty-${saved.id}" type="number" min="0" value="${saved.cantitateMingi||0}"></div></div>
-              <button class="btn-ghost btn-sm" onclick="updateDashboardRefereeBalls('${saved.id}')">${t('sh_updateBalls')}</button>`
+            <div class="field"><label>${t('sh_venue')}</label>${editing ? `<select id="shift-venue-correction-${saved.id}">${dashboardVenueOptions(saved.turneu)}</select>` : saved ? `<input value="${esc(saved.turneu)}" disabled>` : `<select id="shift-venue-${slot}">${dashboardVenueOptions('')}</select>`}</div>
+            ${saved ? `<div class="field"><label>${t('sh_balls')}</label><div style="display:grid;grid-template-columns:.9fr .7fr;gap:6px"><select id="shift-ball-brand-${saved.id}" ${editing?'disabled':''}><option ${saved.marcaMingi==='DHS'?'selected':''}>DHS</option><option ${saved.marcaMingi==='JOOLA'?'selected':''}>JOOLA</option></select><input id="shift-ball-qty-${saved.id}" type="number" min="0" value="${saved.cantitateMingi||0}" ${editing?'disabled':''}></div></div>
+              <div class="ops-actions">${editing ? `<button class="btn-primary btn-sm" onclick="saveDashboardRefereeCorrection('${saved.id}')">${t('sh_saveCorrection')}</button><button class="btn-ghost btn-sm" onclick="cancelDashboardRefereeCorrection()">${t('sh_cancelCorrection')}</button>` : `<button class="btn-ghost btn-sm" onclick="updateDashboardRefereeBalls('${saved.id}')">${t('sh_updateBalls')}</button><button class="btn-ghost btn-sm" onclick="beginDashboardRefereeCorrection('${saved.id}')">${t('sh_correctRef')}</button>`}</div>`
               : `<div></div><button class="btn-primary btn-sm" onclick="saveDashboardReferee(${slot})">${t('sh_saveRef')}</button>`}
           </div>`;
         }).join('')}
@@ -1984,6 +2007,35 @@ async function saveDashboardReferee(slot){
   DB.arbitraj.unshift(local);
   if(isFullAdmin()) demoShiftArbitrajIds.push(row.id);
   await logAction(`A programat arbitrul ${arbitru} la ${turneu}`);
+  render();
+}
+function beginDashboardRefereeCorrection(id){
+  const row = DB.arbitraj.find(a=>a.id===id);
+  if(!canCorrectDashboardReferee(row)) return;
+  dashboardRefereeEditId = id;
+  render();
+}
+function cancelDashboardRefereeCorrection(){
+  dashboardRefereeEditId = null;
+  render();
+}
+async function saveDashboardRefereeCorrection(id){
+  const row = DB.arbitraj.find(a=>a.id===id);
+  if(!canCorrectDashboardReferee(row)) return;
+  const arbitru = document.getElementById(`shift-ref-correction-${id}`)?.value;
+  const turneu = document.getElementById(`shift-venue-correction-${id}`)?.value;
+  if(!arbitru || !turneu) return;
+  const oldArbitru = row.arbitru, oldTurneu = row.turneu;
+  if(arbitru===oldArbitru && turneu===oldTurneu){ dashboardRefereeEditId=null; render(); return; }
+  const { data, error } = await sb.from('arbitraj').update({arbitru,turneu}).eq('id',id).select().single();
+  if(error || !data){ alert(t('sh_correctionError')+' '+(error?.message||'')); return; }
+  row.arbitru = data.arbitru;
+  row.turneu = data.turneu;
+  row.marcaMingi = data.marca_mingi;
+  row.cantitateMingi = data.cantitate_mingi;
+  dashboardRefereeEditId = null;
+  await refetchInventar();
+  await logAction(`A corectat arbitrul/sala din "${oldArbitru} / ${oldTurneu}" în "${row.arbitru} / ${row.turneu}"`);
   render();
 }
 async function updateDashboardRefereeBalls(id){
