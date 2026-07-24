@@ -1596,6 +1596,9 @@ function openActPreview(act){
   document.getElementById('act-modal-body').innerHTML = renderActDoc(act);
   openModal('act-modal');
 }
+function openActPreviewById(id){
+  openActPreview(DB.acteSchimb.find(x=>x.id===id));
+}
 /* Section definitions shared by the on-screen preview and both exports, so all three always agree. */
 function actSections(c){
   return [
@@ -1704,8 +1707,10 @@ function renderActeSchimbList(){
   <div class="table-wrap">
     <div class="table-header"><div><div class="table-title">${t('act_sectionTitle')}</div><div class="view-sub" style="margin:4px 0 0">${t('act_sectionSub')}</div></div></div>
     <div class="table-scroll"><table>
-      <thead><tr><th>${t('th_data')}</th><th>${t('act_numeAdmin')}</th><th></th></tr></thead>
-      <tbody>${acts.length ? acts.map(a=>`<tr><td class="td-muted">${fmtDate(a.data)}</td><td>${esc(a.numeAdministrator)}</td><td><button class="btn-ghost btn-sm" onclick="openActPreview(DB.acteSchimb.find(x=>x.id===${JSON.stringify(a.id)}))">${t('act_docTitle')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="3">${t('act_none')}</td></tr>`}</tbody>
+      <thead><tr><th>${t('th_data')}</th><th>${t('act_numeAdmin')}</th><th></th><th></th></tr></thead>
+      <tbody>${acts.length ? acts.map(a=>`<tr><td class="td-muted">${fmtDate(a.data)}</td><td>${esc(a.numeAdministrator)}</td>
+        <td><button class="btn-ghost btn-sm" data-act-id="${esc(a.id)}" onclick="openActPreviewById(this.dataset.actId)">${t('act_docTitle')}</button></td>
+        <td><button class="btn-danger btn-sm" ${disabledAttr(true)} onclick="removeRow('acte_schimb','${a.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="4">${t('act_none')}</td></tr>`}</tbody>
     </table></div>
   </div>`;
 }
@@ -2245,7 +2250,7 @@ async function removeRow(collection, id){
   const { data, error } = await sb.from(collection).delete().eq('id', id).select();
   if(error){ alert('Ștergerea a eșuat: ' + error.message); return; }
   if(!data || !data.length){ alert('Ștergerea a eșuat: nu aveți permisiunea necesară.'); return; }
-  const stateKey = collection==='trusted_ips' ? 'trustedIps' : collection==='fair_play' ? 'fairPlay' : collection;
+  const stateKey = collection==='trusted_ips' ? 'trustedIps' : collection==='fair_play' ? 'fairPlay' : collection==='acte_schimb' ? 'acteSchimb' : collection;
   if(Array.isArray(DB[stateKey])) DB[stateKey] = DB[stateKey].filter(r=>r.id!==id);
   else await fetchAll();
   await logAction(`A șters o înregistrare din „${collection}”`);
