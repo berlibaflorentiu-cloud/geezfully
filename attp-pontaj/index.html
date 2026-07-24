@@ -1577,7 +1577,7 @@ async function buildActContinut(startedAt, endedAt, shiftId){
     hostel: DB.hostel.filter(r=>inShift(r.createdAt)).map(r=>({ nume: participantName(r.participantId), camera: r.observatii || '', ora: fmtTime(r.createdAt), statut: r.statut })),
     treninguri: DB.treninguri.filter(r=>inShift(r.createdAt)).map(r=>({ nume: participantName(r.participantId), antrenor: r.antrenor, data: r.data, ora: r.ora ? String(r.ora).slice(0,5) : '', statut: trainingStatusAt(r, endedAt) })),
     sarcini: DB.sarcini.filter(r=>inShift(r.createdAt)).map(r=>({ statut: r.status, descriere: r.descriere || '' })),
-    observatii: DB.observatii.filter(r=>inShift(r.createdAt)).map(r=>({ nume: participantName(r.participantId), descriere: r.descriere || '' })),
+    observatii: DB.observatii.filter(r=>inShift(r.createdAt)).map(r=>({ nume: participantName(r.participantId), categorie: r.categorie || '', descriere: r.descriere || '' })),
   };
 }
 async function saveActSchimb({ shiftId, administratorServiciuId, administratorId, numeAdministrator, startedAt, endedAt }){
@@ -1640,7 +1640,7 @@ function actSections(c){
     { titleKey:'act_s_hostel', headers:[t('act_numeSportiv'), t('act_camera'), t('act_oraCazarii'), t('act_statut')], rows:(c.hostel||[]).map(r=>[r.nume, r.camera||'', r.ora||'', trEnum(r.statut)]) },
     { titleKey:'act_s_treninguri', headers:[t('act_numeSportiv'), t('act_antrenor'), t('act_data'), t('act_ora'), t('act_statut')], rows:(c.treninguri||[]).map(r=>[r.nume, r.antrenor, r.data?fmtDate(r.data):'', r.ora||'', r.statut==='programat'?t('act_programat'):t('act_desfasurat')]) },
     { titleKey:'act_s_sarcini', headers:[t('act_statut'), t('act_descriere')], rows:(c.sarcini||[]).map(r=>[trEnum(r.statut), r.descriere||'']) },
-    { titleKey:'act_s_observatii', headers:[t('act_numeSportiv'), t('act_descriere')], rows:(c.observatii||[]).map(r=>[r.nume||'—', r.descriere||'']) },
+    { titleKey:'act_s_observatii', headers:[t('act_numeSportiv'), t('th_categorie'), t('act_descriere')], rows:(c.observatii||[]).map(r=>[r.nume||'—', r.categorie?trEnum(r.categorie):'—', r.descriere||'']) },
   ];
 }
 function actSectionTable(titleKey, headers, rows){
