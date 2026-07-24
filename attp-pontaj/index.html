@@ -1327,13 +1327,13 @@ const NAV = [
   {id:'rapoarte', key:'nav_rapoarte', icon:'▥'},
   {id:'setari', key:'nav_setari', icon:'⚙'},
 ];
-const LOCATION_HIDDEN_VIEWS = new Set(['rapoarte','setari']);
+const LOCATION_HIDDEN_VIEWS = new Set(['setari']);
 
 function buildSidebar(){
   const nav = document.getElementById('sb-nav');
   nav.innerHTML = NAV.filter(item => {
     if(isFullAdmin()) return true;
-    if(!currentShift) return item.id==='dashboard';
+    if(!currentShift) return item.id==='dashboard' || item.id==='rapoarte';
     return !LOCATION_HIDDEN_VIEWS.has(item.id);
   }).map(item => {
     const badge = navBadge(item.id);
@@ -1353,7 +1353,7 @@ function navBadge(id){
 
 function navigate(view){
   if(!isFullAdmin() && LOCATION_HIDDEN_VIEWS.has(view)) view = 'dashboard';
-  if(!isFullAdmin() && !currentShift && view!=='dashboard') view = 'dashboard';
+  if(!isFullAdmin() && !currentShift && view!=='dashboard' && view!=='rapoarte') view = 'dashboard';
   currentView = view;
   document.querySelectorAll('.sb-item').forEach(el => el.classList.toggle('active', el.dataset.view===view));
   const navItem = NAV.find(n=>n.id===view);
@@ -1826,6 +1826,7 @@ async function generateActForPastShift(){
 }
 function renderActeSchimbList(){
   const acts = DB.acteSchimb || [];
+  const canDelete = isFullAdmin();
   const generatedShiftIds = new Set(acts.map(a=>a.inceputPerioada).filter(Boolean));
   return `
   ${isFullAdmin() ? `<div class="add-form">
@@ -1844,10 +1845,10 @@ function renderActeSchimbList(){
   <div class="table-wrap">
     <div class="table-header"><div><div class="table-title">${t('act_sectionTitle')}</div><div class="view-sub" style="margin:4px 0 0">${t('act_sectionSub')}</div></div></div>
     <div class="table-scroll"><table>
-      <thead><tr><th>${t('th_data')}</th><th>${t('act_numeAdmin')}</th><th></th><th></th></tr></thead>
+      <thead><tr><th>${t('th_data')}</th><th>${t('act_numeAdmin')}</th><th></th>${canDelete?'<th></th>':''}</tr></thead>
       <tbody>${acts.length ? acts.map(a=>`<tr><td class="td-muted">${fmtDate(a.data)}</td><td>${esc(a.numeAdministrator)}</td>
         <td><button class="btn-ghost btn-sm" data-act-id="${esc(a.id)}" onclick="openActPreviewById(this.dataset.actId)">${t('act_docTitle')}</button></td>
-        <td><button class="btn-danger btn-sm" ${disabledAttr(true)} onclick="removeRow('acte_schimb','${a.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="4">${t('act_none')}</td></tr>`}</tbody>
+        ${canDelete?`<td><button class="btn-danger btn-sm" onclick="removeRow('acte_schimb','${a.id}')">${t('btn_delete')}</button></td>`:''}</tr>`).join('') : `<tr><td class="td-empty" colspan="${canDelete?4:3}">${t('act_none')}</td></tr>`}</tbody>
     </table></div>
   </div>`;
 }
@@ -3603,6 +3604,10 @@ function updateReportDate(key, value){
   render();
 }
 function renderRapoarte(){
+  if(!isFullAdmin()) return `
+    <div class="view-head"><div class="view-title">${t('act_sectionTitle')}</div></div>
+    <div class="view-sub">${t('act_sectionSub')}</div>
+    ${renderActeSchimbList()}`;
   const report = reportSections();
   return `
   <div class="view-head"><div class="view-title">${t('re_title')}</div></div>
