@@ -303,7 +303,7 @@
   .profile-modal-box { max-width: 980px; }
   .act-modal-box { max-width: 900px; }
 
-  /* ── Act de schimb: rendered as a paper document inside the dark modal chrome ── */
+  /* ── Raport de schimb: rendered as a paper document inside the dark modal chrome ── */
   .act-doc { position: relative; background: #f3eee0; color: #211d14; border-radius: 4px; padding: 34px 38px 30px; font-family: 'DM Sans', sans-serif; overflow: hidden; }
   .act-doc::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(180deg, rgba(0,0,0,.015) 0px, rgba(0,0,0,.015) 1px, transparent 1px, transparent 27px); }
   .act-doc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; border-bottom: 2px solid #211d14; padding-bottom: 16px; margin-bottom: 22px; }
@@ -474,11 +474,11 @@
   </div>
 </div>
 
-<!-- ══ ACT DE SCHIMB MODAL ══ -->
+<!-- ══ RAPORT DE SCHIMB MODAL ══ -->
 <div class="modal-overlay" id="act-modal">
   <div class="modal-box act-modal-box">
     <div class="modal-head">
-      <div class="modal-title" data-i18n="act_docTitle">Act de schimb</div>
+      <div class="modal-title" data-i18n="act_docTitle">Raport de schimb</div>
       <div class="modal-head-actions">
         <button class="btn-ghost btn-sm" onclick="exportActExcel(currentActPreview)" data-i18n="re_excel">Excel</button>
         <button class="btn-ghost btn-sm" onclick="exportActPdf(currentActPreview)" data-i18n="re_pdf">PDF</button>
@@ -739,11 +739,11 @@ ro: {
 
   re_title:'Rapoarte și statistici', re_sub:'Generare rapoarte pentru orice perioadă. Export: Excel, PDF, imprimare.',
   re_perioada:'Perioadă raport', re_de_la:'De la', re_pana_la:'Până la', re_excel:'Excel', re_pdf:'PDF',
-  act_sectionTitle:'Acte de schimb', act_sectionSub:'Actele generate la închiderea fiecărui schimb.',
-  act_pastTitle:'Generează act pentru un schimb anterior', act_pastLoad:'Încarcă schimburile', act_pastPick:'Schimb',
-  act_pastNone:'Niciun schimb încheiat găsit.', act_pastAlready:'(act deja generat)',
-  act_none:'Niciun act generat încă.', act_btnGenerate:'Generează act', act_generating:'Se generează…',
-  act_docTitle:'Act de schimb', act_perioada:'Perioada',
+  act_sectionTitle:'Rapoarte de schimb', act_sectionSub:'Rapoartele generate la închiderea fiecărui schimb.',
+  act_pastTitle:'Generează raport pentru un schimb anterior', act_pastLoad:'Încarcă schimburile', act_pastPick:'Schimb',
+  act_pastNone:'Niciun schimb încheiat găsit.', act_pastAlready:'(raport deja generat)',
+  act_none:'Niciun raport de schimb generat încă.', act_btnGenerate:'Generează raportul', act_generating:'Se generează…',
+  act_docTitle:'Raport de schimb', act_perioada:'Perioada',
   act_s_admin:'Admin', act_s_intarzieri:'Întârzieri', act_s_arbitraj:'Arbitraj', act_s_fairplay:'Fair Play',
   act_s_daune:'Daune', act_s_inventar:'Inventar', act_s_hostel:'Hostel', act_s_treninguri:'Trening', act_s_sarcini:'Sarcini', act_s_observatii:'Observații',
   act_dataSchimb:'Data schimb', act_numeAdmin:'Nume administrator',
@@ -752,7 +752,7 @@ ro: {
   act_tipMiscare:'Intrare/Ieșire', act_articol:'Articol', act_cantitate:'Cantitate', act_sursa:'Nume participant/furnizor',
   act_camera:'Cameră', act_oraCazarii:'Ora cazării', act_statut:'Statut',
   act_antrenor:'Antrenor', act_data:'Data', act_ora:'Ora', act_programat:'Programat', act_desfasurat:'Desfășurat', act_da:'DA', act_nu:'NU',
-  act_goale:'—', act_generat:'Act generat și salvat în Rapoarte.', act_needShift:'Nu există un schimb activ.',
+  act_goale:'—', act_generat:'Raport de schimb generat și salvat în Rapoarte.', act_needShift:'Nu există un schimb activ.',
   re_print:'Imprimare', re_sect_participanti:'Rapoarte privind participanții', re_sect_admin:'Rapoarte administrative',
   re_sect_fin:'Rapoarte financiare', re_sect_inv:'Rapoarte de inventar',
   re_r_intarzieri:'Întârzieri înregistrate', re_r_obsAbs:'Observații / absențe', re_r_cazariHostel:'Cazări hostel',
@@ -980,11 +980,11 @@ ru: {
 
   re_title:'Отчёты и статистика', re_sub:'Формирование отчётов за любой период. Экспорт: Excel, PDF, печать.',
   re_perioada:'Период отчёта', re_de_la:'С', re_pana_la:'По', re_excel:'Excel', re_pdf:'PDF',
-  act_sectionTitle:'Акты смены', act_sectionSub:'Акты, сформированные при закрытии каждой смены.',
-  act_pastTitle:'Сформировать акт для прошедшей смены', act_pastLoad:'Загрузить смены', act_pastPick:'Смена',
-  act_pastNone:'Завершённых смен не найдено.', act_pastAlready:'(акт уже создан)',
-  act_none:'Акты ещё не созданы.', act_btnGenerate:'Сформировать акт', act_generating:'Формируется…',
-  act_docTitle:'Акт смены', act_perioada:'Период',
+  act_sectionTitle:'Отчёты смены', act_sectionSub:'Отчёты, сформированные при закрытии каждой смены.',
+  act_pastTitle:'Сформировать отчёт для прошедшей смены', act_pastLoad:'Загрузить смены', act_pastPick:'Смена',
+  act_pastNone:'Завершённых смен не найдено.', act_pastAlready:'(отчёт уже создан)',
+  act_none:'Отчёты смены ещё не созданы.', act_btnGenerate:'Сформировать отчёт', act_generating:'Формируется…',
+  act_docTitle:'Отчёт смены', act_perioada:'Период',
   act_s_admin:'Админ', act_s_intarzieri:'Опоздания', act_s_arbitraj:'Арбитраж', act_s_fairplay:'Фэйр-плей',
   act_s_daune:'Ущерб', act_s_inventar:'Инвентарь', act_s_hostel:'Хостел', act_s_treninguri:'Тренировки', act_s_sarcini:'Задачи', act_s_observatii:'Замечания',
   act_dataSchimb:'Дата смены', act_numeAdmin:'Имя администратора',
@@ -993,7 +993,7 @@ ru: {
   act_tipMiscare:'Приход/расход', act_articol:'Товар', act_cantitate:'Количество', act_sursa:'Имя участника/поставщика',
   act_camera:'Комната', act_oraCazarii:'Время заселения', act_statut:'Статус',
   act_antrenor:'Тренер', act_data:'Дата', act_ora:'Время', act_programat:'Запланировано', act_desfasurat:'Проведено', act_da:'ДА', act_nu:'НЕТ',
-  act_goale:'—', act_generat:'Акт сформирован и сохранён в Отчётах.', act_needShift:'Нет активной смены.',
+  act_goale:'—', act_generat:'Отчёт смены сформирован и сохранён в Отчётах.', act_needShift:'Нет активной смены.',
   re_print:'Печать', re_sect_participanti:'Отчёты об участниках', re_sect_admin:'Административные отчёты',
   re_sect_fin:'Финансовые отчёты', re_sect_inv:'Отчёты по складу',
   re_r_intarzieri:'Зарегистрированные опоздания', re_r_obsAbs:'Замечания / отсутствия', re_r_cazariHostel:'Заселения в хостел',
@@ -1536,7 +1536,7 @@ async function confirmLocationShift(){
   buildSidebar();
   render();
 }
-/* ══════════════════════ ACT DE SCHIMB ══════════════════════ */
+/* ══════════════════════ RAPORT DE SCHIMB ══════════════════════ */
 /* Core builder shared by the live "generate for current shift" button and the admin
    "generate for a past shift" picker — always scoped by the shift's actual entry/exit window
    (sesiuni_schimb.started_at → ended_at, or → now for a still-open shift), never by calendar
@@ -1611,7 +1611,7 @@ async function generateActSchimb(){
   if(btn){ btn.disabled = true; btn.textContent = t('act_generating'); }
   try{
     const act = await saveActSchimb({ shiftId, administratorServiciuId, administratorId: isFullAdmin() ? currentAdminId : null, numeAdministrator, startedAt, endedAt: now });
-    await logAction(`A generat actul de schimb pentru ${numeAdministrator}`);
+    await logAction(`A generat raportul de schimb pentru ${numeAdministrator}`);
     openActPreview(act);
   } catch(error){
     alert('Generarea actului a eșuat: ' + error.message);
@@ -1674,7 +1674,7 @@ function renderActDoc(act){
   </div>`;
 }
 function actFileBase(act){
-  return `Act-schimb_${act.data}_${String(act.numeAdministrator||'').trim().replace(/\s+/g,'-')}`;
+  return `Raport-schimb_${act.data}_${String(act.numeAdministrator||'').trim().replace(/\s+/g,'-')}`;
 }
 function exportActExcel(act){
   if(!act) return;
@@ -1775,7 +1775,7 @@ async function generateActForPastShift(){
       startedAt: sesiune.started_at,
       endedAt: sesiune.ended_at,
     });
-    await logAction(`A generat actul de schimb (retroactiv) pentru ${numeAdministrator}`);
+    await logAction(`A generat raportul de schimb (retroactiv) pentru ${numeAdministrator}`);
     render();
     openActPreview(act);
   } catch(error){
