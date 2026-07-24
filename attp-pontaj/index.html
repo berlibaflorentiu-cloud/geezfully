@@ -1676,25 +1676,44 @@ function exportActExcel(act){
   XLSX.utils.book_append_sheet(workbook, sheet, 'Act');
   XLSX.writeFile(workbook, actFileBase(act)+'.xlsx');
 }
-function exportActPdf(act){
+/* jsPDF's built-in fonts (Helvetica/Times/Courier) only cover WinAnsi — no Cyrillic, and Romanian
+   ș/ț get silently mangled once anything outside that range appears earlier in the same document.
+   Embed a real Unicode font (Noto Sans, subset to Latin+Cyrillic) so RO/RU text renders correctly
+   instead of being transliterated or garbled. */
+let pdfFontBase64 = null;
+async function ensurePdfFont(doc){
+  if(!pdfFontBase64){
+    const res = await fetch('fonts/NotoSans-Regular-subset.ttf');
+    if(!res.ok) throw new Error('font fetch failed: ' + res.status);
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    let binary = '';
+    const chunk = 0x8000;
+    for(let i=0; i<bytes.length; i+=chunk) binary += String.fromCharCode.apply(null, bytes.subarray(i, i+chunk));
+    pdfFontBase64 = btoa(binary);
+  }
+  doc.addFileToVFS('NotoSans-Regular.ttf', pdfFontBase64);
+  doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
+  doc.setFont('NotoSans');
+}
+function pdfCell(value){ return value===''||value==null ? '-' : String(value); }
+async function exportActPdf(act){
   if(!act) return;
   if(!window.jspdf?.jsPDF){ alert(t('re_noPdf')); return; }
-  const pdfSafe = value => String(value==null?'':value).normalize('NFD').replace(/[̀-ͯ]/g,'')
-    .replace(/[șş]/g,'s').replace(/[țţ]/g,'t').replace(/[ȘŞ]/g,'S').replace(/[ȚŢ]/g,'T').replace(/[—–]/g,'-');
   const doc = new window.jspdf.jsPDF();
-  doc.setFontSize(16); doc.text(pdfSafe(t('act_docTitle')), 12, 14);
+  try { await ensurePdfFont(doc); } catch(e){ alert('Fontul PDF nu s-a putut încărca: ' + e.message); return; }
+  doc.setFontSize(16); doc.text(t('act_docTitle'), 12, 14);
   doc.setFontSize(9); doc.setTextColor(85);
-  doc.text(pdfSafe(`${t('act_dataSchimb')}: ${fmtDate(act.data)}    ${t('act_numeAdmin')}: ${act.numeAdministrator||''}`), 12, 20);
+  doc.text(`${t('act_dataSchimb')}: ${fmtDate(act.data)}    ${t('act_numeAdmin')}: ${act.numeAdministrator||''}`, 12, 20);
   let y = 26;
   actSections(act.continut || {}).forEach(s=>{
     doc.autoTable({
       startY:y,
-      head:[[{content:pdfSafe(t(s.titleKey)), colSpan:s.headers.length, styles:{fillColor:[232,235,240], textColor:[35,42,52], fontStyle:'bold'}}], s.headers.map(pdfSafe)],
-      body: s.rows.length ? s.rows.map(r=>r.map(cell=>cell===''||cell==null?'-':pdfSafe(cell))) : [[{content:pdfSafe(t('act_goale')), colSpan:s.headers.length, styles:{fontStyle:'italic', textColor:[150,150,150]}}]],
+      head:[[{content:t(s.titleKey), colSpan:s.headers.length, styles:{fillColor:[232,235,240], textColor:[35,42,52], font:'NotoSans'}}], s.headers],
+      body: s.rows.length ? s.rows.map(r=>r.map(pdfCell)) : [[{content:t('act_goale'), colSpan:s.headers.length, styles:{textColor:[150,150,150], font:'NotoSans'}}]],
       theme:'grid',
       margin:{left:12,right:12},
-      styles:{fontSize:8, cellPadding:2, lineColor:[205,210,218], lineWidth:.15, overflow:'linebreak'},
-      headStyles:{fillColor:[55,65,81], textColor:255, fontStyle:'bold'},
+      styles:{font:'NotoSans', fontSize:8, cellPadding:2, lineColor:[205,210,218], lineWidth:.15, overflow:'linebreak'},
+      headStyles:{font:'NotoSans', fillColor:[55,65,81], textColor:255},
       rowPageBreak:'avoid',
     });
     y = doc.lastAutoTable.finalY + 6;
@@ -3720,18 +3739,17 @@ function exportExcelReport(){
   XLSX.utils.book_append_sheet(workbook, sheet, 'Raport');
   XLSX.writeFile(workbook, reportFileBase(report)+'.xlsx');
 }
-function exportPdfReport(){
+async function exportPdfReport(){
   if(!window.jspdf?.jsPDF){ alert(t('re_noPdf')); return; }
   const report = reportSections();
   const doc = new window.jspdf.jsPDF();
-  const pdfSafe = value => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-    .replace(/[șş]/g,'s').replace(/[țţ]/g,'t').replace(/[ȘŞ]/g,'S').replace(/[ȚŢ]/g,'T').replace(/[—–]/g,'-');
+  try { await ensurePdfFont(doc); } catch(e){ alert('Fontul PDF nu s-a putut incarca: ' + e.message); return; }
   const body = [];
   report.sections.forEach(section=>{
-    body.push([{content:pdfSafe(section.title), colSpan:2, styles:{fillColor:[232,235,240], textColor:[35,42,52], fontStyle:'bold', cellPadding:2.3}}]);
-    section.rows.forEach(row=>body.push([pdfSafe(row[0]), pdfSafe(row[1])]));
+    body.push([{content:section.title, colSpan:2, styles:{fillColor:[232,235,240], textColor:[35,42,52], font:'NotoSans', cellPadding:2.3}}]);
+    section.rows.forEach(row=>body.push([pdfCell(row[0]), pdfCell(row[1])]));
   });
-  const pdfTitle = report.type==='total' ? 'Raport si statistici' : `Raport - ${pdfSafe(t('re_type_'+report.type))}`;
+  const pdfTitle = report.type==='total' ? 'Raport si statistici' : `Raport - ${t('re_type_'+report.type)}`;
   doc.setFontSize(16); doc.text(pdfTitle, 12, 14);
   doc.setFontSize(9); doc.setTextColor(85); doc.text(`Perioada: ${fmtDate(report.from)} - ${fmtDate(report.to)}`, 12, 20);
   doc.autoTable({
@@ -3740,8 +3758,8 @@ function exportPdfReport(){
     body,
     theme:'grid',
     margin:{left:12,right:12,top:12,bottom:12},
-    styles:{fontSize:8.2, cellPadding:2.1, lineColor:[205,210,218], lineWidth:.15, overflow:'linebreak'},
-    headStyles:{fillColor:[55,65,81], textColor:255, fontStyle:'bold', cellPadding:2.4},
+    styles:{font:'NotoSans', fontSize:8.2, cellPadding:2.1, lineColor:[205,210,218], lineWidth:.15, overflow:'linebreak'},
+    headStyles:{font:'NotoSans', fillColor:[55,65,81], textColor:255, cellPadding:2.4},
     columnStyles:{0:{cellWidth:145},1:{cellWidth:41, halign:'right'}},
     rowPageBreak:'avoid',
   });
