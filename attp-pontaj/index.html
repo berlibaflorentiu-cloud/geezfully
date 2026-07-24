@@ -659,6 +659,9 @@ ro: {
   sp_tipArt:'Tip articole', sp_tipArtPh:'ex. Maiou, șort', sp_dataPredarii:'Data predării', sp_suma:'Sumă (MDL)',
   sp_th_articole:'Articole', sp_th_suma:'Sumă', sp_countSuffix:'înregistrări', sp_none:'Nicio înregistrare.',
   sp_cantitate:'Cantitate', sp_th_cantitate:'Cant.', sp_locatia:'Locația (fără participant)',
+  sp_th_returnare:'Data returnării', sp_hint:'Apasă pe statut pentru a marca returnarea',
+  sp_confirmReturn:'Confirmați marcarea articolelor ca returnate de la spălătorie? Odată confirmată, doar administratorii mai pot anula acest lucru.',
+  sp_lockedHint:'Returnare confirmată — doar administratorii pot anula.',
   sp_filtruTitle:'Schimbă luna', sp_luna:'Lună', sp_toatePerioadele:'Toate lunile',
 
   ho_title:'Hostel', ho_sub:'Cazările pe noapte ale sportivilor la locație.', ho_cazatiAzi:'Cazați azi',
@@ -777,6 +780,7 @@ ro: {
   re_m_totalSesiuniAntrenament:'Total sesiuni antrenament', re_m_incasatAntrenament:'Încasat de la jucători',
   re_m_totalIntarzieri:'Total întârzieri', re_m_totalMinute:'Total minute întârziere', re_m_frecventi:'Participanți frecvenți (≥3/30 zile)',
   re_m_operatiuniSpal:'Operațiuni spălătorie', re_m_cantitateArt:'Cantitate articole', re_m_cheltuieliTotale:'Cheltuieli totale',
+  re_m_spalReturnate:'Returnate de la spălătorie', re_m_spalNereturnate:'Nereturnate de la spălătorie',
   re_m_aviziPerioada:'Avize în perioadă', re_m_valabile:'Valabile', re_m_expiraCurand:'Expiră curând', re_m_expirate:'Expirate',
   re_m_totalDaune:'Total daune înregistrate', re_m_eliberariArb:'Eliberări înregistrate',
   re_m_mingiDhs:'Mingi DHS eliberate', re_m_mingiJoola:'Mingi JOOLA eliberate',
@@ -903,6 +907,9 @@ ru: {
   sp_tipArt:'Тип изделий', sp_tipArtPh:'напр. майка, шорты', sp_dataPredarii:'Дата сдачи', sp_suma:'Сумма (MDL)',
   sp_th_articole:'Изделия', sp_th_suma:'Сумма', sp_countSuffix:'записей', sp_none:'Записей нет.',
   sp_cantitate:'Количество', sp_th_cantitate:'Кол-во', sp_locatia:'Локация (без участника)',
+  sp_th_returnare:'Дата возврата', sp_hint:'Нажмите на статус, чтобы отметить возврат',
+  sp_confirmReturn:'Подтвердить возврат изделий из прачечной? После подтверждения отменить это смогут только администраторы.',
+  sp_lockedHint:'Возврат подтверждён — отменить может только администратор.',
   sp_filtruTitle:'Сменить месяц', sp_luna:'Месяц', sp_toatePerioadele:'Все месяцы',
 
   ho_title:'Хостел', ho_sub:'Ночные заселения спортсменов на локации.', ho_cazatiAzi:'Заселены сегодня',
@@ -1021,6 +1028,7 @@ ru: {
   re_m_totalSesiuniAntrenament:'Всего тренировок', re_m_incasatAntrenament:'Получено от игроков',
   re_m_totalIntarzieri:'Всего опозданий', re_m_totalMinute:'Всего минут опоздания', re_m_frecventi:'Частые опоздания (≥3/30 дней)',
   re_m_operatiuniSpal:'Операций прачечной', re_m_cantitateArt:'Количество изделий', re_m_cheltuieliTotale:'Общие расходы',
+  re_m_spalReturnate:'Возвращено из прачечной', re_m_spalNereturnate:'Не возвращено из прачечной',
   re_m_aviziPerioada:'Справок за период', re_m_valabile:'Действительны', re_m_expiraCurand:'Скоро истекают', re_m_expirate:'Истекли',
   re_m_totalDaune:'Всего зарегистрировано ущерба', re_m_eliberariArb:'Зарегистрированных выдач',
   re_m_mingiDhs:'Выдано мячей DHS', re_m_mingiJoola:'Выдано мячей JOOLA',
@@ -1152,7 +1160,7 @@ async function fetchAll(){
       sfarsitLa:r.sfarsit_la,
       administrator: serviciuAdminById[r.administrator_serviciu_id]?.nume || publicAdminName(adminById[r.administrator_id]),
     })),
-    spalatorie: (spalatorieR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, tipArticole:r.tip_articole, cantitate:r.cantitate, suma:Number(r.suma)})),
+    spalatorie: (spalatorieR.data||[]).map(r=>({id:r.id, data:r.data, participantId:r.participant_id, tipArticole:r.tip_articole, cantitate:r.cantitate, suma:Number(r.suma), dataReturnare:r.data_returnare})),
     hostel: (hostelR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, dataCazare:r.data_cazare, observatii:r.observatii, statut:r.statut, createdAt:r.created_at})),
     lenjerie: (lenjerieR.data||[]).map(r=>({id:r.id, participantId:r.participant_id, dataEliberare:r.data_eliberare, dataReturnare:r.data_returnare})),
     daune: (dauneR.data||[]).map(r=>({
@@ -2627,13 +2635,17 @@ function renderSpalatorie(){
   </div>
 
   <div class="table-wrap">
-    <div class="table-header"><div class="table-title">${rows.length} ${t('sp_countSuffix')}</div></div>
+    <div class="table-header"><div class="table-title">${rows.length} ${t('sp_countSuffix')}</div><div class="table-hint">${t('sp_hint')}</div></div>
     <div class="table-scroll"><table>
-      <thead><tr><th>${t('th_data')}</th><th>${t('th_participant')}</th><th>${t('sp_th_articole')}</th><th>${t('sp_th_cantitate')}</th><th>${t('sp_th_suma')}</th><th></th></tr></thead>
+      <thead><tr><th>${t('th_data')}</th><th>${t('th_participant')}</th><th>${t('sp_th_articole')}</th><th>${t('sp_th_cantitate')}</th><th>${t('sp_th_suma')}</th><th>${t('sp_th_returnare')}</th><th>${t('th_statut')}</th><th></th></tr></thead>
       <tbody>${rows.length ? rows.slice().sort((a,b)=>b.data.localeCompare(a.data)).map(r=>`
         <tr><td class="td-muted">${fmtDate(r.data)}</td><td class="td-name" ${r.participantId?`onclick="openProfile('${r.participantId}')"`:''}>${r.participantId?esc(participantName(r.participantId)):t('sp_locatia')}</td>
         <td>${esc(r.tipArticole)}</td><td class="td-muted">${r.cantitate||1}</td><td class="td-gold">${r.suma} MDL</td>
-        <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('spalatorie','${r.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="6">${t('sp_none')}</td></tr>`}</tbody>
+        <td class="td-muted">${r.dataReturnare?fmtDate(r.dataReturnare):'—'}</td>
+        <td>${r.dataReturnare && !isFullAdmin()
+          ? `<span class="badge green" title="${t('sp_lockedHint')}">${trEnum('returnat')}</span>`
+          : `<button type="button" class="badge ${r.dataReturnare?'green':'yellow'}" ${disabledAttr()} onclick="toggleSpalatorieReturn('${r.id}')" title="${t('sp_hint')}">${trEnum(r.dataReturnare?'returnat':'nereturnat')}</button>`}</td>
+        <td><button class="btn-danger" ${disabledAttr(true)} onclick="removeRow('spalatorie','${r.id}')">${t('btn_delete')}</button></td></tr>`).join('') : `<tr><td class="td-empty" colspan="8">${t('sp_none')}</td></tr>`}</tbody>
     </table></div>
   </div>`;
 }
@@ -2642,8 +2654,22 @@ async function addSpalatorie(){
   const row = { data: document.getElementById('sp-data').value||todayISO(), participant_id:participantId, tip_articole: document.getElementById('sp-tip').value.trim()||'—', cantitate: Number(document.getElementById('sp-cantitate').value)||1, suma: Number(document.getElementById('sp-suma').value)||0 };
   const { data, error } = await sb.from('spalatorie').insert(row).select().single();
   if(error){ alert('Salvarea a eșuat: ' + error.message); return; }
-  DB.spalatorie.unshift({id:data.id, data:data.data, participantId:data.participant_id, tipArticole:data.tip_articole, cantitate:data.cantitate, suma:Number(data.suma)});
+  DB.spalatorie.unshift({id:data.id, data:data.data, participantId:data.participant_id, tipArticole:data.tip_articole, cantitate:data.cantitate, suma:Number(data.suma), dataReturnare:data.data_returnare});
   await logAction(`A înregistrat spălătorie pentru ${participantId ? participantName(participantId) : t('sp_locatia')}`);
+  render();
+}
+async function toggleSpalatorieReturn(id){
+  const item = DB.spalatorie.find(r=>r.id===id);
+  if(!item) return;
+  if(item.dataReturnare && !isFullAdmin()) return;
+  if(!item.dataReturnare && !isFullAdmin() && !confirm(t('sp_confirmReturn'))) return;
+  const dataReturnare = item.dataReturnare ? null : todayISO();
+  const { data, error } = await sb.from('spalatorie').update({ data_returnare:dataReturnare }).eq('id', id).select();
+  if(error){ alert('Actualizarea statutului a eșuat: ' + error.message); return; }
+  if(!data || !data.length){ alert('Actualizarea a eșuat: nu aveți permisiunea necesară.'); return; }
+  item.dataReturnare = dataReturnare;
+  const destinatar = item.participantId ? participantName(item.participantId) : t('sp_locatia');
+  await logAction(`${dataReturnare?'A marcat ca returnate':'A marcat ca nereturnate'} articolele de la spălătorie pentru ${destinatar}`);
   render();
 }
 
@@ -3653,11 +3679,13 @@ function summaryIntarzieri(range){
   ];
 }
 function summarySpalatorie(range){
-  const filtered = DB.spalatorie.filter(r=>range.includes(r.data));
+  const filtered = DB.spalatorie.filter(r=>range.includes(r.data) || range.includes(r.dataReturnare));
   return [
     [t('re_m_operatiuniSpal'), filtered.length],
     [t('re_m_cantitateArt'), filtered.reduce((s,r)=>s+(r.cantitate||1),0)],
     [t('re_m_cheltuieliTotale'), filtered.reduce((s,r)=>s+Number(r.suma||0),0)+' MDL'],
+    [t('re_m_spalReturnate'), filtered.filter(r=>r.dataReturnare).length],
+    [t('re_m_spalNereturnate'), filtered.filter(r=>!r.dataReturnare).length],
   ];
 }
 function summaryMedical(range){
@@ -3780,9 +3808,9 @@ function excelReportRows(report){
     ));
   }
   if(wants('spalatorie')){
-    DB.spalatorie.filter(r=>report.includes(r.data)).forEach(r=>add(
+    DB.spalatorie.filter(r=>report.includes(r.data) || report.includes(r.dataReturnare)).forEach(r=>add(
       r.data, 'Spălătorie', 'Operațiune spălătorie', r.participantId ? participantName(r.participantId) : t('sp_locatia'),
-      r.tipArticole || '', Number(r.suma||0), 'MDL', `${r.cantitate||1} buc`
+      [r.tipArticole || '', `${r.cantitate||1} buc`].filter(Boolean).join(' · '), Number(r.suma||0), 'MDL', r.dataReturnare ? 'returnat' : 'nereturnat', r.dataReturnare
     ));
   }
   if(wants('total')){
