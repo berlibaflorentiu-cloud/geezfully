@@ -327,6 +327,7 @@
   }
   .modal-head { padding: 20px 26px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
   .modal-head-actions { display: flex; align-items: center; gap: 10px; }
+  .act-lang-select { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 7px; padding: 7px 9px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
   .modal-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 600; color: var(--gold); }
   .modal-close { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; line-height: 1; padding: 4px; }
   .modal-close:hover { color: var(--text); }
@@ -480,9 +481,12 @@
     <div class="modal-head">
       <div class="modal-title" data-i18n="act_docTitle">Raport de schimb</div>
       <div class="modal-head-actions">
-        <button class="btn-ghost btn-sm" onclick="exportActExcel(currentActPreview)" data-i18n="re_excel">Excel</button>
-        <button class="btn-ghost btn-sm" onclick="exportActPdf(currentActPreview)" data-i18n="re_pdf">PDF</button>
-        <button class="btn-ghost btn-sm" onclick="window.print()" data-i18n="re_print">Imprimare</button>
+        <select id="act-export-lang" class="act-lang-select" onchange="setActExportLanguage(this.value)" aria-label="Limba raportului">
+          <option value="ro">RO</option><option value="ru">RU</option>
+        </select>
+        <button class="btn-ghost btn-sm" onclick="exportActExcel(currentActPreview, actExportLanguage)" data-i18n="re_excel">Excel</button>
+        <button class="btn-ghost btn-sm" onclick="exportActPdf(currentActPreview, actExportLanguage)" data-i18n="re_pdf">PDF</button>
+        <button class="btn-ghost btn-sm" onclick="printActReport()" data-i18n="re_print">Imprimare</button>
         <button class="modal-close" onclick="closeModal('act-modal')">✕</button>
       </div>
     </div>
@@ -516,7 +520,7 @@ const OBS_CATEGORIES = ['Joc pasiv','Simptome de boală','Fără cartelă','Abse
 
 /* ══════════════════════ I18N ══════════════════════ */
 let LANG = localStorage.getItem('attp-lang') || 'ro';
-function t(key){ return (I18N[LANG] && I18N[LANG][key]) || I18N.ro[key] || key; }
+function t(key, lang=LANG){ return (I18N[lang] && I18N[lang][key]) || I18N.ro[key] || key; }
 function setLang(l){
   LANG = l; localStorage.setItem('attp-lang', l);
   applyStaticI18n();
@@ -547,7 +551,7 @@ const ENUM_RU = {
   'Mingi noi DHS':'Новые мячи DHS', 'Mingi noi JOOLA':'Новые мячи JOOLA', 'Șorturi':'Шорты',
   'Seturi lenjerie':'Комплекты белья',
 };
-function trEnum(v){ return (LANG==='ru' && ENUM_RU[v]) ? ENUM_RU[v] : v; }
+function trEnum(v, lang=LANG){ return (lang==='ru' && ENUM_RU[v]) ? ENUM_RU[v] : v; }
 
 const I18N = {
 ro: {
@@ -1620,78 +1624,90 @@ async function generateActSchimb(){
   }
 }
 let currentActPreview = null;
+let actExportLanguage = 'ro';
 function openActPreview(act){
   if(!act) return;
   currentActPreview = act;
-  document.getElementById('act-modal-body').innerHTML = renderActDoc(act);
+  actExportLanguage = LANG === 'ru' ? 'ru' : 'ro';
+  const langSelect = document.getElementById('act-export-lang');
+  if(langSelect) langSelect.value = actExportLanguage;
+  document.getElementById('act-modal-body').innerHTML = renderActDoc(act, actExportLanguage);
   openModal('act-modal');
+}
+function setActExportLanguage(lang){
+  actExportLanguage = lang === 'ru' ? 'ru' : 'ro';
+  if(currentActPreview) document.getElementById('act-modal-body').innerHTML = renderActDoc(currentActPreview, actExportLanguage);
+}
+function printActReport(){
+  if(currentActPreview) document.getElementById('act-modal-body').innerHTML = renderActDoc(currentActPreview, actExportLanguage);
+  window.print();
 }
 function openActPreviewById(id){
   openActPreview(DB.acteSchimb.find(x=>x.id===id));
 }
 /* Section definitions shared by the on-screen preview and both exports, so all three always agree. */
-function actSections(c){
+function actSections(c, lang=LANG){
   return [
-    { titleKey:'act_s_intarzieri', headers:[t('act_numeSportiv'), t('act_min'), t('act_motiv')], rows:(c.intarzieri||[]).map(r=>[r.nume, r.min ?? '', r.motiv||'']) },
-    { titleKey:'act_s_arbitraj', headers:[t('act_platou'), t('act_numeArbitru')], rows:(c.arbitraj||[]).map(r=>[r.platou, r.arbitru]) },
-    { titleKey:'act_s_fairplay', headers:[t('act_numeSportiv'), t('act_cartonas'), t('act_descriere')], rows:(c.fairPlay||[]).map(r=>[r.nume, trEnum(r.cartonas), r.descriere||'']) },
-    { titleKey:'act_s_daune', headers:[t('act_numeSportiv'), t('act_platou'), t('act_descriere')], rows:(c.daune||[]).map(r=>[r.nume, r.platou||'', r.descriere||'']) },
-    { titleKey:'act_s_inventar', headers:[t('act_tipMiscare'), t('act_articol'), t('act_cantitate'), t('act_motiv')], rows:(c.inventar||[]).map(r=>[trEnum(r.tip), r.articol, r.cantitate, cleanActReason(r.motiv)]) },
-    { titleKey:'act_s_hostel', headers:[t('act_numeSportiv'), t('act_camera'), t('act_oraCazarii'), t('act_statut')], rows:(c.hostel||[]).map(r=>[r.nume, r.camera||'', r.ora||'', trEnum(r.statut)]) },
-    { titleKey:'act_s_treninguri', headers:[t('act_numeSportiv'), t('act_antrenor'), t('act_data'), t('act_ora'), t('act_statut')], rows:(c.treninguri||[]).map(r=>[r.nume, r.antrenor, r.data?fmtDate(r.data):'', r.ora||'', r.statut==='programat'?t('act_programat'):t('act_desfasurat')]) },
-    { titleKey:'act_s_sarcini', headers:[t('act_statut'), t('act_descriere')], rows:(c.sarcini||[]).map(r=>[trEnum(r.statut), r.descriere||'']) },
-    { titleKey:'act_s_observatii', headers:[t('act_numeSportiv'), t('th_categorie'), t('act_descriere')], rows:(c.observatii||[]).map(r=>[r.nume||'—', r.categorie?trEnum(r.categorie):'—', r.descriere||'']) },
+    { titleKey:'act_s_intarzieri', headers:[t('act_numeSportiv',lang), t('act_min',lang), t('act_motiv',lang)], rows:(c.intarzieri||[]).map(r=>[r.nume, r.min ?? '', r.motiv||'']) },
+    { titleKey:'act_s_arbitraj', headers:[t('act_platou',lang), t('act_numeArbitru',lang)], rows:(c.arbitraj||[]).map(r=>[r.platou, r.arbitru]) },
+    { titleKey:'act_s_fairplay', headers:[t('act_numeSportiv',lang), t('act_cartonas',lang), t('act_descriere',lang)], rows:(c.fairPlay||[]).map(r=>[r.nume, trEnum(r.cartonas,lang), r.descriere||'']) },
+    { titleKey:'act_s_daune', headers:[t('act_numeSportiv',lang), t('act_platou',lang), t('act_descriere',lang)], rows:(c.daune||[]).map(r=>[r.nume, r.platou||'', r.descriere||'']) },
+    { titleKey:'act_s_inventar', headers:[t('act_tipMiscare',lang), t('act_articol',lang), t('act_cantitate',lang), t('act_motiv',lang)], rows:(c.inventar||[]).map(r=>[trEnum(r.tip,lang), r.articol, r.cantitate, cleanActReason(r.motiv)]) },
+    { titleKey:'act_s_hostel', headers:[t('act_numeSportiv',lang), t('act_camera',lang), t('act_oraCazarii',lang), t('act_statut',lang)], rows:(c.hostel||[]).map(r=>[r.nume, r.camera||'', r.ora||'', trEnum(r.statut,lang)]) },
+    { titleKey:'act_s_treninguri', headers:[t('act_numeSportiv',lang), t('act_antrenor',lang), t('act_data',lang), t('act_ora',lang), t('act_statut',lang)], rows:(c.treninguri||[]).map(r=>[r.nume, r.antrenor, r.data?fmtDate(r.data):'', r.ora||'', r.statut==='programat'?t('act_programat',lang):t('act_desfasurat',lang)]) },
+    { titleKey:'act_s_sarcini', headers:[t('act_statut',lang), t('act_descriere',lang)], rows:(c.sarcini||[]).map(r=>[trEnum(r.statut,lang), r.descriere||'']) },
+    { titleKey:'act_s_observatii', headers:[t('act_numeSportiv',lang), t('th_categorie',lang), t('act_descriere',lang)], rows:(c.observatii||[]).map(r=>[r.nume||'—', r.categorie?trEnum(r.categorie,lang):'—', r.descriere||'']) },
   ];
 }
-function actSectionTable(titleKey, headers, rows){
+function actSectionTable(titleKey, headers, rows, lang=LANG){
   return `<div class="act-section">
-    <div class="act-section-title">${t(titleKey)}</div>
+    <div class="act-section-title">${t(titleKey,lang)}</div>
     <table class="act-table">
       <thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead>
-      <tbody>${rows.length ? rows.map(r=>`<tr>${r.map(cell=>`<td>${cell===''||cell==null?'—':esc(cell)}</td>`).join('')}</tr>`).join('') : `<tr class="act-empty-row"><td colspan="${headers.length}">${t('act_goale')}</td></tr>`}</tbody>
+      <tbody>${rows.length ? rows.map(r=>`<tr>${r.map(cell=>`<td>${cell===''||cell==null?'—':esc(cell)}</td>`).join('')}</tr>`).join('') : `<tr class="act-empty-row"><td colspan="${headers.length}">${t('act_goale',lang)}</td></tr>`}</tbody>
     </table>
   </div>`;
 }
-function actStampHtml(dateIso){
+function actStampHtml(dateIso, lang=LANG){
   const [y,m,d] = (dateIso||todayISO()).split('-');
-  const monthAbbr = (MONTH_NAMES[LANG==='ru'?'ru':'ro'][Number(m)-1]||'').slice(0,3).toUpperCase();
+  const monthAbbr = (MONTH_NAMES[lang==='ru'?'ru':'ro'][Number(m)-1]||'').slice(0,3).toUpperCase();
   return `<div class="act-stamp"><div>${esc(monthAbbr)}<b>${esc(d)}</b>${esc(y)}</div></div>`;
 }
-function renderActDoc(act){
+function renderActDoc(act, lang=LANG){
   const c = act.continut || {};
   const dateLabel = fmtDate(act.data);
   return `
   <div class="act-doc">
     <div class="act-doc-head">
       <div>
-        <div class="act-doc-eyebrow">ATTP · Registru electronic</div>
-        <div class="act-doc-title">${t('act_docTitle')}</div>
-        <div class="act-doc-meta"><b>${t('act_dataSchimb')}:</b> ${dateLabel} &nbsp;·&nbsp; <b>${t('act_numeAdmin')}:</b> ${esc(c.admin?.nume || act.numeAdministrator)}</div>
+        <div class="act-doc-eyebrow">${lang==='ru'?'ATTP · Электронный журнал':'ATTP · Registru electronic'}</div>
+        <div class="act-doc-title">${t('act_docTitle',lang)}</div>
+        <div class="act-doc-meta"><b>${t('act_dataSchimb',lang)}:</b> ${dateLabel} &nbsp;·&nbsp; <b>${t('act_numeAdmin',lang)}:</b> ${esc(c.admin?.nume || act.numeAdministrator)}</div>
       </div>
-      ${actStampHtml(act.data)}
+      ${actStampHtml(act.data,lang)}
     </div>
-    ${actSections(c).map(s=>actSectionTable(s.titleKey, s.headers, s.rows)).join('')}
+    ${actSections(c,lang).map(s=>actSectionTable(s.titleKey, s.headers, s.rows,lang)).join('')}
   </div>`;
 }
-function actFileBase(act){
-  return `Raport-schimb_${act.data}_${String(act.numeAdministrator||'').trim().replace(/\s+/g,'-')}`;
+function actFileBase(act, lang=LANG){
+  return `Raport-schimb_${act.data}_${String(act.numeAdministrator||'').trim().replace(/\s+/g,'-')}_${lang.toUpperCase()}`;
 }
-function exportActExcel(act){
+function exportActExcel(act, lang=actExportLanguage){
   if(!act) return;
-  if(!window.XLSX){ alert(t('re_noExcel')); return; }
-  const sections = actSections(act.continut || {});
+  if(!window.XLSX){ alert(t('re_noExcel',lang)); return; }
+  const sections = actSections(act.continut || {},lang);
   const rows = [
-    [t('act_docTitle').toUpperCase()],
-    [`${t('act_dataSchimb')}: ${fmtDate(act.data)}    ${t('act_numeAdmin')}: ${act.numeAdministrator||''}`],
+    [t('act_docTitle',lang).toUpperCase()],
+    [`${t('act_dataSchimb',lang)}: ${fmtDate(act.data)}    ${t('act_numeAdmin',lang)}: ${act.numeAdministrator||''}`],
     [],
   ];
   const boldRowIdx = [0];
   sections.forEach(s=>{
     boldRowIdx.push(rows.length);
-    rows.push([t(s.titleKey)]);
+    rows.push([t(s.titleKey,lang)]);
     rows.push(s.headers);
     if(s.rows.length) s.rows.forEach(r=>rows.push(r.map(cell=>cell===''||cell==null?'—':cell)));
-    else rows.push([t('act_goale')]);
+    else rows.push([t('act_goale',lang)]);
     rows.push([]);
   });
   const sheet = XLSX.utils.aoa_to_sheet(rows);
@@ -1703,8 +1719,8 @@ function exportActExcel(act){
     if(cell) cell.s = i===0 ? titleStyle : sectionStyle;
   });
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, sheet, 'Act');
-  XLSX.writeFile(workbook, actFileBase(act)+'.xlsx');
+  XLSX.utils.book_append_sheet(workbook, sheet, lang==='ru'?'Отчёт':'Raport');
+  XLSX.writeFile(workbook, actFileBase(act,lang)+'.xlsx');
 }
 /* jsPDF's built-in fonts (Helvetica/Times/Courier) only cover WinAnsi — no Cyrillic, and Romanian
    ș/ț get silently mangled once anything outside that range appears earlier in the same document.
@@ -1726,20 +1742,20 @@ async function ensurePdfFont(doc){
   doc.setFont('NotoSans');
 }
 function pdfCell(value){ return value===''||value==null ? '-' : String(value); }
-async function exportActPdf(act){
+async function exportActPdf(act, lang=actExportLanguage){
   if(!act) return;
-  if(!window.jspdf?.jsPDF){ alert(t('re_noPdf')); return; }
+  if(!window.jspdf?.jsPDF){ alert(t('re_noPdf',lang)); return; }
   const doc = new window.jspdf.jsPDF();
   try { await ensurePdfFont(doc); } catch(e){ alert('Fontul PDF nu s-a putut încărca: ' + e.message); return; }
-  doc.setFontSize(16); doc.text(t('act_docTitle'), 12, 14);
+  doc.setFontSize(16); doc.text(t('act_docTitle',lang), 12, 14);
   doc.setFontSize(9); doc.setTextColor(85);
-  doc.text(`${t('act_dataSchimb')}: ${fmtDate(act.data)}    ${t('act_numeAdmin')}: ${act.numeAdministrator||''}`, 12, 20);
+  doc.text(`${t('act_dataSchimb',lang)}: ${fmtDate(act.data)}    ${t('act_numeAdmin',lang)}: ${act.numeAdministrator||''}`, 12, 20);
   let y = 26;
-  actSections(act.continut || {}).forEach(s=>{
+  actSections(act.continut || {},lang).forEach(s=>{
     doc.autoTable({
       startY:y,
-      head:[[{content:t(s.titleKey), colSpan:s.headers.length, styles:{fillColor:[232,235,240], textColor:[35,42,52], font:'NotoSans'}}], s.headers],
-      body: s.rows.length ? s.rows.map(r=>r.map(pdfCell)) : [[{content:t('act_goale'), colSpan:s.headers.length, styles:{textColor:[150,150,150], font:'NotoSans'}}]],
+      head:[[{content:t(s.titleKey,lang), colSpan:s.headers.length, styles:{fillColor:[232,235,240], textColor:[35,42,52], font:'NotoSans'}}], s.headers],
+      body: s.rows.length ? s.rows.map(r=>r.map(pdfCell)) : [[{content:t('act_goale',lang), colSpan:s.headers.length, styles:{textColor:[150,150,150], font:'NotoSans'}}]],
       theme:'grid',
       margin:{left:12,right:12},
       styles:{font:'NotoSans', fontSize:8, cellPadding:2, lineColor:[205,210,218], lineWidth:.15, overflow:'linebreak'},
@@ -1748,7 +1764,7 @@ async function exportActPdf(act){
     });
     y = doc.lastAutoTable.finalY + 6;
   });
-  doc.save(actFileBase(act)+'.pdf');
+  doc.save(actFileBase(act,lang)+'.pdf');
 }
 let pastShiftsForAct = null; // null = not loaded yet
 async function loadPastShiftsForAct(){
